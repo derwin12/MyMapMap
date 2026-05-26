@@ -122,6 +122,10 @@ bool PreferenceDialog::loadSettings()
 
   // Allow OSC message with same media source
   _oscSameMediaSourceBox->setChecked(settings.value("oscSameMediaSource", MM::OSC_SAME_MEDIA_SOURCE).toBool());
+#ifdef HAVE_MCP
+  // MCP port
+  _mcpPortNumber->setValue(settings.value("mcpListeningPort", MM::DEFAULT_MCP_PORT).toInt());
+#endif
   // Play in loop
   _playInLoopBox->setChecked(settings.value("playInLoop", MM::PLAY_IN_LOOP).toBool());
 
@@ -156,6 +160,11 @@ void PreferenceDialog::applySettings()
   settings.setValue("language", _languageBox->currentData());
   // Allow OSC message with same media source
   settings.setValue("oscSameMediaSource", _oscSameMediaSourceBox->isChecked());
+#ifdef HAVE_MCP
+  // MCP port
+  settings.setValue("mcpListeningPort", _mcpPortNumber->value());
+  mainWindow->setMcpPort(_mcpPortNumber->value());
+#endif
   // Play in loop
   settings.setValue("playInLoop", _playInLoopBox->isChecked());
 }
@@ -372,6 +381,28 @@ void PreferenceDialog::createControlsPage()
   _oscWidget->setLayout(oscLayout);
 
   _controlsPage->addTab(_oscWidget, tr("OSC Setup"));
+
+#ifdef HAVE_MCP
+  // MCP Tab
+  _mcpWidget = new QWidget;
+
+  _mcpPortNumber = new QSpinBox;
+  _mcpPortNumber->setRange(0, 65534);
+  _mcpPortNumber->setFixedWidth(120);
+  _mcpPortNumber->setSpecialValueText(tr("Disabled"));
+
+  QFormLayout *mcpPortForm = new QFormLayout;
+  mcpPortForm->setFieldGrowthPolicy(QFormLayout::FieldsStayAtSizeHint);
+  mcpPortForm->addRow(tr("MCP port (0 to disable)"), _mcpPortNumber);
+
+  QVBoxLayout *mcpLayout = new QVBoxLayout;
+  mcpLayout->addLayout(mcpPortForm);
+  mcpLayout->addStretch();
+
+  _mcpWidget->setLayout(mcpLayout);
+
+  _controlsPage->addTab(_mcpWidget, tr("MCP Setup"));
+#endif
 
   refreshCurrentIP();
 }

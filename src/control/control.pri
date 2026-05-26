@@ -5,6 +5,11 @@ HEADERS += $$PWD/ConcurrentQueue.h \
 
 SOURCES += $$PWD/OscInterface.cpp
 
+contains(DEFINES, HAVE_MCP) {
+  HEADERS += $$PWD/McpServer.h
+  SOURCES += $$PWD/McpServer.cpp
+}
+
 # OSC support:
 INCLUDEPATH += $$PWD/qosc
 INCLUDEPATH += $$PWD/qosc/contrib/packosc
