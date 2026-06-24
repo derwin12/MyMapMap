@@ -6,6 +6,69 @@
             "blendRight": "0",
             "blendTop": "0",
             "className": "TextureLayer",
+            "depth": "2",
+            "destination": {
+                "className": "Mesh",
+                "locked": "false",
+                "nColumns": "2",
+                "nRows": "2",
+                "vertices": [
+                    [
+                        2192.4558879880924,
+                        -128.96799341106427
+                    ],
+                    [
+                        2872.9678532209423,
+                        -153.66399214935316
+                    ],
+                    [
+                        2203.6798990631123,
+                        333.6079499521263
+                    ],
+                    [
+                        2719.551872707369,
+                        1165.0399074745192
+                    ]
+                ]
+            },
+            "id": 2,
+            "locked": "false",
+            "name": "Mesh 2",
+            "opacity": "1",
+            "solo": "false",
+            "source": {
+                "className": "Mesh",
+                "locked": "false",
+                "nColumns": "2",
+                "nRows": "2",
+                "vertices": [
+                    [
+                        1280.0209892082269,
+                        218.35652168846224
+                    ],
+                    [
+                        2002.8563713493434,
+                        218.35652168846224
+                    ],
+                    [
+                        1295.0800596695,
+                        1295.0800596695
+                    ],
+                    [
+                        1867.324737197884,
+                        1280.0209892082269
+                    ]
+                ]
+            },
+            "sourceId": 2,
+            "visible": "true"
+        },
+        {
+            "blendBottom": "0",
+            "blendLeft": "0",
+            "blendRight": "0",
+            "blendTop": "0",
+            "className": "TextureLayer",
             "depth": "0",
             "destination": {
                 "className": "Mesh",
@@ -72,7 +135,7 @@
             "depth": "1",
             "destination": {
                 "className": "Mesh",
-                "locked": "false",
+                "locked": "true",
                 "nColumns": "2",
                 "nRows": "2",
                 "vertices": [
@@ -95,13 +158,13 @@
                 ]
             },
             "id": 1,
-            "locked": "false",
+            "locked": "true",
             "name": "Mesh 1",
             "opacity": "1",
             "solo": "false",
             "source": {
                 "className": "Mesh",
-                "locked": "false",
+                "locked": "true",
                 "nColumns": "2",
                 "nRows": "2",
                 "vertices": [
@@ -124,7 +187,7 @@
                 ]
             },
             "sourceId": 2,
-            "visible": "true"
+            "visible": "false"
         }
     ],
     "sources": [

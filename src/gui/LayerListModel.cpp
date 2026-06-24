@@ -71,9 +71,6 @@ QVariant LayerListModel::data(const QModelIndex &index, int role) const
   case Qt::DecorationRole:
     return layerList.at(index.row()).icon;
 
-  case Qt::ToolTipRole:
-    return QString("ID: %1").arg(layerList.at(index.row()).id);
-
   default:
     return QVariant();
   }

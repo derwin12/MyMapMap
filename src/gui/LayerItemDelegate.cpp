@@ -46,19 +46,19 @@ void LayerItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opt
     if (index.column() == MM::HideColumn)
     {
       bool isVisible = index.model()->data(index, Qt::CheckStateRole).toBool();
-      if (isVisible)
-      {
-        QStyleOptionToolButton mappingMuteButton;
-        mappingMuteButton.state |= QStyle::State_Enabled;
-        mappingMuteButton.rect = QRect(x + 4, y + 12,
-                MM::MAPPING_LIST_ICON_SIZE, MM::MAPPING_LIST_ICON_SIZE);
-        mappingMuteButton.icon = MM::themedIcon(":/visible-mapping");
-        mappingMuteButton.iconSize = QSize(MM::MAPPING_LIST_ICON_SIZE,
-                MM::MAPPING_LIST_ICON_SIZE);
+      QStyleOptionToolButton mappingMuteButton;
+      mappingMuteButton.state |= QStyle::State_Enabled;
+      mappingMuteButton.rect = QRect(x + 4, y + 12,
+              MM::MAPPING_LIST_ICON_SIZE, MM::MAPPING_LIST_ICON_SIZE);
+      mappingMuteButton.icon = MM::themedIcon(":/visible-mapping");
+      mappingMuteButton.iconSize = QSize(MM::MAPPING_LIST_ICON_SIZE,
+              MM::MAPPING_LIST_ICON_SIZE);
 
-        QApplication::style()->drawControl(
-              QStyle::CE_ToolButtonLabel, &mappingMuteButton, painter);
-      }
+      if (!isVisible)
+        painter->setOpacity(0.25);
+      QApplication::style()->drawControl(
+            QStyle::CE_ToolButtonLabel, &mappingMuteButton, painter);
+      painter->setOpacity(1.0);
     }
 
     if (index.column() == MM::IconAndNameColum)
@@ -144,7 +144,9 @@ void LayerItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opt
         mappingSoloPanel.addRoundedRect(mappingSoloButton.rect.adjusted(
               -2, -2, 2, 2), 4, 4);
         painter->setPen(QPen()); // No pen
-        painter->fillPath(mappingSoloPanel, MM::DARK_BLUE);
+        QColor soloHighlight = QApplication::palette().color(QPalette::Highlight);
+        soloHighlight.setAlpha(200);
+        painter->fillPath(mappingSoloPanel, soloHighlight);
         painter->drawPath(mappingSoloPanel);
       }
       QApplication::style()->drawControl( QStyle::CE_ToolButtonLabel,
@@ -156,7 +158,9 @@ void LayerItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opt
         mappingLockPanel.addRoundedRect(QRectF(mappingLockButton.rect.adjusted(
               -2, -2, 2, 2)), 4, 4);
         painter->setPen(QPen()); // No pen
-        painter->fillPath(mappingLockPanel, MM::DARK_BLUE);
+        QColor lockHighlight = QApplication::palette().color(QPalette::Highlight);
+        lockHighlight.setAlpha(200);
+        painter->fillPath(mappingLockPanel, lockHighlight);
         painter->drawPath(mappingLockPanel);
       }
       QApplication::style()->drawControl(
