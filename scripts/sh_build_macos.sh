@@ -24,5 +24,5 @@ echo "Qt version: $(qmake --version | tail -1)"
 # ---------------------------------------------------------------------------
 # Build
 # ---------------------------------------------------------------------------
-qmake mapmap.pro
+qmake mymapmap.pro
 make -j"$(sysctl -n hw.logicalcpu)"

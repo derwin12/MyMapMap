@@ -151,10 +151,10 @@ We want the 0 series to be backward-compatible. That means that a project create
 * If it's a new feature, increment minor. If it's bugfix, increment micro. If it's not backward-compatible, increment major.
 * Create a release-x.y.z branch
 * Verify the version number:
-  * vim -o VERSION.txt DMGVERSION.txt mapmap.pro docs/Doxyfile NEWS src/core/MM.cpp
+  * vim -o VERSION.txt DMGVERSION.txt mymapmap.pro docs/Doxyfile NEWS src/core/MM.cpp
   * VERSION.txt
   * VERSION in MM.cpp
-  * VERSION in mapmap.pro
+  * VERSION in mymapmap.pro
   * PROJECT_NUMBER in Doxyfile
 * Edit NEWS - update with the news for the release you are about to make
 * Run ./scripts/update-changelog.sh and commit the changes
@@ -179,7 +179,7 @@ We want the 0 series to be backward-compatible. That means that a project create
 
 ## <a id='qt-resources-system'></a>Qt resources system
 
-* The mapmap.pro file is where the packaging is done
+* The mymapmap.pro file is where the packaging is done
 * The mapmap.qrc file is where we specify which resources are packaged with the app.
 * Images are set there. They are then available as a path-like alias such as ":/fullscreen"
 * See https://doc.qt.io/qt-6/resources.html

@@ -10,7 +10,7 @@ Run from the repo root in PowerShell:
 cd H:\Github\MyMapMap; & .\build_msvc2022.bat 2>&1 | Select-Object -Last 40
 ```
 
-The script calls `vcvars64.bat` to set up the MSVC environment, runs `qmake mapmap.pro CONFIG+=release`, then `nmake`. Output binary: `bin\mymapmap.exe`.
+The script calls `vcvars64.bat` to set up the MSVC environment, runs `qmake mymapmap.pro CONFIG+=release`, then `nmake`. Output binary: `bin\mymapmap.exe`.
 
 Expected last line on success: `BUILD_OK`
 

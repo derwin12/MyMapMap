@@ -9,7 +9,7 @@ Install the dependencies.
 Build it:
 
 ```
-qmake mapmap.pro
+qmake mymapmap.pro
 make
 ```
 
@@ -91,10 +91,10 @@ This is the primary tested Windows build path for this fork.
    ```
    build_msvc2022.bat
    ```
-   This runs `qmake mapmap.pro CONFIG+=release` then `nmake` automatically.
+   This runs `qmake mymapmap.pro CONFIG+=release` then `nmake` automatically.
    Alternatively run qmake and nmake manually:
    ```
-   qmake mapmap.pro CONFIG+=release
+   qmake mymapmap.pro CONFIG+=release
    nmake
    ```
 
@@ -153,11 +153,11 @@ You might need to update the files:
   
 ```
 cd src/mapmap
-lupdate mapmap.pro 
+lupdate mymapmap.pro 
 ```
 
 Then, do this:
 
 ```  
-lrelease mapmap.pro
+lrelease mymapmap.pro
 ```

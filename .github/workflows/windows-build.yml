@@ -26,7 +26,7 @@ jobs:
         tools: 'tools_mingw1310'
 
     - name: Configure with qmake
-      run: qmake mapmap.pro CONFIG+=release
+      run: qmake mymapmap.pro CONFIG+=release
 
     - name: Build
       run: mingw32-make -j4

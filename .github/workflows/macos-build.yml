@@ -24,7 +24,7 @@ jobs:
     - name: Configure with qmake
       run: |
         export PATH="$(brew --prefix qt)/bin:$PATH"
-        qmake mapmap.pro CONFIG+=release
+        qmake mymapmap.pro CONFIG+=release
 
     - name: Build
       run: |
