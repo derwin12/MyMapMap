@@ -1778,7 +1778,7 @@ void MainWindow::createLayout()
   mainSplitter->setStretchFactor(0, 1);
 
   // Final setups.
-  setWindowTitle(tr("MapMap"));
+  setWindowTitle(MM::APPLICATION_NAME);
   resize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
   setCentralWidget(mainSplitter);
 
@@ -1924,7 +1924,7 @@ void MainWindow::createActions()
   addAction(redoAction);
 
   // About.
-  aboutAction = new QAction(tr("&About MapMap"), this);
+  aboutAction = new QAction(tr("&About %1").arg(MM::APPLICATION_NAME), this);
   aboutAction->setToolTip(tr("Show the application's About box"));
   aboutAction->setIconVisibleInMenu(false);
   aboutAction->setShortcutContext(Qt::ApplicationShortcut);

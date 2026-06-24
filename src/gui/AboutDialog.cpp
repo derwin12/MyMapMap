@@ -91,6 +91,8 @@ void AboutDialog::createAboutTab()
 
   // Software description
   QString aboutSoftwareText = "<p>" + tr("MapMap is a free/open source video mapping software.") + "</p>";
+  // Fork notice
+  QString forkNoticeText = "<p>" + tr("%1 is a fork of <a href=\"https://github.com/mapmapteam/mapmap\">MapMap</a>, licensed GPLv3.").arg(MM::APPLICATION_NAME) + "</p>";
   // Copyright and software owners
   QString copyrightText = "<p>" + tr("Copyright &copy; 2013 %1.").arg(MM::COPYRIGHT_OWNERS) + "</p>";
   // License short notice
@@ -108,6 +110,7 @@ void AboutDialog::createAboutTab()
   // Append texts
   QString aboutText;
   aboutText.append(aboutSoftwareText);
+  aboutText.append(forkNoticeText);
   aboutText.append(copyrightText);
   aboutText.append(licenseNoticeText);
   aboutText.append(aboutMappingText);

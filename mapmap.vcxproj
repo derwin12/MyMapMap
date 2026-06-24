@@ -1,0 +1,890 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{787C8693-3C92-35AB-9E66-0329AC697221}</ProjectGuid>
+    <RootNamespace>mapmap</RootNamespace>
+    <Keyword>Qt4VSv1.0</Keyword>
+    <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformMinVersion>10.0.26100.0</WindowsTargetPlatformMinVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;" Label="Configuration">
+    <PlatformToolset>v143</PlatformToolset>
+    <OutputDirectory>bin\</OutputDirectory>
+    <ATLMinimizesCRunTimeLibraryUsage>false</ATLMinimizesCRunTimeLibraryUsage>
+    <CharacterSet>NotSet</CharacterSet>
+    <ConfigurationType>Application</ConfigurationType>
+    <IntermediateDirectory>src\app\objs\</IntermediateDirectory>
+    <PrimaryOutput>mapmap</PrimaryOutput>
+  </PropertyGroup>
+  <PropertyGroup Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;" Label="Configuration">
+    <PlatformToolset>v143</PlatformToolset>
+    <OutputDirectory>bin\</OutputDirectory>
+    <ATLMinimizesCRunTimeLibraryUsage>false</ATLMinimizesCRunTimeLibraryUsage>
+    <CharacterSet>NotSet</CharacterSet>
+    <ConfigurationType>Application</ConfigurationType>
+    <IntermediateDirectory>src\app\objs\</IntermediateDirectory>
+    <PrimaryOutput>mapmap</PrimaryOutput>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists(&apos;$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props&apos;)" />
+  </ImportGroup>
+  <ImportGroup Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists(&apos;$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props&apos;)" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <OutDir Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">bin\</OutDir>
+    <IntDir Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\app\objs\</IntDir>
+    <TargetName Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">mapmap</TargetName>
+    <IgnoreImportLibrary Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">true</IgnoreImportLibrary>
+    <LinkIncremental Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">false</LinkIncremental>
+    <OutDir Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">bin\</OutDir>
+    <IntDir Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\app\objs\</IntDir>
+    <TargetName Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">mapmap</TargetName>
+    <IgnoreImportLibrary Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">true</IgnoreImportLibrary>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">
+    <ClCompile>
+      <AdditionalIncludeDirectories>.;src\core;src\shape;src\gui;src\control;src\app;src\core;src\shape;src\gui;src\control;src\app;src\core;src\shape;src\gui;src\control;src\app;src\gui\contrib\qtpropertybrowser\src;src\gui\contrib\qtpropertybrowser-extension;src\core;src\shape;src\gui;src\control;src\app;src\control\qosc;H:/Github/MyMapMap/src/control/qosc/contrib/packosc;src\core;src\shape;src\gui;src\control;src\app;C:\Qt\6.8.3\msvc2022_64\include;C:\Qt\6.8.3\msvc2022_64\include\QtOpenGLWidgets;C:\Qt\6.8.3\msvc2022_64\include\QtOpenGL;C:\Qt\6.8.3\msvc2022_64\include\QtMultimediaWidgets;C:\Qt\6.8.3\msvc2022_64\include\QtWidgets;C:\Qt\6.8.3\msvc2022_64\include\QtMultimedia;C:\Qt\6.8.3\msvc2022_64\include\QtGui;C:\Qt\6.8.3\msvc2022_64\include\QtNetwork;C:\Qt\6.8.3\msvc2022_64\include\QtCore;src\app\mocs;/include;C:\Qt\6.8.3\msvc2022_64\mkspecs\win32-msvc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>-Zc:rvalueCast -Zc:inline -Zc:strictStrings -Zc:throwingNew -permissive- -Zc:__cplusplus -Zc:externConstexpr -utf-8 -w34100 -w34189 -w44456 -w44457 -w44458 %(AdditionalOptions)</AdditionalOptions>
+      <AssemblerListingLocation>src\app\objs\</AssemblerListingLocation>
+      <BrowseInformation>false</BrowseInformation>
+      <DebugInformationFormat>None</DebugInformationFormat>
+      <DisableSpecificWarnings>4577;4467;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <ObjectFileName>src\app\objs\</ObjectFileName>
+      <Optimization>MaxSpeed</Optimization>
+      <PreprocessorDefinitions>_USE_MATH_DEFINES;_USE_MATH_DEFINES;_USE_MATH_DEFINES;_USE_MATH_DEFINES;_USE_MATH_DEFINES;_WINDOWS;UNICODE;_UNICODE;WIN32;_ENABLE_EXTENDED_ALIGNED_STORAGE;WIN64;UNICODE;QT_THREAD_SUPPORT;QT_CORE_LIB;QT_GUI_LIB;QT_MESSAGELOGCONTEXT;WIN32;WIN32;WIN32;WIN32;WIN32;NDEBUG;QT_NO_DEBUG;QT_OPENGLWIDGETS_LIB;QT_OPENGL_LIB;QT_MULTIMEDIAWIDGETS_LIB;QT_WIDGETS_LIB;QT_MULTIMEDIA_LIB;QT_GUI_LIB;QT_NETWORK_LIB;QT_CORE_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessToFile>false</PreprocessToFile>
+      <ProgramDataBaseFileName></ProgramDataBaseFileName>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>opengl32.lib;C:\Qt\6.8.3\msvc2022_64\lib\Qt6OpenGLWidgets.lib;C:\Qt\6.8.3\msvc2022_64\lib\Qt6OpenGL.lib;C:\Qt\6.8.3\msvc2022_64\lib\Qt6MultimediaWidgets.lib;C:\Qt\6.8.3\msvc2022_64\lib\Qt6Widgets.lib;C:\Qt\6.8.3\msvc2022_64\lib\Qt6Multimedia.lib;C:\Qt\6.8.3\msvc2022_64\lib\Qt6Gui.lib;C:\Qt\6.8.3\msvc2022_64\lib\Qt6Network.lib;C:\Qt\6.8.3\msvc2022_64\lib\Qt6Core.lib;C:\Qt\6.8.3\msvc2022_64\lib\Qt6EntryPoint.lib;shell32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>&quot;/MANIFESTDEPENDENCY:type=&apos;win32&apos; name=&apos;Microsoft.Windows.Common-Controls&apos; version=&apos;6.0.0.0&apos; publicKeyToken=&apos;6595b64144ccf1df&apos; language=&apos;*&apos; processorArchitecture=&apos;*&apos;&quot; %(AdditionalOptions)</AdditionalOptions>
+      <DataExecutionPrevention>true</DataExecutionPrevention>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <IgnoreImportLibrary>true</IgnoreImportLibrary>
+      <LinkIncremental>false</LinkIncremental>
+      <OptimizeReferences>true</OptimizeReferences>
+      <OutputFile>$(OutDir)\mapmap.exe</OutputFile>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <SubSystem>Windows</SubSystem>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <Version>0.6</Version>
+    </Link>
+    <Midl>
+      <DefaultCharType>Unsigned</DefaultCharType>
+      <EnableErrorChecks>None</EnableErrorChecks>
+      <WarningLevel>0</WarningLevel>
+    </Midl>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_USE_MATH_DEFINES;_USE_MATH_DEFINES;_USE_MATH_DEFINES;_USE_MATH_DEFINES;_USE_MATH_DEFINES;_WINDOWS;UNICODE;_UNICODE;WIN32;_ENABLE_EXTENDED_ALIGNED_STORAGE;WIN64;UNICODE;QT_THREAD_SUPPORT;QT_CORE_LIB;QT_GUI_LIB;QT_MESSAGELOGCONTEXT;WIN32;WIN32;WIN32;WIN32;WIN32;NDEBUG;QT_NO_DEBUG;QT_OPENGLWIDGETS_LIB;QT_OPENGL_LIB;QT_MULTIMEDIAWIDGETS_LIB;QT_WIDGETS_LIB;QT_MULTIMEDIA_LIB;QT_GUI_LIB;QT_NETWORK_LIB;QT_CORE_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">
+    <ClCompile>
+      <AdditionalIncludeDirectories>.;src\core;src\shape;src\gui;src\control;src\app;src\core;src\shape;src\gui;src\control;src\app;src\core;src\shape;src\gui;src\control;src\app;src\gui\contrib\qtpropertybrowser\src;src\gui\contrib\qtpropertybrowser-extension;src\core;src\shape;src\gui;src\control;src\app;src\control\qosc;H:/Github/MyMapMap/src/control/qosc/contrib/packosc;src\core;src\shape;src\gui;src\control;src\app;C:\Qt\6.8.3\msvc2022_64\include;C:\Qt\6.8.3\msvc2022_64\include\QtOpenGLWidgets;C:\Qt\6.8.3\msvc2022_64\include\QtOpenGL;C:\Qt\6.8.3\msvc2022_64\include\QtMultimediaWidgets;C:\Qt\6.8.3\msvc2022_64\include\QtWidgets;C:\Qt\6.8.3\msvc2022_64\include\QtMultimedia;C:\Qt\6.8.3\msvc2022_64\include\QtGui;C:\Qt\6.8.3\msvc2022_64\include\QtNetwork;C:\Qt\6.8.3\msvc2022_64\include\QtCore;src\app\mocs;/include;C:\Qt\6.8.3\msvc2022_64\mkspecs\win32-msvc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>-Zc:rvalueCast -Zc:inline -Zc:strictStrings -Zc:throwingNew -permissive- -Zc:__cplusplus -Zc:externConstexpr -utf-8 -w34100 -w34189 -w44456 -w44457 -w44458 %(AdditionalOptions)</AdditionalOptions>
+      <AssemblerListingLocation>src\app\objs\</AssemblerListingLocation>
+      <BrowseInformation>false</BrowseInformation>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DisableSpecificWarnings>4577;4467;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <ObjectFileName>src\app\objs\</ObjectFileName>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>_USE_MATH_DEFINES;_USE_MATH_DEFINES;_USE_MATH_DEFINES;_USE_MATH_DEFINES;_USE_MATH_DEFINES;_WINDOWS;UNICODE;_UNICODE;WIN32;_ENABLE_EXTENDED_ALIGNED_STORAGE;WIN64;UNICODE;QT_THREAD_SUPPORT;QT_CORE_LIB;QT_GUI_LIB;QT_MESSAGELOGCONTEXT;WIN32;WIN32;WIN32;WIN32;WIN32;QT_OPENGLWIDGETS_LIB;QT_OPENGL_LIB;QT_MULTIMEDIAWIDGETS_LIB;QT_WIDGETS_LIB;QT_MULTIMEDIA_LIB;QT_GUI_LIB;QT_NETWORK_LIB;QT_CORE_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessToFile>false</PreprocessToFile>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>opengl32.lib;C:\Qt\6.8.3\msvc2022_64\lib\Qt6OpenGLWidgetsd.lib;C:\Qt\6.8.3\msvc2022_64\lib\Qt6OpenGLd.lib;C:\Qt\6.8.3\msvc2022_64\lib\Qt6MultimediaWidgetsd.lib;C:\Qt\6.8.3\msvc2022_64\lib\Qt6Widgetsd.lib;C:\Qt\6.8.3\msvc2022_64\lib\Qt6Multimediad.lib;C:\Qt\6.8.3\msvc2022_64\lib\Qt6Guid.lib;C:\Qt\6.8.3\msvc2022_64\lib\Qt6Networkd.lib;C:\Qt\6.8.3\msvc2022_64\lib\Qt6Cored.lib;C:\Qt\6.8.3\msvc2022_64\lib\Qt6EntryPointd.lib;shell32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>&quot;/MANIFESTDEPENDENCY:type=&apos;win32&apos; name=&apos;Microsoft.Windows.Common-Controls&apos; version=&apos;6.0.0.0&apos; publicKeyToken=&apos;6595b64144ccf1df&apos; language=&apos;*&apos; processorArchitecture=&apos;*&apos;&quot; %(AdditionalOptions)</AdditionalOptions>
+      <DataExecutionPrevention>true</DataExecutionPrevention>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <IgnoreImportLibrary>true</IgnoreImportLibrary>
+      <OutputFile>$(OutDir)\mapmap.exe</OutputFile>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <SubSystem>Windows</SubSystem>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <Version>0.6</Version>
+    </Link>
+    <Midl>
+      <DefaultCharType>Unsigned</DefaultCharType>
+      <EnableErrorChecks>None</EnableErrorChecks>
+      <WarningLevel>0</WarningLevel>
+    </Midl>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_USE_MATH_DEFINES;_USE_MATH_DEFINES;_USE_MATH_DEFINES;_USE_MATH_DEFINES;_USE_MATH_DEFINES;_WINDOWS;UNICODE;_UNICODE;WIN32;_ENABLE_EXTENDED_ALIGNED_STORAGE;WIN64;UNICODE;QT_THREAD_SUPPORT;QT_CORE_LIB;QT_GUI_LIB;QT_MESSAGELOGCONTEXT;WIN32;WIN32;WIN32;WIN32;WIN32;QT_OPENGLWIDGETS_LIB;QT_OPENGL_LIB;QT_MULTIMEDIAWIDGETS_LIB;QT_WIDGETS_LIB;QT_MULTIMEDIA_LIB;QT_GUI_LIB;QT_NETWORK_LIB;QT_CORE_LIB;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="src\gui\AboutDialog.cpp" />
+    <ClCompile Include="src\core\CameraImpl.cpp" />
+    <ClCompile Include="src\core\CameraSurface.cpp" />
+    <ClCompile Include="src\core\Commands.cpp" />
+    <ClCompile Include="src\gui\ConsoleWindow.cpp" />
+    <ClCompile Include="src\core\Element.cpp" />
+    <ClCompile Include="src\shape\Ellipse.cpp" />
+    <ClCompile Include="src\core\Layer.cpp" />
+    <ClCompile Include="src\gui\LayerGui.cpp" />
+    <ClCompile Include="src\gui\LayerItemDelegate.cpp" />
+    <ClCompile Include="src\gui\LayerListModel.cpp" />
+    <ClCompile Include="src\core\MM.cpp" />
+    <ClCompile Include="src\app\MainApplication.cpp" />
+    <ClCompile Include="src\gui\MainWindow.cpp" />
+    <ClCompile Include="src\gui\MapperGLCanvas.cpp" />
+    <ClCompile Include="src\gui\MapperGLCanvasToolbar.cpp" />
+    <ClCompile Include="src\core\MappingManager.cpp" />
+    <ClCompile Include="src\shape\Mesh.cpp" />
+    <ClCompile Include="src\core\MetaObjectRegistry.cpp" />
+    <ClCompile Include="src\control\OscInterface.cpp" />
+    <ClCompile Include="src\control\qosc\contrib\oscpack\OscOutboundPacketStream.cpp" />
+    <ClCompile Include="src\control\qosc\contrib\oscpack\OscPrintReceivedElements.cpp" />
+    <ClCompile Include="src\control\qosc\contrib\oscpack\OscReceivedElements.cpp" />
+    <ClCompile Include="src\control\qosc\contrib\oscpack\OscTypes.cpp" />
+    <ClCompile Include="src\gui\OutputGLCanvas.cpp" />
+    <ClCompile Include="src\gui\OutputGLWindow.cpp" />
+    <ClCompile Include="src\shape\Polygon.cpp" />
+    <ClCompile Include="src\gui\PreferenceDialog.cpp" />
+    <ClCompile Include="src\core\ProjectLabels.cpp" />
+    <ClCompile Include="src\core\ProjectReader.cpp" />
+    <ClCompile Include="src\core\ProjectWriter.cpp" />
+    <ClCompile Include="src\core\Serializable.cpp" />
+    <ClCompile Include="src\shape\Shape.cpp" />
+    <ClCompile Include="src\gui\ShapeControlPainter.cpp" />
+    <ClCompile Include="src\gui\ShapeGraphicsItem.cpp" />
+    <ClCompile Include="src\gui\ShortcutWindow.cpp" />
+    <ClCompile Include="src\core\Source.cpp" />
+    <ClCompile Include="src\gui\SourceGui.cpp" />
+    <ClCompile Include="src\core\UidAllocator.cpp" />
+    <ClCompile Include="src\core\Util.cpp" />
+    <ClCompile Include="src\core\VideoImpl.cpp" />
+    <ClCompile Include="src\core\VideoPlayerImpl.cpp" />
+    <ClCompile Include="src\gui\contrib\qtpropertybrowser-extension\fileedit.cpp" />
+    <ClCompile Include="src\gui\contrib\qtpropertybrowser-extension\fileeditfactory.cpp" />
+    <ClCompile Include="src\gui\contrib\qtpropertybrowser-extension\filepathmanager.cpp" />
+    <ClCompile Include="src\app\main.cpp" />
+    <ClCompile Include="src\control\qosc\oscreceiver.cpp" />
+    <ClCompile Include="src\control\qosc\oscsender.cpp" />
+    <ClCompile Include="src\gui\contrib\qtpropertybrowser\src\qtbuttonpropertybrowser.cpp" />
+    <ClCompile Include="src\gui\contrib\qtpropertybrowser\src\qteditorfactory.cpp" />
+    <ClCompile Include="src\gui\contrib\qtpropertybrowser\src\qtgroupboxpropertybrowser.cpp" />
+    <ClCompile Include="src\gui\contrib\qtpropertybrowser\src\qtpropertybrowser.cpp" />
+    <ClCompile Include="src\gui\contrib\qtpropertybrowser\src\qtpropertybrowserutils.cpp" />
+    <ClCompile Include="src\gui\contrib\qtpropertybrowser\src\qtpropertymanager.cpp" />
+    <ClCompile Include="src\gui\contrib\qtpropertybrowser\src\qttreepropertybrowser.cpp" />
+    <ClCompile Include="src\gui\contrib\qtpropertybrowser\src\qtvariantproperty.cpp" />
+    <ClCompile Include="src\gui\contrib\qtpropertybrowser-extension\variantfactory.cpp" />
+    <ClCompile Include="src\gui\contrib\qtpropertybrowser-extension\variantmanager.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="src\gui\AboutDialog.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\gui\AboutDialog.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\AboutDialog.h -o H:\Github\MyMapMap\src\app\mocs\moc_AboutDialog.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/gui/AboutDialog.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_AboutDialog.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\gui\AboutDialog.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\AboutDialog.h -o H:\Github\MyMapMap\src\app\mocs\moc_AboutDialog.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/gui/AboutDialog.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_AboutDialog.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <ClInclude Include="src\core\CameraImpl.h" />
+    <CustomBuild Include="src\core\CameraSurface.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\core\CameraSurface.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\core\CameraSurface.h -o H:\Github\MyMapMap\src\app\mocs\moc_CameraSurface.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/core/CameraSurface.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_CameraSurface.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\core\CameraSurface.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\core\CameraSurface.h -o H:\Github\MyMapMap\src\app\mocs\moc_CameraSurface.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/core/CameraSurface.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_CameraSurface.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <ClInclude Include="src\core\Commands.h" />
+    <ClInclude Include="src\control\ConcurrentQueue.h" />
+    <CustomBuild Include="src\gui\ConsoleWindow.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\gui\ConsoleWindow.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\ConsoleWindow.h -o H:\Github\MyMapMap\src\app\mocs\moc_ConsoleWindow.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/gui/ConsoleWindow.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_ConsoleWindow.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\gui\ConsoleWindow.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\ConsoleWindow.h -o H:\Github\MyMapMap\src\app\mocs\moc_ConsoleWindow.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/gui/ConsoleWindow.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_ConsoleWindow.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\core\Element.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\core\Element.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\core\Element.h -o H:\Github\MyMapMap\src\app\mocs\moc_Element.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/core/Element.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_Element.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\core\Element.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\core\Element.h -o H:\Github\MyMapMap\src\app\mocs\moc_Element.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/core/Element.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_Element.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\shape\Ellipse.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\shape\Ellipse.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\shape\Ellipse.h -o H:\Github\MyMapMap\src\app\mocs\moc_Ellipse.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/shape/Ellipse.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_Ellipse.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\shape\Ellipse.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\shape\Ellipse.h -o H:\Github\MyMapMap\src\app\mocs\moc_Ellipse.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/shape/Ellipse.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_Ellipse.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <ClInclude Include="src\gui\GuiForward.h" />
+    <CustomBuild Include="src\core\Layer.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\core\Layer.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\core\Layer.h -o H:\Github\MyMapMap\src\app\mocs\moc_Layer.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/core/Layer.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_Layer.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\core\Layer.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\core\Layer.h -o H:\Github\MyMapMap\src\app\mocs\moc_Layer.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/core/Layer.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_Layer.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\gui\LayerGui.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\gui\LayerGui.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\LayerGui.h -o H:\Github\MyMapMap\src\app\mocs\moc_LayerGui.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/gui/LayerGui.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_LayerGui.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\gui\LayerGui.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\LayerGui.h -o H:\Github\MyMapMap\src\app\mocs\moc_LayerGui.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/gui/LayerGui.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_LayerGui.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\gui\LayerItemDelegate.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\gui\LayerItemDelegate.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\LayerItemDelegate.h -o H:\Github\MyMapMap\src\app\mocs\moc_LayerItemDelegate.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/gui/LayerItemDelegate.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_LayerItemDelegate.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\gui\LayerItemDelegate.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\LayerItemDelegate.h -o H:\Github\MyMapMap\src\app\mocs\moc_LayerItemDelegate.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/gui/LayerItemDelegate.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_LayerItemDelegate.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\gui\LayerListModel.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\gui\LayerListModel.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\LayerListModel.h -o H:\Github\MyMapMap\src\app\mocs\moc_LayerListModel.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/gui/LayerListModel.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_LayerListModel.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\gui\LayerListModel.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\LayerListModel.h -o H:\Github\MyMapMap\src\app\mocs\moc_LayerListModel.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/gui/LayerListModel.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_LayerListModel.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <ClInclude Include="src\core\MM.h" />
+    <ClInclude Include="src\app\MainApplication.h" />
+    <CustomBuild Include="src\gui\MainWindow.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\gui\MainWindow.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\MainWindow.h -o H:\Github\MyMapMap\src\app\mocs\moc_MainWindow.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/gui/MainWindow.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_MainWindow.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\gui\MainWindow.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\MainWindow.h -o H:\Github\MyMapMap\src\app\mocs\moc_MainWindow.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/gui/MainWindow.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_MainWindow.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\gui\MapperGLCanvas.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\gui\MapperGLCanvas.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\MapperGLCanvas.h -o H:\Github\MyMapMap\src\app\mocs\moc_MapperGLCanvas.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/gui/MapperGLCanvas.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_MapperGLCanvas.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\gui\MapperGLCanvas.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\MapperGLCanvas.h -o H:\Github\MyMapMap\src\app\mocs\moc_MapperGLCanvas.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/gui/MapperGLCanvas.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_MapperGLCanvas.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\gui\MapperGLCanvasToolbar.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\gui\MapperGLCanvasToolbar.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\MapperGLCanvasToolbar.h -o H:\Github\MyMapMap\src\app\mocs\moc_MapperGLCanvasToolbar.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/gui/MapperGLCanvasToolbar.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_MapperGLCanvasToolbar.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\gui\MapperGLCanvasToolbar.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\MapperGLCanvasToolbar.h -o H:\Github\MyMapMap\src\app\mocs\moc_MapperGLCanvasToolbar.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/gui/MapperGLCanvasToolbar.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_MapperGLCanvasToolbar.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <ClInclude Include="src\core\MappingManager.h" />
+    <ClInclude Include="src\core\Maths.h" />
+    <CustomBuild Include="src\shape\Mesh.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\shape\Mesh.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\shape\Mesh.h -o H:\Github\MyMapMap\src\app\mocs\moc_Mesh.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/shape/Mesh.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_Mesh.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\shape\Mesh.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\shape\Mesh.h -o H:\Github\MyMapMap\src\app\mocs\moc_Mesh.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/shape/Mesh.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_Mesh.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <ClInclude Include="src\control\qosc\contrib\oscpack\MessageMappingOscPacketListener.h" />
+    <ClInclude Include="src\core\MetaObjectRegistry.h" />
+    <ClInclude Include="src\control\qosc\contrib\oscpack\OscException.h" />
+    <ClInclude Include="src\control\qosc\contrib\oscpack\OscHostEndianness.h" />
+    <ClInclude Include="src\control\OscInterface.h" />
+    <ClInclude Include="src\control\qosc\contrib\oscpack\OscOutboundPacketStream.h" />
+    <ClInclude Include="src\control\qosc\contrib\oscpack\OscPacketListener.h" />
+    <ClInclude Include="src\control\qosc\contrib\oscpack\OscPrintReceivedElements.h" />
+    <ClInclude Include="src\control\qosc\contrib\oscpack\OscReceivedElements.h" />
+    <ClInclude Include="src\control\qosc\contrib\oscpack\OscTypes.h" />
+    <CustomBuild Include="src\gui\OutputGLCanvas.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\gui\OutputGLCanvas.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\OutputGLCanvas.h -o H:\Github\MyMapMap\src\app\mocs\moc_OutputGLCanvas.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/gui/OutputGLCanvas.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_OutputGLCanvas.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\gui\OutputGLCanvas.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\OutputGLCanvas.h -o H:\Github\MyMapMap\src\app\mocs\moc_OutputGLCanvas.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/gui/OutputGLCanvas.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_OutputGLCanvas.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\gui\OutputGLWindow.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\gui\OutputGLWindow.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\OutputGLWindow.h -o H:\Github\MyMapMap\src\app\mocs\moc_OutputGLWindow.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/gui/OutputGLWindow.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_OutputGLWindow.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\gui\OutputGLWindow.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\OutputGLWindow.h -o H:\Github\MyMapMap\src\app\mocs\moc_OutputGLWindow.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/gui/OutputGLWindow.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_OutputGLWindow.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\shape\Polygon.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\shape\Polygon.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\shape\Polygon.h -o H:\Github\MyMapMap\src\app\mocs\moc_Polygon.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/shape/Polygon.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_Polygon.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\shape\Polygon.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\shape\Polygon.h -o H:\Github\MyMapMap\src\app\mocs\moc_Polygon.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/shape/Polygon.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_Polygon.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\gui\PreferenceDialog.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\gui\PreferenceDialog.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\PreferenceDialog.h -o H:\Github\MyMapMap\src\app\mocs\moc_PreferenceDialog.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/gui/PreferenceDialog.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_PreferenceDialog.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\gui\PreferenceDialog.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\PreferenceDialog.h -o H:\Github\MyMapMap\src\app\mocs\moc_PreferenceDialog.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/gui/PreferenceDialog.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_PreferenceDialog.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <ClInclude Include="src\core\ProjectLabels.h" />
+    <ClInclude Include="src\core\ProjectReader.h" />
+    <ClInclude Include="src\core\ProjectWriter.h" />
+    <CustomBuild Include="src\shape\Quad.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\shape\Quad.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\shape\Quad.h -o H:\Github\MyMapMap\src\app\mocs\moc_Quad.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/shape/Quad.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_Quad.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\shape\Quad.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\shape\Quad.h -o H:\Github\MyMapMap\src\app\mocs\moc_Quad.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/shape/Quad.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_Quad.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\core\Serializable.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\core\Serializable.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\core\Serializable.h -o H:\Github\MyMapMap\src\app\mocs\moc_Serializable.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/core/Serializable.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_Serializable.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\core\Serializable.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\core\Serializable.h -o H:\Github\MyMapMap\src\app\mocs\moc_Serializable.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/core/Serializable.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_Serializable.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\shape\Shape.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\shape\Shape.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\shape\Shape.h -o H:\Github\MyMapMap\src\app\mocs\moc_Shape.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/shape/Shape.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_Shape.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\shape\Shape.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\shape\Shape.h -o H:\Github\MyMapMap\src\app\mocs\moc_Shape.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/shape/Shape.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_Shape.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <ClInclude Include="src\gui\ShapeControlPainter.h" />
+    <ClInclude Include="src\gui\ShapeGraphicsItem.h" />
+    <ClInclude Include="src\shape\Shapes.h" />
+    <CustomBuild Include="src\gui\ShortcutWindow.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\gui\ShortcutWindow.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\ShortcutWindow.h -o H:\Github\MyMapMap\src\app\mocs\moc_ShortcutWindow.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/gui/ShortcutWindow.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_ShortcutWindow.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\gui\ShortcutWindow.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\ShortcutWindow.h -o H:\Github\MyMapMap\src\app\mocs\moc_ShortcutWindow.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/gui/ShortcutWindow.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_ShortcutWindow.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\core\Source.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\core\Source.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\core\Source.h -o H:\Github\MyMapMap\src\app\mocs\moc_Source.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/core/Source.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_Source.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\core\Source.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\core\Source.h -o H:\Github\MyMapMap\src\app\mocs\moc_Source.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/core/Source.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_Source.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\gui\SourceGui.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\gui\SourceGui.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\SourceGui.h -o H:\Github\MyMapMap\src\app\mocs\moc_SourceGui.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/gui/SourceGui.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_SourceGui.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\gui\SourceGui.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\SourceGui.h -o H:\Github\MyMapMap\src\app\mocs\moc_SourceGui.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/gui/SourceGui.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_SourceGui.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\shape\Triangle.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\shape\Triangle.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\shape\Triangle.h -o H:\Github\MyMapMap\src\app\mocs\moc_Triangle.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/shape/Triangle.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_Triangle.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\shape\Triangle.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\shape\Triangle.h -o H:\Github\MyMapMap\src\app\mocs\moc_Triangle.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/shape/Triangle.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_Triangle.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <ClInclude Include="src\core\UidAllocator.h" />
+    <ClInclude Include="src\core\Util.h" />
+    <ClInclude Include="src\core\VideoImpl.h" />
+    <CustomBuild Include="src\core\VideoPlayerImpl.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\core\VideoPlayerImpl.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\core\VideoPlayerImpl.h -o H:\Github\MyMapMap\src\app\mocs\moc_VideoPlayerImpl.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/core/VideoPlayerImpl.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_VideoPlayerImpl.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\core\VideoPlayerImpl.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\core\VideoPlayerImpl.h -o H:\Github\MyMapMap\src\app\mocs\moc_VideoPlayerImpl.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/core/VideoPlayerImpl.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_VideoPlayerImpl.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\gui\contrib\qtpropertybrowser-extension\fileedit.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\gui\contrib\qtpropertybrowser-extension\fileedit.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\contrib\qtpropertybrowser-extension\fileedit.h -o H:\Github\MyMapMap\src\app\mocs\moc_fileedit.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/gui/contrib/qtpropertybrowser-extension/fileedit.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_fileedit.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\gui\contrib\qtpropertybrowser-extension\fileedit.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\contrib\qtpropertybrowser-extension\fileedit.h -o H:\Github\MyMapMap\src\app\mocs\moc_fileedit.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/gui/contrib/qtpropertybrowser-extension/fileedit.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_fileedit.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\gui\contrib\qtpropertybrowser-extension\fileeditfactory.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\gui\contrib\qtpropertybrowser-extension\fileeditfactory.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\contrib\qtpropertybrowser-extension\fileeditfactory.h -o H:\Github\MyMapMap\src\app\mocs\moc_fileeditfactory.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/gui/contrib/qtpropertybrowser-extension/fileeditfactory.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_fileeditfactory.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\gui\contrib\qtpropertybrowser-extension\fileeditfactory.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\contrib\qtpropertybrowser-extension\fileeditfactory.h -o H:\Github\MyMapMap\src\app\mocs\moc_fileeditfactory.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/gui/contrib/qtpropertybrowser-extension/fileeditfactory.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_fileeditfactory.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\gui\contrib\qtpropertybrowser-extension\filepathmanager.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\gui\contrib\qtpropertybrowser-extension\filepathmanager.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\contrib\qtpropertybrowser-extension\filepathmanager.h -o H:\Github\MyMapMap\src\app\mocs\moc_filepathmanager.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/gui/contrib/qtpropertybrowser-extension/filepathmanager.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_filepathmanager.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\gui\contrib\qtpropertybrowser-extension\filepathmanager.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\contrib\qtpropertybrowser-extension\filepathmanager.h -o H:\Github\MyMapMap\src\app\mocs\moc_filepathmanager.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/gui/contrib/qtpropertybrowser-extension/filepathmanager.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_filepathmanager.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\control\qosc\oscreceiver.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\control\qosc\oscreceiver.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\control\qosc\oscreceiver.h -o H:\Github\MyMapMap\src\app\mocs\moc_oscreceiver.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/control/qosc/oscreceiver.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_oscreceiver.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\control\qosc\oscreceiver.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\control\qosc\oscreceiver.h -o H:\Github\MyMapMap\src\app\mocs\moc_oscreceiver.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/control/qosc/oscreceiver.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_oscreceiver.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\control\qosc\oscsender.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\control\qosc\oscsender.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\control\qosc\oscsender.h -o H:\Github\MyMapMap\src\app\mocs\moc_oscsender.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/control/qosc/oscsender.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_oscsender.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\control\qosc\oscsender.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\control\qosc\oscsender.h -o H:\Github\MyMapMap\src\app\mocs\moc_oscsender.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/control/qosc/oscsender.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_oscsender.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\gui\contrib\qtpropertybrowser\src\qtbuttonpropertybrowser.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\gui\contrib\qtpropertybrowser\src\qtbuttonpropertybrowser.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\contrib\qtpropertybrowser\src\qtbuttonpropertybrowser.h -o H:\Github\MyMapMap\src\app\mocs\moc_qtbuttonpropertybrowser.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/gui/contrib/qtpropertybrowser/src/qtbuttonpropertybrowser.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_qtbuttonpropertybrowser.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\gui\contrib\qtpropertybrowser\src\qtbuttonpropertybrowser.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\contrib\qtpropertybrowser\src\qtbuttonpropertybrowser.h -o H:\Github\MyMapMap\src\app\mocs\moc_qtbuttonpropertybrowser.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/gui/contrib/qtpropertybrowser/src/qtbuttonpropertybrowser.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_qtbuttonpropertybrowser.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\gui\contrib\qtpropertybrowser\src\qteditorfactory.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\gui\contrib\qtpropertybrowser\src\qteditorfactory.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\contrib\qtpropertybrowser\src\qteditorfactory.h -o H:\Github\MyMapMap\src\app\mocs\moc_qteditorfactory.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/gui/contrib/qtpropertybrowser/src/qteditorfactory.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_qteditorfactory.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\gui\contrib\qtpropertybrowser\src\qteditorfactory.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\contrib\qtpropertybrowser\src\qteditorfactory.h -o H:\Github\MyMapMap\src\app\mocs\moc_qteditorfactory.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/gui/contrib/qtpropertybrowser/src/qteditorfactory.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_qteditorfactory.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\gui\contrib\qtpropertybrowser\src\qtgroupboxpropertybrowser.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\gui\contrib\qtpropertybrowser\src\qtgroupboxpropertybrowser.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\contrib\qtpropertybrowser\src\qtgroupboxpropertybrowser.h -o H:\Github\MyMapMap\src\app\mocs\moc_qtgroupboxpropertybrowser.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/gui/contrib/qtpropertybrowser/src/qtgroupboxpropertybrowser.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_qtgroupboxpropertybrowser.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\gui\contrib\qtpropertybrowser\src\qtgroupboxpropertybrowser.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\contrib\qtpropertybrowser\src\qtgroupboxpropertybrowser.h -o H:\Github\MyMapMap\src\app\mocs\moc_qtgroupboxpropertybrowser.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/gui/contrib/qtpropertybrowser/src/qtgroupboxpropertybrowser.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_qtgroupboxpropertybrowser.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\gui\contrib\qtpropertybrowser\src\qtpropertybrowser.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\gui\contrib\qtpropertybrowser\src\qtpropertybrowser.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\contrib\qtpropertybrowser\src\qtpropertybrowser.h -o H:\Github\MyMapMap\src\app\mocs\moc_qtpropertybrowser.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/gui/contrib/qtpropertybrowser/src/qtpropertybrowser.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_qtpropertybrowser.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\gui\contrib\qtpropertybrowser\src\qtpropertybrowser.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\contrib\qtpropertybrowser\src\qtpropertybrowser.h -o H:\Github\MyMapMap\src\app\mocs\moc_qtpropertybrowser.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/gui/contrib/qtpropertybrowser/src/qtpropertybrowser.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_qtpropertybrowser.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\gui\contrib\qtpropertybrowser\src\qtpropertybrowserutils_p.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\gui\contrib\qtpropertybrowser\src\qtpropertybrowserutils_p.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\contrib\qtpropertybrowser\src\qtpropertybrowserutils_p.h -o H:\Github\MyMapMap\src\app\mocs\moc_qtpropertybrowserutils_p.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/gui/contrib/qtpropertybrowser/src/qtpropertybrowserutils_p.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_qtpropertybrowserutils_p.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\gui\contrib\qtpropertybrowser\src\qtpropertybrowserutils_p.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\contrib\qtpropertybrowser\src\qtpropertybrowserutils_p.h -o H:\Github\MyMapMap\src\app\mocs\moc_qtpropertybrowserutils_p.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/gui/contrib/qtpropertybrowser/src/qtpropertybrowserutils_p.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_qtpropertybrowserutils_p.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\gui\contrib\qtpropertybrowser\src\qtpropertymanager.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\gui\contrib\qtpropertybrowser\src\qtpropertymanager.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\contrib\qtpropertybrowser\src\qtpropertymanager.h -o H:\Github\MyMapMap\src\app\mocs\moc_qtpropertymanager.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/gui/contrib/qtpropertybrowser/src/qtpropertymanager.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_qtpropertymanager.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\gui\contrib\qtpropertybrowser\src\qtpropertymanager.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\contrib\qtpropertybrowser\src\qtpropertymanager.h -o H:\Github\MyMapMap\src\app\mocs\moc_qtpropertymanager.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/gui/contrib/qtpropertybrowser/src/qtpropertymanager.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_qtpropertymanager.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\gui\contrib\qtpropertybrowser\src\qttreepropertybrowser.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\gui\contrib\qtpropertybrowser\src\qttreepropertybrowser.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\contrib\qtpropertybrowser\src\qttreepropertybrowser.h -o H:\Github\MyMapMap\src\app\mocs\moc_qttreepropertybrowser.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/gui/contrib/qtpropertybrowser/src/qttreepropertybrowser.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_qttreepropertybrowser.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\gui\contrib\qtpropertybrowser\src\qttreepropertybrowser.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\contrib\qtpropertybrowser\src\qttreepropertybrowser.h -o H:\Github\MyMapMap\src\app\mocs\moc_qttreepropertybrowser.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/gui/contrib/qtpropertybrowser/src/qttreepropertybrowser.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_qttreepropertybrowser.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\gui\contrib\qtpropertybrowser\src\qtvariantproperty.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\gui\contrib\qtpropertybrowser\src\qtvariantproperty.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\contrib\qtpropertybrowser\src\qtvariantproperty.h -o H:\Github\MyMapMap\src\app\mocs\moc_qtvariantproperty.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/gui/contrib/qtpropertybrowser/src/qtvariantproperty.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_qtvariantproperty.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\gui\contrib\qtpropertybrowser\src\qtvariantproperty.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\contrib\qtpropertybrowser\src\qtvariantproperty.h -o H:\Github\MyMapMap\src\app\mocs\moc_qtvariantproperty.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/gui/contrib/qtpropertybrowser/src/qtvariantproperty.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_qtvariantproperty.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\gui\contrib\qtpropertybrowser-extension\variantfactory.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\gui\contrib\qtpropertybrowser-extension\variantfactory.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\contrib\qtpropertybrowser-extension\variantfactory.h -o H:\Github\MyMapMap\src\app\mocs\moc_variantfactory.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/gui/contrib/qtpropertybrowser-extension/variantfactory.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_variantfactory.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\gui\contrib\qtpropertybrowser-extension\variantfactory.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\contrib\qtpropertybrowser-extension\variantfactory.h -o H:\Github\MyMapMap\src\app\mocs\moc_variantfactory.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/gui/contrib/qtpropertybrowser-extension/variantfactory.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_variantfactory.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\gui\contrib\qtpropertybrowser-extension\variantmanager.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\gui\contrib\qtpropertybrowser-extension\variantmanager.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\contrib\qtpropertybrowser-extension\variantmanager.h -o H:\Github\MyMapMap\src\app\mocs\moc_variantmanager.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/gui/contrib/qtpropertybrowser-extension/variantmanager.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_variantmanager.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\gui\contrib\qtpropertybrowser-extension\variantmanager.h;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\contrib\qtpropertybrowser-extension\variantmanager.h -o H:\Github\MyMapMap\src\app\mocs\moc_variantmanager.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/gui/contrib/qtpropertybrowser-extension/variantmanager.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_variantmanager.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\app\mocs\moc_AboutDialog.cpp" />
+    <ClCompile Include="src\app\mocs\moc_CameraSurface.cpp" />
+    <ClCompile Include="src\app\mocs\moc_ConsoleWindow.cpp" />
+    <ClCompile Include="src\app\mocs\moc_Element.cpp" />
+    <ClCompile Include="src\app\mocs\moc_Ellipse.cpp" />
+    <ClCompile Include="src\app\mocs\moc_Layer.cpp" />
+    <ClCompile Include="src\app\mocs\moc_LayerGui.cpp" />
+    <ClCompile Include="src\app\mocs\moc_LayerItemDelegate.cpp" />
+    <ClCompile Include="src\app\mocs\moc_LayerListModel.cpp" />
+    <ClCompile Include="src\app\mocs\moc_MainWindow.cpp" />
+    <ClCompile Include="src\app\mocs\moc_MapperGLCanvas.cpp" />
+    <ClCompile Include="src\app\mocs\moc_MapperGLCanvasToolbar.cpp" />
+    <ClCompile Include="src\app\mocs\moc_Mesh.cpp" />
+    <ClCompile Include="src\app\mocs\moc_OutputGLCanvas.cpp" />
+    <ClCompile Include="src\app\mocs\moc_OutputGLWindow.cpp" />
+    <ClCompile Include="src\app\mocs\moc_Polygon.cpp" />
+    <ClCompile Include="src\app\mocs\moc_PreferenceDialog.cpp" />
+    <ClCompile Include="src\app\mocs\moc_Quad.cpp" />
+    <ClCompile Include="src\app\mocs\moc_Serializable.cpp" />
+    <ClCompile Include="src\app\mocs\moc_Shape.cpp" />
+    <ClCompile Include="src\app\mocs\moc_ShortcutWindow.cpp" />
+    <ClCompile Include="src\app\mocs\moc_Source.cpp" />
+    <ClCompile Include="src\app\mocs\moc_SourceGui.cpp" />
+    <ClCompile Include="src\app\mocs\moc_Triangle.cpp" />
+    <ClCompile Include="src\app\mocs\moc_VideoPlayerImpl.cpp" />
+    <ClCompile Include="src\app\mocs\moc_fileedit.cpp" />
+    <ClCompile Include="src\app\mocs\moc_fileeditfactory.cpp" />
+    <ClCompile Include="src\app\mocs\moc_filepathmanager.cpp" />
+    <ClCompile Include="src\app\mocs\moc_oscreceiver.cpp" />
+    <ClCompile Include="src\app\mocs\moc_oscsender.cpp" />
+    <CustomBuild Include="H:\Github\MyMapMap\src\app\mocs\moc_predefs.h.cbt">
+      <FileType>Document</FileType>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\mkspecs\features\data\dummy.cpp;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">cl -BxC:\Qt\6.8.3\msvc2022_64\bin\qmake.exe -nologo -Zc:wchar_t -FS -Zc:rvalueCast -Zc:inline -Zc:strictStrings -Zc:throwingNew -permissive- -Zc:__cplusplus -Zc:externConstexpr -D_USE_MATH_DEFINES -D_USE_MATH_DEFINES -D_USE_MATH_DEFINES -D_USE_MATH_DEFINES -D_USE_MATH_DEFINES -O2 -MD -std:c++17 -utf-8 -E C:\Qt\6.8.3\msvc2022_64\mkspecs\features\data\dummy.cpp 2&gt;NUL &gt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">Generate moc_predefs.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\mkspecs\features\data\dummy.cpp;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">cl -BxC:\Qt\6.8.3\msvc2022_64\bin\qmake.exe -nologo -Zc:wchar_t -FS -Zc:rvalueCast -Zc:inline -Zc:strictStrings -Zc:throwingNew -permissive- -Zc:__cplusplus -Zc:externConstexpr -D_USE_MATH_DEFINES -D_USE_MATH_DEFINES -D_USE_MATH_DEFINES -D_USE_MATH_DEFINES -D_USE_MATH_DEFINES -Zi -MDd -std:c++17 -utf-8 -E C:\Qt\6.8.3\msvc2022_64\mkspecs\features\data\dummy.cpp 2&gt;NUL &gt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">Generate moc_predefs.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;%(Outputs)</Outputs>
+    </CustomBuild>
+    <ClCompile Include="src\app\mocs\moc_qtpropertybrowserutils_p.cpp" />
+    <ClCompile Include="src\app\mocs\moc_variantfactory.cpp" />
+    <ClCompile Include="src\app\mocs\moc_variantmanager.cpp" />
+    <ClCompile Include="src\app\qrc\qrc_documentation.cpp" />
+    <ClCompile Include="src\app\qrc\qrc_interface.cpp" />
+    <ClCompile Include="src\app\qrc\qrc_main.cpp" />
+    <ClCompile Include="src\app\qrc\qrc_translation.cpp" />
+    <CustomBuild Include="H:\Github\MyMapMap\src\app\mocs\qteditorfactory.moc.cbt">
+      <FileType>Document</FileType>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\gui\contrib\qtpropertybrowser\src\qteditorfactory.cpp;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\contrib\qtpropertybrowser\src\qteditorfactory.cpp -o H:\Github\MyMapMap\src\app\mocs\qteditorfactory.moc</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/gui/contrib/qtpropertybrowser/src/qteditorfactory.cpp</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\qteditorfactory.moc;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\gui\contrib\qtpropertybrowser\src\qteditorfactory.cpp;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\contrib\qtpropertybrowser\src\qteditorfactory.cpp -o H:\Github\MyMapMap\src\app\mocs\qteditorfactory.moc</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/gui/contrib/qtpropertybrowser/src/qteditorfactory.cpp</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\qteditorfactory.moc;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="H:\Github\MyMapMap\src\app\mocs\qtpropertymanager.moc.cbt">
+      <FileType>Document</FileType>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\gui\contrib\qtpropertybrowser\src\qtpropertymanager.cpp;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\contrib\qtpropertybrowser\src\qtpropertymanager.cpp -o H:\Github\MyMapMap\src\app\mocs\qtpropertymanager.moc</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/gui/contrib/qtpropertybrowser/src/qtpropertymanager.cpp</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\qtpropertymanager.moc;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\gui\contrib\qtpropertybrowser\src\qtpropertymanager.cpp;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\contrib\qtpropertybrowser\src\qtpropertymanager.cpp -o H:\Github\MyMapMap\src\app\mocs\qtpropertymanager.moc</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/gui/contrib/qtpropertybrowser/src/qtpropertymanager.cpp</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\qtpropertymanager.moc;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="H:\Github\MyMapMap\src\app\mocs\qttreepropertybrowser.moc.cbt">
+      <FileType>Document</FileType>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">src\gui\contrib\qtpropertybrowser\src\qttreepropertybrowser.cpp;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DNDEBUG -DQT_NO_DEBUG -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\contrib\qtpropertybrowser\src\qttreepropertybrowser.cpp -o H:\Github\MyMapMap\src\app\mocs\qttreepropertybrowser.moc</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">MOC src/gui/contrib/qtpropertybrowser/src/qttreepropertybrowser.cpp</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\mocs\qttreepropertybrowser.moc;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">src\gui\contrib\qtpropertybrowser\src\qttreepropertybrowser.cpp;H:\Github\MyMapMap\src\app\mocs\mocinclude.opt;H:\Github\MyMapMap\src\app\mocs\moc_predefs.h;C:\Qt\6.8.3\msvc2022_64\bin\moc.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\moc.exe  -DUNICODE -D_UNICODE -DWIN32 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -DWIN64 -DUNICODE -DQT_THREAD_SUPPORT -DQT_CORE_LIB -DQT_GUI_LIB -DQT_MESSAGELOGCONTEXT -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DWIN32 -DQT_OPENGLWIDGETS_LIB -DQT_OPENGL_LIB -DQT_MULTIMEDIAWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB --compiler-flavor=msvc --include H:/Github/MyMapMap/src/app/mocs/moc_predefs.h @H:/Github/MyMapMap/src/app/mocs/mocinclude.opt src\gui\contrib\qtpropertybrowser\src\qttreepropertybrowser.cpp -o H:\Github\MyMapMap\src\app\mocs\qttreepropertybrowser.moc</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">MOC src/gui/contrib/qtpropertybrowser/src/qttreepropertybrowser.cpp</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\mocs\qttreepropertybrowser.moc;%(Outputs)</Outputs>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="translations\mapmap_en.ts">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">translations\mapmap_en.ts;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:/Qt/6.8.3/msvc2022_64/bin/lrelease translations\mapmap_en.ts -qm translations/mapmap_en.qm</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:/Qt/6.8.3/msvc2022_64/bin/lrelease</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">translations\mapmap_en.qm;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">translations\mapmap_en.ts;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:/Qt/6.8.3/msvc2022_64/bin/lrelease translations\mapmap_en.ts -qm translations/mapmap_en.qm</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:/Qt/6.8.3/msvc2022_64/bin/lrelease</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">translations\mapmap_en.qm;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="translations\mapmap_es.ts">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">translations\mapmap_es.ts;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:/Qt/6.8.3/msvc2022_64/bin/lrelease translations\mapmap_es.ts -qm translations/mapmap_es.qm</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:/Qt/6.8.3/msvc2022_64/bin/lrelease</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">translations\mapmap_es.qm;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">translations\mapmap_es.ts;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:/Qt/6.8.3/msvc2022_64/bin/lrelease translations\mapmap_es.ts -qm translations/mapmap_es.qm</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:/Qt/6.8.3/msvc2022_64/bin/lrelease</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">translations\mapmap_es.qm;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="translations\mapmap_fr.ts">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">translations\mapmap_fr.ts;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:/Qt/6.8.3/msvc2022_64/bin/lrelease translations\mapmap_fr.ts -qm translations/mapmap_fr.qm</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:/Qt/6.8.3/msvc2022_64/bin/lrelease</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">translations\mapmap_fr.qm;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">translations\mapmap_fr.ts;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:/Qt/6.8.3/msvc2022_64/bin/lrelease translations\mapmap_fr.ts -qm translations/mapmap_fr.qm</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:/Qt/6.8.3/msvc2022_64/bin/lrelease</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">translations\mapmap_fr.qm;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="translations\mapmap_zh_CN.ts">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">translations\mapmap_zh_CN.ts;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:/Qt/6.8.3/msvc2022_64/bin/lrelease translations\mapmap_zh_CN.ts -qm translations/mapmap_zh_CN.qm</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:/Qt/6.8.3/msvc2022_64/bin/lrelease</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">translations\mapmap_zh_CN.qm;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">translations\mapmap_zh_CN.ts;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:/Qt/6.8.3/msvc2022_64/bin/lrelease translations\mapmap_zh_CN.ts -qm translations/mapmap_zh_CN.qm</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:/Qt/6.8.3/msvc2022_64/bin/lrelease</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">translations\mapmap_zh_CN.qm;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="translations\mapmap_zh_TW.ts">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">translations\mapmap_zh_TW.ts;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:/Qt/6.8.3/msvc2022_64/bin/lrelease translations\mapmap_zh_TW.ts -qm translations/mapmap_zh_TW.qm</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:/Qt/6.8.3/msvc2022_64/bin/lrelease</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">translations\mapmap_zh_TW.qm;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">translations\mapmap_zh_TW.ts;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:/Qt/6.8.3/msvc2022_64/bin/lrelease translations\mapmap_zh_TW.ts -qm translations/mapmap_zh_TW.qm</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:/Qt/6.8.3/msvc2022_64/bin/lrelease</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">translations\mapmap_zh_TW.qm;%(Outputs)</Outputs>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="docs\informations\CHANGELOG.html" />
+    <None Include="CHANGELOG.md" />
+    <None Include="docs\informations\CONTRIBUTORS.html" />
+    <None Include="docs\informations\CONTRIBUTORS.md" />
+    <None Include="resources\fonts\DroidSans.otf" />
+    <None Include="resources\fonts\Hack-Regular.otf" />
+    <None Include="docs\informations\LICENSE" />
+    <None Include="docs\informations\LICENSE_SHORT.txt" />
+    <None Include="docs\informations\MAPPING" />
+    <None Include="resources\images\icons\add_camera_w.png" />
+    <None Include="resources\images\shapes\add_circle.png" />
+    <None Include="resources\images\icons\add_movie_w.png" />
+    <None Include="resources\images\icons\add_paint_w.png" />
+    <None Include="resources\images\shapes\add_quad.png" />
+    <None Include="resources\images\shapes\add_triangle.png" />
+    <None Include="resources\images\icons\advanced.png" />
+    <None Include="resources\images\checkbox\checkbox-checked-focused.png" />
+    <None Include="resources\images\checkbox\checkbox-checked.png" />
+    <None Include="resources\images\checkbox\checkbox-unchecked-focused.png" />
+    <None Include="resources\images\checkbox\checkbox-unchecked.png" />
+    <None Include="resources\images\test-signal\examples\classic-test-card.png" />
+    <None Include="resources\images\icons\controls.png" />
+    <None Include="resources\images\icons\ctrl2_w.png" />
+    <None Include="resources\images\icons\small\delete_w.png" />
+    <CustomBuild Include="docs\documentation.qrc">
+      <FileType>Document</FileType>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">docs\documentation.qrc;C:\Qt\6.8.3\msvc2022_64\bin\rcc.exe;docs\informations\keyboard-shortcuts.css;docs\informations\keyboard-shortcuts.html;docs\informations\CONTRIBUTORS.html;docs\informations\MAPPING;docs\informations\CHANGELOG.html;docs\informations\CONTRIBUTORS.md;docs\informations\osc.md;docs\informations\LICENSE_SHORT.txt;docs\informations\mapmap-keyboard-shortcuts.md;docs\informations\LICENSE;docs\informations\osc.html;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\rcc.exe -name documentation --no-zstd docs\documentation.qrc -o H:\Github\MyMapMap\src\app\qrc\qrc_documentation.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">RCC docs/documentation.qrc</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\qrc\qrc_documentation.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">docs\documentation.qrc;C:\Qt\6.8.3\msvc2022_64\bin\rcc.exe;docs\informations\keyboard-shortcuts.css;docs\informations\keyboard-shortcuts.html;docs\informations\CONTRIBUTORS.html;docs\informations\MAPPING;docs\informations\CHANGELOG.html;docs\informations\CONTRIBUTORS.md;docs\informations\osc.md;docs\informations\LICENSE_SHORT.txt;docs\informations\mapmap-keyboard-shortcuts.md;docs\informations\LICENSE;docs\informations\osc.html;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\rcc.exe -name documentation --no-zstd docs\documentation.qrc -o H:\Github\MyMapMap\src\app\qrc\qrc_documentation.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">RCC docs/documentation.qrc</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\qrc\qrc_documentation.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <None Include="resources\images\icons\small\duplicate_w.png" />
+    <None Include="resources\images\icons\fullscreen_w.png" />
+    <None Include="resources\images\icons\interface.png" />
+    <CustomBuild Include="resources\interface.qrc">
+      <FileType>Document</FileType>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">resources\interface.qrc;C:\Qt\6.8.3\msvc2022_64\bin\rcc.exe;resources\images\icons\save_w.png;resources\images\icons\interface.png;resources\images\logo\mapmap-wide-with-border.svg;resources\images\icons\zoom_1.png;resources\images\icons\open_w.png;resources\images\test-signal\examples\classic-test-card.png;resources\images\icons\scale-vertex.png;resources\images\icons\add_camera_w.png;resources\images\icons\small\lock_w.png;resources\images\icons\ctrl2_w.png;resources\images\icons\play_w.png;resources\images\icons\zoom_out_w.svg.png;resources\images\icons\testsignal.png;resources\images\icons\newdoc_w.png;resources\images\test-signal\test-signal.svg;resources\images\icons\nofullscreen_w.png;resources\images\test-signal\examples\ntsc-test-card.png;resources\images\shapes\add_quad.png;resources\images\test-signal\ntsc-test-signal.svg;resources\images\shapes\add_circle.png;resources\fonts\Hack-Regular.otf;resources\images\test-signal\examples\pal-test-card.png;resources\images\icons\solo.png;resources\images\icons\rewind_w.png;resources\images\logo\logomapmap.png;resources\images\logo\mapmap-logo.png;resources\images\icons\zoom_fit.png;resources\images\logo\splash.png;resources\images\icons\rotate-vertex.png;resources\images\icons\small\visible_w.png;resources\fonts\DroidSans.otf;resources\images\icons\pause_w_1.png;resources\images\icons\zoom_in.png;resources\images\icons\add_paint_w.png;resources\images\test-signal\pal-test-signal.svg;resources\images\icons\small\duplicate_w.png;resources\qss\mapmap.qss;resources\images\logo\logomapmap-light.png;resources\images\shapes\add_triangle.png;resources\images\icons\add_movie_w.png;resources\images\icons\syphon-white.png;resources\images\icons\controls.png;resources\images\icons\advanced.png;resources\images\icons\fullscreen_w.png;resources\images\icons\small\delete_w.png;resources\images\checkbox\checkbox-unchecked.png;resources\images\checkbox\radio-unchecked-focused.png;resources\images\checkbox\checkbox-checked-focused.png;resources\images\checkbox\checkbox-unchecked-focused.png;resources\images\checkbox\radio-checked-focused.png;resources\images\checkbox\radio-checked.png;resources\images\checkbox\radio-unchecked.png;resources\images\checkbox\checkbox-checked.png;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\rcc.exe -name interface --no-zstd resources\interface.qrc -o H:\Github\MyMapMap\src\app\qrc\qrc_interface.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">RCC resources/interface.qrc</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\qrc\qrc_interface.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">resources\interface.qrc;C:\Qt\6.8.3\msvc2022_64\bin\rcc.exe;resources\images\icons\save_w.png;resources\images\icons\interface.png;resources\images\logo\mapmap-wide-with-border.svg;resources\images\icons\zoom_1.png;resources\images\icons\open_w.png;resources\images\test-signal\examples\classic-test-card.png;resources\images\icons\scale-vertex.png;resources\images\icons\add_camera_w.png;resources\images\icons\small\lock_w.png;resources\images\icons\ctrl2_w.png;resources\images\icons\play_w.png;resources\images\icons\zoom_out_w.svg.png;resources\images\icons\testsignal.png;resources\images\icons\newdoc_w.png;resources\images\test-signal\test-signal.svg;resources\images\icons\nofullscreen_w.png;resources\images\test-signal\examples\ntsc-test-card.png;resources\images\shapes\add_quad.png;resources\images\test-signal\ntsc-test-signal.svg;resources\images\shapes\add_circle.png;resources\fonts\Hack-Regular.otf;resources\images\test-signal\examples\pal-test-card.png;resources\images\icons\solo.png;resources\images\icons\rewind_w.png;resources\images\logo\logomapmap.png;resources\images\logo\mapmap-logo.png;resources\images\icons\zoom_fit.png;resources\images\logo\splash.png;resources\images\icons\rotate-vertex.png;resources\images\icons\small\visible_w.png;resources\fonts\DroidSans.otf;resources\images\icons\pause_w_1.png;resources\images\icons\zoom_in.png;resources\images\icons\add_paint_w.png;resources\images\test-signal\pal-test-signal.svg;resources\images\icons\small\duplicate_w.png;resources\qss\mapmap.qss;resources\images\logo\logomapmap-light.png;resources\images\shapes\add_triangle.png;resources\images\icons\add_movie_w.png;resources\images\icons\syphon-white.png;resources\images\icons\controls.png;resources\images\icons\advanced.png;resources\images\icons\fullscreen_w.png;resources\images\icons\small\delete_w.png;resources\images\checkbox\checkbox-unchecked.png;resources\images\checkbox\radio-unchecked-focused.png;resources\images\checkbox\checkbox-checked-focused.png;resources\images\checkbox\checkbox-unchecked-focused.png;resources\images\checkbox\radio-checked-focused.png;resources\images\checkbox\radio-checked.png;resources\images\checkbox\radio-unchecked.png;resources\images\checkbox\checkbox-checked.png;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\rcc.exe -name interface --no-zstd resources\interface.qrc -o H:\Github\MyMapMap\src\app\qrc\qrc_interface.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">RCC resources/interface.qrc</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\qrc\qrc_interface.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <None Include="docs\informations\keyboard-shortcuts.css" />
+    <None Include="docs\informations\keyboard-shortcuts.html" />
+    <None Include="resources\images\icons\small\lock_w.png" />
+    <None Include="resources\images\logo\logomapmap-light.png" />
+    <None Include="resources\images\logo\logomapmap.png" />
+    <CustomBuild Include="main.qrc">
+      <FileType>Document</FileType>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">main.qrc;C:\Qt\6.8.3\msvc2022_64\bin\rcc.exe;CHANGELOG.md;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\rcc.exe -name main --no-zstd main.qrc -o H:\Github\MyMapMap\src\app\qrc\qrc_main.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">RCC main.qrc</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\qrc\qrc_main.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">main.qrc;C:\Qt\6.8.3\msvc2022_64\bin\rcc.exe;CHANGELOG.md;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\rcc.exe -name main --no-zstd main.qrc -o H:\Github\MyMapMap\src\app\qrc\qrc_main.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">RCC main.qrc</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\qrc\qrc_main.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <None Include="docs\informations\mapmap-keyboard-shortcuts.md" />
+    <None Include="resources\images\logo\mapmap-logo.png" />
+    <None Include="resources\images\logo\mapmap-wide-with-border.svg" />
+    <None Include="resources\qss\mapmap.qss" />
+    <None Include="translations\mapmap_en.qm" />
+    <None Include="translations\mapmap_es.qm" />
+    <None Include="translations\mapmap_fr.qm" />
+    <None Include="translations\mapmap_zh_CN.qm" />
+    <None Include="translations\mapmap_zh_TW.qm" />
+    <None Include="resources\images\icons\newdoc_w.png" />
+    <None Include="resources\images\icons\nofullscreen_w.png" />
+    <None Include="resources\images\test-signal\examples\ntsc-test-card.png" />
+    <None Include="resources\images\test-signal\ntsc-test-signal.svg" />
+    <None Include="resources\images\icons\open_w.png" />
+    <None Include="docs\informations\osc.html" />
+    <None Include="docs\informations\osc.md" />
+    <None Include="resources\images\test-signal\examples\pal-test-card.png" />
+    <None Include="resources\images\test-signal\pal-test-signal.svg" />
+    <None Include="resources\images\icons\pause_w_1.png" />
+    <None Include="resources\images\icons\play_w.png" />
+    <None Include="resources\images\checkbox\radio-checked-focused.png" />
+    <None Include="resources\images\checkbox\radio-checked.png" />
+    <None Include="resources\images\checkbox\radio-unchecked-focused.png" />
+    <None Include="resources\images\checkbox\radio-unchecked.png" />
+    <None Include="resources\images\icons\rewind_w.png" />
+    <None Include="resources\images\icons\rotate-vertex.png" />
+    <None Include="resources\images\icons\save_w.png" />
+    <None Include="resources\images\icons\scale-vertex.png" />
+    <None Include="resources\images\icons\solo.png" />
+    <None Include="resources\images\logo\splash.png" />
+    <None Include="resources\images\icons\syphon-white.png" />
+    <None Include="resources\images\test-signal\test-signal.svg" />
+    <None Include="resources\images\icons\testsignal.png" />
+    <CustomBuild Include="translations\translation.qrc">
+      <FileType>Document</FileType>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">translations\translation.qrc;C:\Qt\6.8.3\msvc2022_64\bin\rcc.exe;translations\mapmap_zh_TW.qm;translations\mapmap_es.qm;translations\mapmap_fr.qm;translations\mapmap_zh_CN.qm;translations\mapmap_en.qm;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\rcc.exe -name translation --no-zstd translations\translation.qrc -o H:\Github\MyMapMap\src\app\qrc\qrc_translation.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">RCC translations/translation.qrc</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|x64&apos;">H:\Github\MyMapMap\src\app\qrc\qrc_translation.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">translations\translation.qrc;C:\Qt\6.8.3\msvc2022_64\bin\rcc.exe;translations\mapmap_zh_TW.qm;translations\mapmap_es.qm;translations\mapmap_fr.qm;translations\mapmap_zh_CN.qm;translations\mapmap_en.qm;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">C:\Qt\6.8.3\msvc2022_64\bin\rcc.exe -name translation --no-zstd translations\translation.qrc -o H:\Github\MyMapMap\src\app\qrc\qrc_translation.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">RCC translations/translation.qrc</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|x64&apos;">H:\Github\MyMapMap\src\app\qrc\qrc_translation.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <None Include="resources\images\icons\small\visible_w.png" />
+    <None Include="resources\images\icons\zoom_1.png" />
+    <None Include="resources\images\icons\zoom_fit.png" />
+    <None Include="resources\images\icons\zoom_in.png" />
+    <None Include="resources\images\icons\zoom_out_w.svg.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="resources\windows_resource.rc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets" />
+</Project>

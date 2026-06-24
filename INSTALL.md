@@ -113,6 +113,13 @@ This fork additionally supports building with MSVC instead of MinGW:
 4. To open/build in the Visual Studio 2022 IDE instead of the command line, generate
    a solution file: `qmake -tp vc mapmap.pro CONFIG+=release`, then open the resulting
    `mapmap.sln`.
+5. `bin/mapmap.exe` is dynamically linked against Qt6 and won't run standalone (outside
+   Qt Creator/VS, which inject the Qt `bin` dir onto `PATH` automatically) until you
+   deploy the required DLLs alongside it:
+   ```
+   C:\Qt\6.8.3\msvc2022_64\bin\windeployqt.exe --release --no-system-d3d-compiler bin\mapmap.exe
+   ```
+   See `deploy_msvc2022.bat` for a script that does this.
 
 #### MSVC-specific source notes
 
