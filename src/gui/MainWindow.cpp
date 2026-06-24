@@ -2734,6 +2734,11 @@ bool MainWindow::loadFile(const QString &fileName)
     settings.setValue("defaultProjectDir", currentDir.absoluteFilePath(fileName));
     statusBar()->showMessage(tr("File loaded"), 2000);
     setCurrentFile(fileName);
+
+    // Fit both editors to the newly loaded content instead of keeping
+    // whatever zoom/pan was left over from the previous project.
+    sourceCanvas->fitShapeToView();
+    destinationCanvas->fitShapeToView();
   }
 
   return true;
