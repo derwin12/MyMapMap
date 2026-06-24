@@ -4258,8 +4258,6 @@ void MainWindow::refreshIcons()
 
 void MainWindow::changeEvent(QEvent* event)
 {
-  if (event->type() == QEvent::ApplicationPaletteChange)
-    refreshIcons();
   QMainWindow::changeEvent(event);
 }
 

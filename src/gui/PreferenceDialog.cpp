@@ -165,6 +165,7 @@ void PreferenceDialog::applySettings()
   QString theme = _themeBox->currentData().toString();
   settings.setValue("theme", theme);
   MainApplication::applyTheme(theme);
+  mainWindow->refreshIcons();
   // Allow OSC message with same media source
   settings.setValue("oscSameMediaSource", _oscSameMediaSourceBox->isChecked());
 #ifdef HAVE_MCP
@@ -203,22 +204,17 @@ void PreferenceDialog::createInterfacePage()
   _themeBox->addItem(tr("Dark"), "dark");
   _themeBox->addItem(tr("Light"), "light");
 
-  QFormLayout *languageForm = new QFormLayout;
-  languageForm->setFieldGrowthPolicy(QFormLayout::FieldsStayAtSizeHint);
-  languageForm->addRow(tr("Language (requires restart)"), _languageBox);
-
-  QFormLayout *toolbarIconSizeForm = new QFormLayout;
-  toolbarIconSizeForm->setFieldGrowthPolicy(QFormLayout::FieldsStayAtSizeHint);
-  toolbarIconSizeForm->addRow(tr("Toolbar icon size (requires restart)"), _toolbarIconSizeBox);
-
-  QFormLayout *themeForm = new QFormLayout;
-  themeForm->setFieldGrowthPolicy(QFormLayout::FieldsStayAtSizeHint);
-  themeForm->addRow(tr("Theme"), _themeBox);
+  QFormLayout *interfaceForm = new QFormLayout;
+  interfaceForm->setFieldGrowthPolicy(QFormLayout::FieldsStayAtSizeHint);
+  interfaceForm->setSpacing(10);
+  interfaceForm->setContentsMargins(12, 12, 12, 12);
+  interfaceForm->addRow(tr("Language (requires restart)"), _languageBox);
+  interfaceForm->addRow(tr("Toolbar icon size (requires restart)"), _toolbarIconSizeBox);
+  interfaceForm->addRow(tr("Theme"), _themeBox);
 
   QVBoxLayout *interfaceLayout = new QVBoxLayout;
-  interfaceLayout->addLayout(languageForm);
-  interfaceLayout->addLayout(toolbarIconSizeForm);
-  interfaceLayout->addLayout(themeForm);
+  interfaceLayout->addLayout(interfaceForm);
+  interfaceLayout->addStretch();
 
   _interfacePage->setLayout(interfaceLayout);
 }
@@ -383,16 +379,18 @@ void PreferenceDialog::createControlsPage()
 
   QFormLayout *listenAddressForm = new QFormLayout;
   listenAddressForm->setFieldGrowthPolicy(QFormLayout::FieldsStayAtSizeHint);
-  listenAddressForm->setFormAlignment(Qt::AlignCenter);
   listenAddressForm->addRow(tr("Local IP"), listenAddressLayout);
 
   QVBoxLayout *oscLayout = new QVBoxLayout;
-  // oscLayout->addWidget(_sendMessageBox, 1);
-  // oscLayout->addLayout(sendMessageForm, 4);
-  oscLayout->addWidget(_listenMessageBox, 1);
-  oscLayout->addLayout(listenPortForm, 1);
-  oscLayout->addWidget(_oscSameMediaSourceBox, 1);
-  oscLayout->addLayout(listenAddressForm, 3);
+  oscLayout->setSpacing(8);
+  oscLayout->setContentsMargins(12, 12, 12, 12);
+  oscLayout->addWidget(_listenMessageBox);
+  oscLayout->addLayout(listenPortForm);
+  oscLayout->addSpacing(6);
+  oscLayout->addWidget(_oscSameMediaSourceBox);
+  oscLayout->addSpacing(12);
+  oscLayout->addLayout(listenAddressForm);
+  oscLayout->addStretch();
 
   _oscWidget->setLayout(oscLayout);
 

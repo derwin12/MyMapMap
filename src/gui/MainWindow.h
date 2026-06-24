@@ -171,6 +171,8 @@ private slots:
 
 public slots:
 
+  void refreshIcons();
+
   // Layer creation.
   void addMesh();
   void addTriangle();
@@ -299,7 +301,6 @@ private:
 
   // Theme helpers.
   static QIcon themedIcon(const QString& resource);
-  void refreshIcons();
   void createToolBars();
   void createStatusBar();
   void updateRecentFileActions();

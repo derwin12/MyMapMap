@@ -218,15 +218,16 @@ int main(int argc, char *argv[])
   // Let splash for at least one second.
   I::sleep(1);
 
-  // Create window.
-  MainWindow* win = MainWindow::window();
-  // Add custom font
+  // Apply theme and font before creating the window so that refreshIcons()
+  // sees the correct palette during MainWindow construction.
+  MainApplication::applyTheme(settings.value("theme", "dark").toString());
   int id = QFontDatabase::addApplicationFont(":/base-font");
   QString family = QFontDatabase::applicationFontFamilies(id).at(0);
   app.setFont(QFont(family, 11, QFont::Normal));
 
-  // Apply theme from saved preference (default: dark).
-  MainApplication::applyTheme(settings.value("theme", "dark").toString());
+  // Create window.
+  MainWindow* win = MainWindow::window();
+  win->refreshIcons();
 
   // read positional argument:
   const QStringList args = parser.positionalArguments();
