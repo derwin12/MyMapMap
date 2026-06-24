@@ -45,6 +45,7 @@
 
 #include "OutputGLWindow.h"
 #include "ConsoleWindow.h"
+#include "VideoExporter.h"
 
 #include "MappingManager.h"
 #include "LayerItemDelegate.h"
@@ -94,6 +95,10 @@ protected:
 
   // Slots ////////////////////////////////////////////////////////////////////////////////////////////////////
 private slots:
+
+  // Recording.
+  void toggleRecording(bool on);
+  void onRecordingStopped(const QString& filePath);
 
   // Menus slots.
   // File menu.
@@ -415,6 +420,7 @@ private:
   QAction *pauseAction;
   QAction *rewindAction;
   QAction *muteAllAction;
+  QAction *recordAction;
 
   QAction *outputFullScreenAction;
   QAction *displayControlsAction;
@@ -549,6 +555,9 @@ private:
   QModelIndex currentSelectedIndex;
   QTimer *videoTimer;
   QElapsedTimer *systemTimer;
+  // Video recorder
+  VideoExporter* _videoExporter;
+
   // Preference dialog
   PreferenceDialog* _preferenceDialog;
   // About dialog

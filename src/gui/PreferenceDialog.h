@@ -88,6 +88,10 @@ private:
   QCheckBox *_stickyVerticesBox;
   QComboBox *_stickyRadiusBox;
 
+  // Recording widgets
+  QComboBox *_videoFormatBox;
+  QComboBox *_videoQualityBox;
+
   // Output widgets
   QCheckBox *_showResolutionBox;
   QRadioButton *_classicRadio;

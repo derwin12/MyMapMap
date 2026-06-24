@@ -17,6 +17,7 @@
         <file alias="play">images/icons/svg/play.svg</file>
         <file alias="pause">images/icons/svg/pause.svg</file>
         <file alias="rewind">images/icons/svg/rewind.svg</file>
+        <file alias="record">images/icons/svg/record.svg</file>
         <file alias="shape-mesh">images/icons/svg/add-mesh.svg</file>
         <file alias="shape-triangle">images/icons/svg/add-triangle.svg</file>
         <file alias="shape-ellipse">images/icons/svg/add-ellipse.svg</file>

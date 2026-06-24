@@ -1647,6 +1647,15 @@ void MainWindow::createLayout()
   // Preferences dialog
   _preferenceDialog = new PreferenceDialog(this);
 
+  // Video exporter
+  _videoExporter = new VideoExporter(this);
+  connect(_videoExporter, &VideoExporter::recordingStopped,
+          this, &MainWindow::onRecordingStopped);
+  connect(_videoExporter, &VideoExporter::errorOccurred, this, [this](const QString& msg) {
+    statusBar()->showMessage(tr("Recording error: %1").arg(msg), 5000);
+    recordAction->setChecked(false);
+  });
+
   outputWindow = new OutputGLWindow(this, destinationCanvas);
   outputWindow->installEventFilter(destinationCanvas);
 
@@ -2106,6 +2115,18 @@ void MainWindow::createActions()
   addAction(rewindAction);
   connect(rewindAction, SIGNAL(triggered()), this, SLOT(rewind()));
 
+  // Record output to video file.
+  recordAction = new QAction(tr("Record"), this);
+  recordAction->setShortcut(Qt::CTRL | Qt::SHIFT | Qt::Key_R);
+  recordAction->setIcon(themedIcon(":/record"));
+  recordAction->setToolTip(tr("Record output to video file"));
+  recordAction->setIconVisibleInMenu(false);
+  recordAction->setCheckable(true);
+  recordAction->setChecked(false);
+  recordAction->setShortcutContext(Qt::ApplicationShortcut);
+  addAction(recordAction);
+  connect(recordAction, &QAction::toggled, this, &MainWindow::toggleRecording);
+
   // Mute all source audio.
   muteAllAction = new QAction(tr("&Mute All Audio"), this);
   muteAllAction->setShortcut(Qt::CTRL | Qt::Key_M);
@@ -2558,6 +2579,8 @@ void MainWindow::createToolBars()
   mainToolBar->addAction(pauseAction);
   mainToolBar->addAction(rewindAction);
   mainToolBar->addAction(muteAllAction);
+  mainToolBar->addSeparator();
+  mainToolBar->addAction(recordAction);
 
   // Disable toolbar context menu
   mainToolBar->setContextMenuPolicy(Qt::PreventContextMenu);
@@ -3550,6 +3573,22 @@ void MainWindow::processFrame()
   // Update canvases.
   updateCanvases();
 
+  // Grab output framebuffer and feed to recorder if active.
+  if (_videoExporter->isRecording()) {
+    QOpenGLWidget* glw = qobject_cast<QOpenGLWidget*>(outputWindow->getCanvas()->viewport());
+    if (glw) {
+      QImage frame = glw->grabFramebuffer();
+      if (!frame.isNull())
+        _videoExporter->sendFrame(frame);
+    }
+
+    // Show running duration in status bar.
+    qint64 ms = _videoExporter->duration();
+    statusBar()->showMessage(tr("● REC  %1:%2")
+      .arg(ms / 60000, 2, 10, QChar('0'))
+      .arg((ms % 60000) / 1000, 2, 10, QChar('0')));
+  }
+
   // Update true FPS.
   nFrames++;
   if (nFrames > framesPerSecond())
@@ -3561,6 +3600,43 @@ void MainWindow::processFrame()
         QString::number(framesPerSecond()  , 'f', 2));
     nFrames = 0;
   }
+}
+
+void MainWindow::toggleRecording(bool on)
+{
+  if (on) {
+    QSettings s;
+    auto format  = (VideoExporter::Format)  s.value("videoFormat",  (int)VideoExporter::H264_MP4).toInt();
+    auto quality = (VideoExporter::Quality) s.value("videoQuality", (int)VideoExporter::HighQuality).toInt();
+
+    QString filter = VideoExporter::formatFilter(format);
+    QString ext    = VideoExporter::formatExtension(format);
+    QString path   = QFileDialog::getSaveFileName(
+        this, tr("Save Recording As"), QString(), filter);
+
+    if (path.isEmpty()) {
+      recordAction->setChecked(false);
+      return;
+    }
+
+    // Ensure correct extension.
+    if (!path.endsWith("." + ext, Qt::CaseInsensitive))
+      path += "." + ext;
+
+    QSize size = outputWindow->getCanvas()->viewport()->size();
+    if (!_videoExporter->start(path, format, quality, size, framesPerSecond())) {
+      recordAction->setChecked(false);
+      statusBar()->showMessage(tr("Failed to start recording."), 4000);
+    }
+  } else {
+    _videoExporter->stop();
+  }
+}
+
+void MainWindow::onRecordingStopped(const QString& filePath)
+{
+  recordAction->setChecked(false);
+  statusBar()->showMessage(tr("Recording saved: %1").arg(filePath), 6000);
 }
 
 void MainWindow::updatePlayingState()

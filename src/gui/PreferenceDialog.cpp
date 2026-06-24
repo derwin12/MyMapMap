@@ -21,6 +21,7 @@
 
 #include "PreferenceDialog.h"
 #include "MainApplication.h"
+#include "VideoExporter.h"
 
 namespace mmp {
 
@@ -132,6 +133,10 @@ bool PreferenceDialog::loadSettings()
   // Play in loop
   _playInLoopBox->setChecked(settings.value("playInLoop", MM::PLAY_IN_LOOP).toBool());
 
+  // Video recording
+  _videoFormatBox->setCurrentIndex(settings.value("videoFormat", (int)VideoExporter::H264_MP4).toInt());
+  _videoQualityBox->setCurrentIndex(settings.value("videoQuality", (int)VideoExporter::HighQuality).toInt());
+
   return true;
 }
 
@@ -175,6 +180,10 @@ void PreferenceDialog::applySettings()
 #endif
   // Play in loop
   settings.setValue("playInLoop", _playInLoopBox->isChecked());
+
+  // Video recording
+  settings.setValue("videoFormat",  _videoFormatBox->currentIndex());
+  settings.setValue("videoQuality", _videoQualityBox->currentIndex());
 }
 
 void PreferenceDialog::refreshCurrentIP()
@@ -311,9 +320,31 @@ void PreferenceDialog::createOutputPage()
   QGroupBox *testCardGroupbox = new QGroupBox(tr("Test Card"));
   testCardGroupbox->setLayout(testCardLayout);
 
+  // Recording group box
+  _videoFormatBox = new QComboBox;
+  for (int i = 0; i <= (int)VideoExporter::MJPEG_AVI; ++i)
+    _videoFormatBox->addItem(VideoExporter::formatLabel((VideoExporter::Format)i), i);
+
+  _videoQualityBox = new QComboBox;
+  _videoQualityBox->addItem(tr("Low"),       (int)VideoExporter::LowQuality);
+  _videoQualityBox->addItem(tr("Medium"),    (int)VideoExporter::MediumQuality);
+  _videoQualityBox->addItem(tr("High"),      (int)VideoExporter::HighQuality);
+  _videoQualityBox->addItem(tr("Very High"), (int)VideoExporter::VeryHighQuality);
+
+  QFormLayout *recordingForm = new QFormLayout;
+  recordingForm->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
+  recordingForm->setSpacing(8);
+  recordingForm->setContentsMargins(12, 8, 12, 8);
+  recordingForm->addRow(tr("Format / Codec"), _videoFormatBox);
+  recordingForm->addRow(tr("Quality"),        _videoQualityBox);
+
+  QGroupBox *recordingGroupBox = new QGroupBox(tr("Recording"));
+  recordingGroupBox->setLayout(recordingForm);
+
   QVBoxLayout *outputPageLayout = new QVBoxLayout;
   outputPageLayout->addWidget(outputGroupBox);
   outputPageLayout->addWidget(testCardGroupbox);
+  outputPageLayout->addWidget(recordingGroupBox);
 
   _outputPage->setLayout(outputPageLayout);
 }
