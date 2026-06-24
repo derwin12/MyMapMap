@@ -547,13 +547,13 @@ void MainWindow::open()
     QString fileName = QFileDialog::getOpenFileName(this,
                                                     tr("Open project"),
                                                     settings.value("defaultProjectDir").toString(),
-                                                    tr("MapMap files (*.%1)").arg(MM::FILE_EXTENSION),
+                                                    tr("MyMapMap files (*.%1)").arg(MM::FILE_EXTENSION),
                                                     nullptr, QFileDialog::DontUseNativeDialog);
 #else
     QString fileName = QFileDialog::getOpenFileName(this,
                                                     tr("Open project"),
                                                     settings.value("defaultProjectDir").toString(),
-                                                    tr("MapMap files (*.%1)").arg(MM::FILE_EXTENSION));
+                                                    tr("MyMapMap files (*.%1)").arg(MM::FILE_EXTENSION));
 #endif
 
     if (! fileName.isEmpty())
@@ -585,13 +585,13 @@ bool MainWindow::saveAs()
 #ifdef Q_OS_LINUX
   QString fileName = QFileDialog::getSaveFileName(this,
                                                   tr("Save project"), settings.value("defaultProjectDir").toString(),
-                                                  tr("MapMap files (*.%1)").arg(MM::FILE_EXTENSION),
+                                                  tr("MyMapMap files (*.%1)").arg(MM::FILE_EXTENSION),
                                                   nullptr, QFileDialog::DontUseNativeDialog);
 #else
   // Popul file dialog to choose filename.
   QString fileName = QFileDialog::getSaveFileName(this,
                                                   tr("Save project"), settings.value("defaultProjectDir").toString(),
-                                                  tr("MapMap files (*.%1)").arg(MM::FILE_EXTENSION));
+                                                  tr("MyMapMap files (*.%1)").arg(MM::FILE_EXTENSION));
 #endif
 
   // Restart video playback. XXX Hack
@@ -1617,7 +1617,7 @@ void MainWindow::deleteSource(uid sourceId, bool replace)
   if (Source::getUidAllocator().exists(sourceId))
   {
     if (replace == false) {
-      int r = QMessageBox::warning(this, tr("MapMap"),
+      int r = QMessageBox::warning(this, tr("MyMapMap"),
                                    tr("Remove this source and all its associated layers?"),
                                    QMessageBox::Ok | QMessageBox::Cancel);
       if (r == QMessageBox::Ok)
@@ -2723,7 +2723,7 @@ bool MainWindow::okToContinue()
 {
   if (isWindowModified())
   {
-    int r = QMessageBox::warning(this, tr("MapMap"),
+    int r = QMessageBox::warning(this, tr("MyMapMap"),
                                  tr("The document has been modified.\n"
                                     "Do you want to save your changes?"),
                                  QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
@@ -2834,7 +2834,7 @@ void MainWindow::setCurrentFile(const QString &fileName)
     updateRecentFileActions();
   }
 
-  setWindowTitle(tr("%1[*] - %2").arg(shownName).arg(tr("MapMap Project")));
+  setWindowTitle(tr("%1[*] - %2").arg(shownName).arg(tr("MyMapMap Project")));
 }
 
 void MainWindow::setCurrentVideo(const QString &fileName)
@@ -3015,7 +3015,7 @@ bool MainWindow::importMediaFile(const QString &fileName, bool isImage, bool isC
   }
 
   if (!isCamera && !file.open(QIODevice::ReadOnly)) {
-    QMessageBox::warning(this, tr("MapMap Project"),
+    QMessageBox::warning(this, tr("MyMapMap Project"),
                          tr("Cannot read file %1:\n%2.")
                          .arg(file.fileName())
                          .arg(file.errorString()));

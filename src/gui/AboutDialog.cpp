@@ -90,7 +90,7 @@ void AboutDialog::createAboutTab()
   aboutTextBrowser->setOpenExternalLinks(true);
 
   // Software description
-  QString aboutSoftwareText = "<p>" + tr("MapMap is a free/open source video mapping software.") + "</p>";
+  QString aboutSoftwareText = "<p>" + tr("MyMapMap is a free/open source video mapping software.") + "</p>";
   // Fork notice
   QString forkNoticeText = "<p>" + tr("%1 is a fork of <a href=\"https://github.com/mapmapteam/mapmap\">MapMap</a>, licensed GPLv3.").arg(MM::APPLICATION_NAME) + "</p>";
   // Copyright and software owners

@@ -2,7 +2,7 @@
 
 MyMapMap is a fork of [MapMap](https://github.com/mapmapteam/mapmap), licensed GPLv3.
 The `upstream` git remote points at the original project; `origin` points at this fork
-(derwin12/MyMapMap). Build verified working: Qt 6.8.3 (`msvc2022_64` kit + Multimedia
+(derwin12/MyMapMap). Build verified working: Qt 6.11.1 (`msvc2022_64` kit + Multimedia
 module) with Visual Studio 2022, via `build_msvc2022.bat` (qmake + nmake). Output binary
 is `bin/mapmap.exe`, kept inside the project folder (`DESTDIR` in `mapmap.pro`; the
 upstream `win32` block in `src/src.pri` used to redirect `TARGET` outside the repo —

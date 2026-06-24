@@ -97,12 +97,12 @@ Build on Windows
 
 This fork additionally supports building with MSVC instead of MinGW:
 
-1. Install **Qt 6.8.x** with the **`msvc2022_64`** kit and the **Multimedia** module,
+1. Install **Qt 6.11.x** with the **`msvc2022_64`** kit and the **Multimedia** module,
    via the Qt Maintenance Tool (`C:\Qt\MaintenanceTool.exe` → "Add or remove
-   components" → expand the Qt 6.8.x version → check `MSVC 2022 64-bit` and
+   components" → expand the Qt 6.11.x version → check `MSVC 2022 64-bit` and
    `Additional Libraries > Qt Multimedia`).
 2. Build from a Visual Studio 2022 x64 command prompt (or run `vcvars64.bat` first),
-   using the Qt 6.8.x msvc2022_64 kit's `qmake`:
+   using the Qt 6.11.x msvc2022_64 kit's `qmake`:
    ```
    qmake mapmap.pro CONFIG+=release
    nmake
@@ -117,7 +117,7 @@ This fork additionally supports building with MSVC instead of MinGW:
    Qt Creator/VS, which inject the Qt `bin` dir onto `PATH` automatically) until you
    deploy the required DLLs alongside it:
    ```
-   C:\Qt\6.8.3\msvc2022_64\bin\windeployqt.exe --release --no-system-d3d-compiler bin\mapmap.exe
+   C:\Qt\6.11.1\msvc2022_64\bin\windeployqt.exe --release --no-system-d3d-compiler bin\mapmap.exe
    ```
    See `deploy_msvc2022.bat` for a script that does this.
 
