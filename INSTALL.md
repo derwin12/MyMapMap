@@ -69,7 +69,7 @@ Build:
 
 #### Corrupted OSC port
 
-If the appearance of the window of the OSC port number in the preferences seem corrupted, you might want to reset MapMap's preferences:
+If the OSC port number in preferences appears corrupted, reset preferences:
 
 ```
 rm -f ~/Library/Preferences/info.mapmap.MapMap.plist
@@ -78,48 +78,43 @@ rm -f ~/Library/Preferences/info.mapmap.MapMap.plist
 Build on Windows
 ----------------
 
-## Build dynamic version to debug project:
-- Download and install [Qt6 MinGW incl. QtCreator](https://www.qt.io/download-open-source/)
-- Build and run MapMap project within QtCreator (Ctrl-R)
+### MyMapMap fork: building with Visual Studio 2022 / MSVC (recommended)
 
-## Build static version for release:
-- Build a [Qt static environment](https://wiki.qt.io/Building_a_static_Qt_for_Windows_using_MinGW)
-- Build MapMap using QtCreator (qmake, build release)
-- Run MapMap.exe
-
-#### For packaging
-- Open Qt terminal via a Start Menu and run the following command:
-`windeployqt --release --no-system-d3d-compiler <path-to-app-binary>`
-- Replace all the `*.qm` files that exists in `released-binary`/translations folder by the ones from `source-code`/translations folder
-- Download and install [Inno Setup](https://jrsoftware.org/isdl.php) to create an installation wizard setup
-
-### MyMapMap fork: building with Visual Studio 2022 / MSVC
-
-This fork additionally supports building with MSVC instead of MinGW:
+This is the primary tested Windows build path for this fork.
 
 1. Install **Qt 6.11.x** with the **`msvc2022_64`** kit and the **Multimedia** module,
    via the Qt Maintenance Tool (`C:\Qt\MaintenanceTool.exe` → "Add or remove
    components" → expand the Qt 6.11.x version → check `MSVC 2022 64-bit` and
    `Additional Libraries > Qt Multimedia`).
-2. Build from a Visual Studio 2022 x64 command prompt (or run `vcvars64.bat` first),
-   using the Qt 6.11.x msvc2022_64 kit's `qmake`:
+
+2. Build from a Visual Studio 2022 x64 command prompt (or run `vcvars64.bat` first):
+   ```
+   build_msvc2022.bat
+   ```
+   This runs `qmake mapmap.pro CONFIG+=release` then `nmake` automatically.
+   Alternatively run qmake and nmake manually:
    ```
    qmake mapmap.pro CONFIG+=release
    nmake
    ```
-   See `build_msvc2022.bat` in the repo root for a script that does this end to end.
-3. The built binary lands at `bin/mapmap.exe` inside the project folder (set via
-   `DESTDIR` in `mapmap.pro`).
-4. To open/build in the Visual Studio 2022 IDE instead of the command line, generate
-   a solution file: `qmake -tp vc mapmap.pro CONFIG+=release`, then open the resulting
-   `mapmap.sln`.
-5. `bin/mapmap.exe` is dynamically linked against Qt6 and won't run standalone (outside
-   Qt Creator/VS, which inject the Qt `bin` dir onto `PATH` automatically) until you
-   deploy the required DLLs alongside it:
+
+3. The built binary lands at `bin\mymapmap.exe` inside the project folder.
+
+4. To open in the Visual Studio 2022 IDE, generate a solution file first:
    ```
-   C:\Qt\6.11.1\msvc2022_64\bin\windeployqt.exe --release --no-system-d3d-compiler bin\mapmap.exe
+   gen_sln.bat
    ```
-   See `deploy_msvc2022.bat` for a script that does this.
+   Then open `mapmap.sln`.
+
+5. `bin\mymapmap.exe` is dynamically linked against Qt6 and requires Qt DLLs alongside
+   it to run outside the IDE. Deploy them with:
+   ```
+   deploy_msvc2022.bat
+   ```
+   which runs:
+   ```
+   C:\Qt\6.11.1\msvc2022_64\bin\windeployqt.exe --release --no-system-d3d-compiler bin\mymapmap.exe
+   ```
 
 #### MSVC-specific source notes
 
@@ -133,6 +128,24 @@ previously only built with MinGW upstream):
 - `src/gui/ShapeGraphicsItem.cpp`: a GNU-only compound-literal cast
   (`(CacheQuadMapping){ ... }`) was replaced with standard brace-initialization
   (`CacheQuadMapping{ ... }`), since MSVC doesn't support that GCC/Clang extension.
+
+### Build with MinGW (upstream / legacy)
+
+The upstream project used MinGW. This path is not regularly tested in this fork.
+
+**Dynamic build (for development):**
+- Download and install [Qt6 MinGW incl. QtCreator](https://www.qt.io/download-open-source/)
+- Build and run within QtCreator (Ctrl-R)
+
+**Static build (for release):**
+- Build a [Qt static environment](https://wiki.qt.io/Building_a_static_Qt_for_Windows_using_MinGW)
+- Build using QtCreator (qmake, build release)
+
+**Packaging:**
+- Open Qt terminal from the Start Menu and run:
+  `windeployqt --release --no-system-d3d-compiler <path-to-app-binary>`
+- Replace all `*.qm` files in the release `translations` folder with those from the source tree
+- Use [Inno Setup](https://jrsoftware.org/isdl.php) to create an installer
 
 Editing translations
 --------------------
