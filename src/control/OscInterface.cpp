@@ -27,7 +27,7 @@
 
 namespace mmp {
 
-static const QString OSC_ROOT("mapmap");
+static const QString OSC_ROOT("mymapmap");
 static const QString OSC_SOURCE("source");
 static const QString OSC_LAYER("layer");
 static const QString OSC_QUIT("quit");
@@ -173,7 +173,7 @@ void OscInterface::applyOscCommand(MainWindow &main_window, QVariantList & comma
   QString typetags = command.at(1).toString();
 
   bool pathIsValid = false;
-  // Walks through each token in the form /mapmap/source/color - The first token is "mapmap", and then "source"
+  // Walks through each token in the form /mymapmap/source/color - The first token is "mymapmap", and then "source"
   QPair<QString,QString> iterator = next(path);
 
   if (iterator.first.isEmpty()) {

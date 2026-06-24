@@ -104,7 +104,7 @@ This is the primary tested Windows build path for this fork.
    ```
    gen_sln.bat
    ```
-   Then open `mapmap.sln`.
+   Then open `mymapmap.sln`.
 
 5. `bin\mymapmap.exe` is dynamically linked against Qt6 and requires Qt DLLs alongside
    it to run outside the IDE. Deploy them with:
