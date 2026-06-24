@@ -98,8 +98,11 @@ ColorGui::ColorGui(Source::ptr source)
 
 void ColorGui::setValue(QtProperty* property, const QVariant& value) {
   if (property == _colorItem) {
-    color->setColor(value.value<QColor>());
-    emit valueChanged(_source);
+    QColor newColor = value.value<QColor>();
+    if (newColor != color->getColor()) {
+      color->setColor(newColor);
+      emit valueChanged(_source);
+    }
   }
   else
     SourceGui::setValue(property, value);
@@ -141,14 +144,19 @@ _imageFileItem->setValue(image->getUri());
 
 void ImageGui::setValue(QtProperty* property, const QVariant& value) {
   if (property == _imageFileItem) {
-    image->setUri(value.toString());
-    emit valueChanged(_source);
+    QString newUri = value.toString();
+    if (newUri != image->getUri()) {
+      image->setUri(newUri);
+      emit valueChanged(_source);
+    }
   }
   else if (property == _imageRateItem)
   {
-    //double rateSign = (media->getRate() <= 0 ? -1 : +1);
-    image->setRate(value.toDouble()/100.0);
-    emit valueChanged(_source);
+    double newRate = value.toDouble()/100.0;
+    if (newRate != image->getRate()) {
+      image->setRate(newRate);
+      emit valueChanged(_source);
+    }
   }
   else
     TextureGui::setValue(property, value);
@@ -205,25 +213,27 @@ void VideoGui::setValue(QtProperty* property, const QVariant& value)
 {
   if (property == _mediaFileItem)
   {
-    media->setUri(value.toString());
-    emit valueChanged(_source);
+    QString newUri = value.toString();
+    if (newUri != media->getUri()) {
+      media->setUri(newUri);
+      emit valueChanged(_source);
+    }
   }
   else if (property == _mediaRateItem)
   {
-    //double rateSign = (media->getRate() <= 0 ? -1 : +1);
-    media->setRate(value.toDouble()/100.0);
-    emit valueChanged(_source);
+    double newRate = value.toDouble()/100.0;
+    if (newRate != media->getRate()) {
+      media->setRate(newRate);
+      emit valueChanged(_source);
+    }
   }
-//    else if (property == _mediaReverseItem)
-//    {
-//      double absoluteRate = abs( media->getRate() );
-//      media->setRate( (value.toBool() ? -1 : +1) * absoluteRate );
-//      emit valueChanged(_source);
-//    }
   else if (property == _mediaVolumeItem)
   {
-    media->setVolume(value.toDouble()/100.0);
-    emit valueChanged(_source);
+    double newVolume = value.toDouble()/100.0;
+    if (newVolume != media->getVolume()) {
+      media->setVolume(newVolume);
+      emit valueChanged(_source);
+    }
   }
   else
     TextureGui::setValue(property, value);

@@ -3092,6 +3092,11 @@ void MainWindow::updateSourceItem(uid sourceId, const QIcon& icon, const QString
     return;
   }
 
+  // Only the name reflects an actual project edit (e.g. a rename); the icon
+  // also gets refreshed on every play/pause state change, which should not
+  // mark the project as modified.
+  bool nameChanged = (item->text() != name);
+
   // Update item info.
   item->setIcon(icon);
   item->setText(name);
@@ -3100,7 +3105,8 @@ void MainWindow::updateSourceItem(uid sourceId, const QIcon& icon, const QString
   updateMappers();
 
   // Window was modified.
-  windowModified();
+  if (nameChanged)
+    windowModified();
 }
 
 void MainWindow::addLayerItem(uid layerId)
