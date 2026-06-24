@@ -2821,6 +2821,9 @@ bool MainWindow::loadFile(const QString &fileName)
   // Clear current project.
   clearProject();
 
+  // Set curFile early so locateMediaFile can resolve relative paths.
+  curFile = fileName;
+
   // Read new project
   ProjectReader reader(this);
   if (! reader.readFile(&file))
@@ -3534,8 +3537,16 @@ bool MainWindow::fileSupported(const QString &file, const QString &extension)
 
 QString MainWindow::locateMediaFile(const QString &uri, bool isImage)
 {
-  // Get more info about url
+  // Try resolving relative URIs against the project file's directory first.
   QFileInfo file(uri);
+  if (!file.isAbsolute() && !curFile.isEmpty()) {
+    QFileInfo candidate(QFileInfo(curFile).absoluteDir(), uri);
+    if (candidate.exists())
+      return candidate.absoluteFilePath();
+  }
+  if (file.exists())
+    return file.absoluteFilePath();
+
   // The name of the file
   QString filename = file.fileName();
   // Handle the case where it is video or image

@@ -23,7 +23,7 @@
 namespace mmp {
 
 const QString MM::APPLICATION_NAME = "MyMapMap";
-const QString MM::VERSION = "0.6.3-mymapmap.1";
+const QString MM::VERSION = "1.0.0";
 const QString MM::COPYRIGHT_OWNERS = "Alexandre Quessy, Sofian Audry, Dame Diongue, Mike Latona, Vasilis Liaskovitis";
 const QString MM::ORGANIZATION_NAME = "MyMapMap";
 const QString MM::ORGANIZATION_DOMAIN = "artpluscode.com";

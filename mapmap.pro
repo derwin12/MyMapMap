@@ -5,7 +5,7 @@ CONFIG += c++17
 TEMPLATE = app
 
 # Always use major.minor.micro version number format
-VERSION = 0.6.3
+VERSION = 1.0.0
 TARGET = mapmap
 
 DESTDIR = $$PWD/bin

@@ -1,0 +1,114 @@
+{
+    "version": "0.6.3-mymapmap.1",
+    "sources": [
+        {
+            "className": "Image",
+            "id": 1,
+            "name": "Test Image",
+            "locked": "false",
+            "opacity": "1",
+            "x": 0,
+            "y": 0,
+            "uri": "test.png",
+            "rate": "1"
+        },
+        {
+            "className": "Image",
+            "id": 2,
+            "name": "Gradient",
+            "locked": "false",
+            "opacity": "1",
+            "x": 0,
+            "y": 0,
+            "uri": "pnggrad8rgb.png",
+            "rate": "1"
+        },
+        {
+            "className": "Color",
+            "id": 3,
+            "name": "Accent",
+            "locked": "false",
+            "opacity": "1",
+            "color": "#804a9ee0"
+        }
+    ],
+    "layers": [
+        {
+            "className": "TextureLayer",
+            "id": 4,
+            "name": "Left Panel",
+            "locked": "false",
+            "opacity": "1",
+            "solo": "false",
+            "visible": "true",
+            "depth": "4",
+            "sourceId": 1,
+            "destination": {
+                "className": "Quad",
+                "vertices": [
+                    [60.0, 60.0],
+                    [580.0, 80.0],
+                    [560.0, 640.0],
+                    [40.0, 620.0]
+                ]
+            },
+            "source": {
+                "className": "Quad",
+                "vertices": [
+                    [0.0, 0.0],
+                    [320.0, 0.0],
+                    [320.0, 240.0],
+                    [0.0, 240.0]
+                ]
+            }
+        },
+        {
+            "className": "TextureLayer",
+            "id": 5,
+            "name": "Right Panel",
+            "locked": "false",
+            "opacity": "1",
+            "solo": "false",
+            "visible": "true",
+            "depth": "5",
+            "sourceId": 2,
+            "destination": {
+                "className": "Quad",
+                "vertices": [
+                    [700.0, 80.0],
+                    [1220.0, 60.0],
+                    [1240.0, 620.0],
+                    [720.0, 640.0]
+                ]
+            },
+            "source": {
+                "className": "Quad",
+                "vertices": [
+                    [0.0, 0.0],
+                    [300.0, 0.0],
+                    [300.0, 300.0],
+                    [0.0, 300.0]
+                ]
+            }
+        },
+        {
+            "className": "ColorLayer",
+            "id": 6,
+            "name": "Center Overlay",
+            "locked": "false",
+            "opacity": "1",
+            "solo": "false",
+            "visible": "true",
+            "depth": "6",
+            "sourceId": 3,
+            "destination": {
+                "className": "Triangle",
+                "vertices": [
+                    [640.0, 180.0],
+                    [860.0, 540.0],
+                    [420.0, 540.0]
+                ]
+            }
+        }
+    ]
+}
