@@ -193,42 +193,6 @@ public slots:
   uid createSyphonSource(uid sourceId, const QString& serverUUID,
                          const QString& serverName, const QString& appName);
 
-  // TODO: Remove all these unsed fonctions below
-
-  /*======= Start of Unsed fonctions =======*/
-  /// Creates a textured mesh.
-  uid createMeshTextureLayer(uid mappingId,
-                               uid sourceId,
-                               int nColumns, int nRows,
-                               const QVector<QPointF> &src, const QVector<QPointF> &dst);
-
-  /// Creates a textured triangle.
-  uid createTriangleTextureLayer(uid mappingId,
-                                   uid sourceId,
-                                   const QVector<QPointF> &src, const QVector<QPointF> &dst);
-
-
-  /// Creates a textured ellipse.
-  uid createEllipseTextureLayer(uid mappingId,
-                                  uid sourceId,
-                                  const QVector<QPointF> &src, const QVector<QPointF> &dst);
-
-  /// Creates a color quad.
-  uid createQuadColorLayer(uid mappingId,
-                             uid sourceId,
-                             const QVector<QPointF> &dst);
-
-  /// Creates a color triangle.
-  uid createTriangleColorLayer(uid mappingId,
-                                 uid sourceId,
-                                 const QVector<QPointF> &dst);
-
-  /// Creates a color ellipse.
-  uid createEllipseColorLayer(uid mappingId,
-                                uid sourceId,
-                                const QVector<QPointF> &dst);
-  /*======= End of Unsed fonctions =======*/
-
   /// Sets visibility of mapping.
   void setLayerVisible(uid mappingId, bool visible);
 
