@@ -103,6 +103,9 @@ trash
 !resources/macOS/MapMap.icns
 
 *.json
+!.claude/*.json
+!.claude/*.md
 
 # Local development notes
 KNOWN-WARNINGS.txt
+.dual-graph/

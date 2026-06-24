@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tasklist *)",
+      "mcp__dual-graph__graph_continue",
+      "mcp__dual-graph__graph_read",
+      "mcp__dual-graph__graph_scan",
+      "mcp__dual-graph__graph_retrieve",
+      "mcp__dual-graph__graph_neighbors",
+      "mcp__dual-graph__graph_impact",
+      "mcp__dual-graph__graph_register_edit",
+      "mcp__dual-graph__graph_action_summary",
+      "mcp__dual-graph__fallback_rg",
+      "mcp__token-counter__get_session_stats",
+      "mcp__token-counter__count_tokens"
+    ]
+  }
+}

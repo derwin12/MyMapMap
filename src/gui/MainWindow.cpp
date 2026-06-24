@@ -2343,19 +2343,11 @@ void MainWindow::createActions()
   connect(fitToViewAction, SIGNAL(triggered()), sourceCanvas, SLOT(fitShapeToView()));
   connect(fitToViewAction, SIGNAL(triggered()), destinationCanvas, SLOT(fitShapeToView()));
 
-  // Helps
-  // Bug report
+  // Help actions
   bugReportAction = new QAction(tr("Report an issue"), this);
   connect(bugReportAction, SIGNAL(triggered()), this, SLOT(reportBug()));
-  // Support
-  supportAction = new QAction(tr("Technical support"), this);
-  connect(supportAction, SIGNAL(triggered()), this, SLOT(technicalSupport()));
-  // Documentation
   docAction = new QAction(tr("Documentation"), this);
   connect(docAction, SIGNAL(triggered()), this, SLOT(documentation()));
-  // Send us feedback
-  feedbackAction = new QAction(tr("Submit feedback via email"), this);
-  connect(feedbackAction, SIGNAL(triggered()), this, SLOT(sendFeedback()));
   // Keyboard shortcuts
   shortcutAction = new QAction(tr("&Keyboard shortcuts"), this);
   shortcutAction->setShortcut(Qt::CTRL | Qt::Key_K);
@@ -2505,8 +2497,6 @@ void MainWindow::createMenus()
   helpMenu = menuBar->addMenu(tr("&Help"));
   helpMenu->addAction(docAction);
   helpMenu->addAction(shortcutAction);
-  helpMenu->addAction(feedbackAction);
-  helpMenu->addAction(supportAction);
   helpMenu->addAction(bugReportAction);
   helpMenu->addSeparator();
   helpMenu->addAction(aboutAction);

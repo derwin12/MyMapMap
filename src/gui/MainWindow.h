@@ -154,17 +154,9 @@ private slots:
   void documentation() {
       QDesktopServices::openUrl(QUrl(MM::WEBSITE_URL));
   }
-  // Send us feedback
-  void sendFeedback() {
-      QDesktopServices::openUrl(QUrl("mailto:mapmap@artpluscode.com"));
-  }
-  // Technical support
-  void technicalSupport() {
-      QDesktopServices::openUrl(QUrl(MM::WEBSITE_URL));
-  }
-  // Report an issues
+  // Report an issue
   void reportBug() {
-      QDesktopServices::openUrl(QUrl("https://github.com/mapmapteam/mapmap/issues/new"));
+      QDesktopServices::openUrl(QUrl("https://github.com/derwin12/MyMapMap/issues/new"));
   }
 
   void openShortcutWindow();
@@ -471,9 +463,7 @@ private:
 
   // help actions
   QAction *bugReportAction;
-  QAction *supportAction;
   QAction *docAction;
-  QAction *feedbackAction;
   QAction *shortcutAction;
 
   // Screen output action
