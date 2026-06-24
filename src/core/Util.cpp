@@ -79,43 +79,51 @@ int map_int(int value, int istart, int istop, int ostart, int ostop)
 
 Mesh* createMeshForTexture(Texture* texture, int frameWidth, int frameHeight)
 {
-  Q_UNUSED(frameHeight);
-  Q_UNUSED(frameWidth);
+  int w = texture->getWidth();
+  int h = texture->getHeight();
+
+  if (w <= 0 || h <= 0)
+    return createMeshForColor(frameWidth, frameHeight);
 
   return new Mesh(
-    QPointF(texture->getX(), texture->getY()),
-    QPointF(texture->getX() + texture->getWidth(), texture->getY()),
-    QPointF(texture->getX() + texture->getWidth(), texture->getY() + texture->getHeight()),
-    QPointF(texture->getX(), texture->getY() + texture->getHeight())
+    QPointF(texture->getX(),     texture->getY()),
+    QPointF(texture->getX() + w, texture->getY()),
+    QPointF(texture->getX() + w, texture->getY() + h),
+    QPointF(texture->getX(),     texture->getY() + h)
   );
 }
 
 Triangle* createTriangleForTexture(Texture* texture, int frameWidth, int frameHeight)
 {
-  Q_UNUSED(frameHeight);
-  Q_UNUSED(frameWidth);
+  int w = texture->getWidth();
+  int h = texture->getHeight();
+
+  if (w <= 0 || h <= 0)
+    return createTriangleForColor(frameWidth, frameHeight);
 
   return new Triangle(
-    QPointF(texture->getX(), texture->getY() + texture->getHeight()),
-    QPointF(texture->getX() + texture->getWidth(), texture->getY() + texture->getHeight()),
-    QPointF(texture->getX() + texture->getWidth() / 2, texture->getY())
+    QPointF(texture->getX(),             texture->getY() + h),
+    QPointF(texture->getX() + w,         texture->getY() + h),
+    QPointF(texture->getX() + w / 2.0,   texture->getY())
   );
 }
 
-Ellipse* createEllipseForTexture(Texture* texture, int frameWidth,
-    int frameHeight)
+Ellipse* createEllipseForTexture(Texture* texture, int frameWidth, int frameHeight)
 {
-  Q_UNUSED(frameHeight);
-  Q_UNUSED(frameWidth);
+  int w = texture->getWidth();
+  int h = texture->getHeight();
 
-  qreal halfWidth  = texture->getWidth() / 2;
-  qreal halfHeight = texture->getHeight() / 2;
+  if (w <= 0 || h <= 0)
+    return createEllipseForColor(frameWidth, frameHeight);
+
+  qreal halfWidth  = w / 2.0;
+  qreal halfHeight = h / 2.0;
 
   return new Ellipse(
-    QPointF(texture->getX(), texture->getY() + halfHeight),
-    QPointF(texture->getX() + halfWidth, texture->getY()),
-    QPointF(texture->getX() + texture->getWidth(), texture->getY() + halfHeight),
-    QPointF(texture->getX() + halfWidth, texture->getY() + texture->getHeight()),
+    QPointF(texture->getX(),              texture->getY() + halfHeight),
+    QPointF(texture->getX() + halfWidth,  texture->getY()),
+    QPointF(texture->getX() + w,          texture->getY() + halfHeight),
+    QPointF(texture->getX() + halfWidth,  texture->getY() + h),
     true
   );
 }
