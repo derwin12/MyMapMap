@@ -11,57 +11,41 @@ permissions:
 
 jobs:
   build-and-release:
-    runs-on: windows-latest
+    runs-on: self-hosted
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Qt (MSVC 2022 64-bit)
-        uses: jurplel/install-qt-action@v4
-        with:
-          version: '6.8.*'
-          host: 'windows'
-          target: 'desktop'
-          arch: 'win64_msvc2022_64'
-          modules: 'qtmultimedia'
-
-      - name: Set up MSVC environment
-        uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: x64
-
-      - name: Configure with qmake
-        run: qmake mapmap.pro CONFIG+=release
-
       - name: Build
-        run: nmake
+        shell: cmd
+        run: build_msvc2022.bat
 
       - name: Deploy Qt dependencies
-        run: windeployqt --release --no-system-d3d-compiler bin\mymapmap.exe
+        shell: cmd
+        run: C:\Qt\6.11.1\msvc2022_64\bin\windeployqt.exe --release --no-system-d3d-compiler bin\mymapmap.exe
 
       - name: Determine version string
         id: version
         shell: bash
         run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
-      - name: Stage release contents
-        shell: bash
+      - name: Build installer
+        shell: cmd
         run: |
-          STAGE="MyMapMap-${{ steps.version.outputs.version }}-win64"
-          mkdir -p "release/$STAGE"
-          cp -r bin/* "release/$STAGE/"
-          cp LICENSE README.md CHANGELOG.md "release/$STAGE/"
-          echo "stage_dir=release/$STAGE" >> "$GITHUB_ENV"
+          if not exist installer\output mkdir installer\output
+          "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\mymapmap.iss
 
-      - name: Zip release
-        shell: bash
+      - name: Zip portable release
+        shell: pwsh
         run: |
-          cd release
-          7z a -tzip "MyMapMap-${{ steps.version.outputs.version }}-win64.zip" "MyMapMap-${{ steps.version.outputs.version }}-win64"
+          $ver = "${{ steps.version.outputs.version }}"
+          Compress-Archive -Path bin\* -DestinationPath "MyMapMap-$ver-win64.zip"
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: release/MyMapMap-*-win64.zip
+          files: |
+            MyMapMap-*-win64.zip
+            installer/output/MyMapMap-*-Setup.exe
           generate_release_notes: true
