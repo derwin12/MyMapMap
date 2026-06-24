@@ -69,6 +69,7 @@ html/
 Info.plist
 *.xcodeproj/
 *.pro*user*
+*.vcxproj.user
 *.app
 DMGVERSION.txt
 *.db
