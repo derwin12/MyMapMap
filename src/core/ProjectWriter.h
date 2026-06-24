@@ -23,6 +23,8 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QDir>
+#include <QFileInfo>
 #include "MappingManager.h"
 #include "Layer.h"
 #include "Source.h"
@@ -37,11 +39,12 @@ namespace mmp {
 class ProjectWriter
 {
 public:
-    ProjectWriter (MainWindow *window);
-    bool writeFile (QIODevice *device);
+    ProjectWriter(MainWindow *window, const QString& projectFilePath = QString());
+    bool writeFile(QIODevice *device);
 
   private:
     MainWindow *_window;
+    QDir _projectDir;
 };
 
 }

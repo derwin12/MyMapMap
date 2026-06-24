@@ -6,7 +6,7 @@ TEMPLATE = app
 
 # Always use major.minor.micro version number format
 VERSION = 1.0.0
-TARGET = mapmap
+TARGET = mymapmap
 
 DESTDIR = $$PWD/bin
 

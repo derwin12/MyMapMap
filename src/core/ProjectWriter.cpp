@@ -21,8 +21,9 @@
 
 namespace mmp {
 
-ProjectWriter::ProjectWriter(MainWindow *window) :
-    _window(window)
+ProjectWriter::ProjectWriter(MainWindow *window, const QString& projectFilePath) :
+    _window(window),
+    _projectDir(projectFilePath.isEmpty() ? QDir() : QFileInfo(projectFilePath).absoluteDir())
 {
 }
 
@@ -38,6 +39,12 @@ bool ProjectWriter::writeFile(QIODevice *device)
   {
     QJsonObject source;
     manager.getSource(i)->write(source);
+    // Convert absolute media URIs to paths relative to the project file.
+    if (source.contains("uri") && !_projectDir.path().isEmpty()) {
+      QString absUri = source["uri"].toString();
+      if (QFileInfo(absUri).isAbsolute())
+        source["uri"] = _projectDir.relativeFilePath(absUri);
+    }
     sources.append(source);
   }
   project[ProjectLabels::SOURCES] = sources;

@@ -38,7 +38,7 @@ jobs:
         run: nmake
 
       - name: Deploy Qt dependencies
-        run: windeployqt --release --no-system-d3d-compiler bin\mapmap.exe
+        run: windeployqt --release --no-system-d3d-compiler bin\mymapmap.exe
 
       - name: Determine version string
         id: version

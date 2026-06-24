@@ -12,7 +12,15 @@
       "mcp__dual-graph__graph_action_summary",
       "mcp__dual-graph__fallback_rg",
       "mcp__token-counter__get_session_stats",
-      "mcp__token-counter__count_tokens"
+      "mcp__token-counter__count_tokens",
+      "mcp__token-counter__log_usage",
+      "mcp__token-counter__estimate_cost",
+      "mcp__token-counter__reset_session",
+      "mcp__token-counter__get_usage_history",
+      "PowerShell(wmic process *)",
+      "PowerShell(Get-Process *)",
+      "PowerShell(Get-Item *)",
+      "PowerShell(Get-ChildItem *)"
     ]
   }
 }

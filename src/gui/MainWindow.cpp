@@ -2857,7 +2857,7 @@ bool MainWindow::saveFile(const QString &fileName)
     return false;
   }
 
-  ProjectWriter writer(this);
+  ProjectWriter writer(this, fileName);
   if (writer.writeFile(&file))
   {
     file.close();
@@ -3498,9 +3498,15 @@ void MainWindow::syncLayerManager()
 bool MainWindow::fileExists(const QString &file)
 {
   QFileInfo checkFile(file);
-
   if (checkFile.exists() && checkFile.isFile())
     return true;
+
+  // Also try resolving relative paths against the current project directory.
+  if (!checkFile.isAbsolute() && !curFile.isEmpty()) {
+    QFileInfo candidate(QFileInfo(curFile).absoluteDir(), file);
+    if (candidate.exists() && candidate.isFile())
+      return true;
+  }
 
   return false;
 }

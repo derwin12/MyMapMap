@@ -8,6 +8,8 @@
 #include <QOpenGLContext>
 #include <QStyleFactory>
 #include <QPalette>
+#include <QPainter>
+#include <QSplashScreen>
 
 #include "MM.h"
 #include "MainWindow.h"
@@ -175,15 +177,45 @@ int main(int argc, char *argv[])
     qWarning() << "Unrecognized/unsupported language: " << lang;
   }
 
-  // Create splash screen.
-  QPixmap pixmap(":/mapmap-splash");
+  // Create splash screen — drawn programmatically so it reflects the fork branding.
+  QPixmap pixmap(480, 280);
+  pixmap.fill(QColor(0x27, 0x2a, 0x36));
+  {
+    QPainter p(&pixmap);
+    p.setRenderHint(QPainter::Antialiasing);
+
+    // Accent bar at top.
+    p.fillRect(0, 0, 480, 4, QColor(0x4a, 0x9e, 0xe0));
+
+    // App name.
+    QFont nameFont("Arial", 36, QFont::Bold);
+    p.setFont(nameFont);
+    p.setPen(QColor(0xf6, 0xf5, 0xf5));
+    p.drawText(QRect(0, 30, 480, 80), Qt::AlignHCenter | Qt::AlignVCenter, "MyMapMap");
+
+    // Tagline.
+    QFont tagFont("Arial", 11);
+    p.setFont(tagFont);
+    p.setPen(QColor(0x4a, 0x9e, 0xe0));
+    p.drawText(QRect(0, 110, 480, 30), Qt::AlignHCenter | Qt::AlignVCenter, "Projection Mapping");
+
+    // Version.
+    QFont verFont("Arial", 9);
+    p.setFont(verFont);
+    p.setPen(QColor(0x9a, 0x9c, 0xaa));
+    p.drawText(QRect(0, 230, 480, 30), Qt::AlignHCenter | Qt::AlignVCenter,
+               QString("Version %1  —  based on MapMap").arg(MM::VERSION));
+
+    // Thin bottom rule.
+    p.fillRect(0, 276, 480, 4, QColor(0x4a, 0x9e, 0xe0));
+  }
   QSplashScreen splash(pixmap);
 
   // Show splash.
   splash.show();
 
   splash.showMessage("  " + QObject::tr("Initiating program..."),
-                     Qt::AlignLeft | Qt::AlignTop, MM::WHITE);
+                     Qt::AlignLeft | Qt::AlignBottom, QColor(0x9a, 0x9c, 0xaa));
 
   // Let splash for at least one second.
   I::sleep(1);
