@@ -113,3 +113,6 @@ trash
 # Local development notes
 KNOWN-WARNINGS.txt
 .dual-graph/
+
+# Installer build output
+installer/output/
