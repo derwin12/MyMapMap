@@ -2622,6 +2622,13 @@ void MainWindow::createStatusBar()
   trueFramesPerSecondsLabel->setFrameStyle(QFrame::Panel | QFrame::Sunken);
   trueFramesPerSecondsLabel->setContentsMargins(2, 0, 0, 0);
 
+  // Recording timer.
+  recordingTimerLabel = new QLabel(statusBar());
+  recordingTimerLabel->setFrameStyle(QFrame::Panel | QFrame::Sunken);
+  recordingTimerLabel->setContentsMargins(4, 0, 4, 0);
+  recordingTimerLabel->setStyleSheet("color: #e03030; font-weight: bold;");
+  recordingTimerLabel->hide();
+
   // Add permanently into the statut bar
   statusBar()->addPermanentWidget(currentMessageLabel, 5);
   statusBar()->addPermanentWidget(lastActionLabel, 4);
@@ -2629,6 +2636,7 @@ void MainWindow::createStatusBar()
   statusBar()->addPermanentWidget(sourceZoomLabel, 1);
   statusBar()->addPermanentWidget(destinationZoomLabel, 1);
   statusBar()->addPermanentWidget(trueFramesPerSecondsLabel, 1);
+  statusBar()->addPermanentWidget(recordingTimerLabel);
 
   // Update the status bar
   updateStatusBar();
@@ -3582,9 +3590,9 @@ void MainWindow::processFrame()
         _videoExporter->sendFrame(frame);
     }
 
-    // Show running duration in status bar.
+    // Update recording timer label.
     qint64 ms = _videoExporter->duration();
-    statusBar()->showMessage(tr("● REC  %1:%2")
+    recordingTimerLabel->setText(tr("● REC  %1:%2")
       .arg(ms / 60000, 2, 10, QChar('0'))
       .arg((ms % 60000) / 1000, 2, 10, QChar('0')));
   }
@@ -3627,6 +3635,9 @@ void MainWindow::toggleRecording(bool on)
     if (!_videoExporter->start(path, format, quality, size, framesPerSecond())) {
       recordAction->setChecked(false);
       statusBar()->showMessage(tr("Failed to start recording."), 4000);
+    } else {
+      recordingTimerLabel->setText("● REC  00:00");
+      recordingTimerLabel->show();
     }
   } else {
     _videoExporter->stop();
@@ -3636,6 +3647,7 @@ void MainWindow::toggleRecording(bool on)
 void MainWindow::onRecordingStopped(const QString& filePath)
 {
   recordAction->setChecked(false);
+  recordingTimerLabel->hide();
   statusBar()->showMessage(tr("Recording saved: %1").arg(filePath), 6000);
 }
 

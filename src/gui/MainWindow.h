@@ -575,6 +575,7 @@ private:
   QLabel *currentMessageLabel;
   QLabel *mousePosLabel;
   QLabel *trueFramesPerSecondsLabel;
+  QLabel *recordingTimerLabel;
 
   typedef Source::SourceType SourceType;
   typedef MShape::ShapeType ShapeType ;
