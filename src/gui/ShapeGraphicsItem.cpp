@@ -264,6 +264,33 @@ void TextureGraphicsItem::_prePaint(QPainter* painter,
   Q_UNUSED(option);
   painter->beginNativePainting();
 
+  // QPainter's native-GL paint engine does not set up the legacy fixed-function
+  // matrix stack to match its own coordinate transform, so glVertex calls below
+  // (in item-local coordinates) need an explicit projection/modelview that maps
+  // device pixels to NDC, combined with the painter's current transform.
+  {
+    QPaintDevice* device = painter->device();
+    int devW = device ? device->width()  : 1;
+    int devH = device ? device->height() : 1;
+
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, devW, devH, 0, -1, 1);
+
+    QTransform t = painter->transform();
+    GLfloat m[16] = {
+      (GLfloat)t.m11(), (GLfloat)t.m12(), 0, (GLfloat)t.m13(),
+      (GLfloat)t.m21(), (GLfloat)t.m22(), 0, (GLfloat)t.m23(),
+      0,                0,                1, 0,
+      (GLfloat)t.m31(), (GLfloat)t.m32(), 0, (GLfloat)t.m33()
+    };
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    glMultMatrixf(m);
+  }
+
   // Free any textures orphaned by destroyed sources now that a GL context is
   // current (see issue #229).
   Texture::deleteOrphanedTextures();
@@ -317,6 +344,11 @@ void TextureGraphicsItem::_postPaint(QPainter* painter,
   Q_UNUSED(option);
 
   glDisable(GL_TEXTURE_2D);
+
+  glMatrixMode(GL_MODELVIEW);
+  glPopMatrix();
+  glMatrixMode(GL_PROJECTION);
+  glPopMatrix();
 
   painter->endNativePainting();
 }

@@ -59,5 +59,6 @@
         <file alias="toggle-test-signal">images/icons/svg/test-signal.svg</file>
         <file alias="vertex-scale">images/icons/svg/vertex-scale.svg</file>
         <file alias="vertex-rotate">images/icons/svg/vertex-rotate.svg</file>
+        <file alias="mute">images/icons/svg/mute.svg</file>
     </qresource>
 </RCC>

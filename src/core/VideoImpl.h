@@ -97,6 +97,10 @@ public:
   virtual void setVolume(double volume = 0.0);
   double getVolume() const { return _volume; }
 
+  /// Mutes/unmutes audio without discarding the stored volume level.
+  void setMuted(bool muted) { _muted = muted; setVolume(_volume); }
+  bool isMuted() const { return _muted; }
+
   void resetMovie();
 
   /// Unloads the current movie and releases the capture device / player
@@ -134,6 +138,7 @@ protected:
 
   double _rate;
   double _volume;
+  bool _muted;
 
   bool _terminate;
   bool _movieReady;

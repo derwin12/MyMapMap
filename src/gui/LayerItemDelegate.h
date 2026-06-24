@@ -27,6 +27,7 @@
 #include <QApplication>
 #include <QMouseEvent>
 #include <QToolTip>
+#include <QAbstractItemView>
 
 #include "MM.h"
 
@@ -59,6 +60,8 @@ signals:
 protected:
   bool editorEvent(QEvent *event, QAbstractItemModel *model,
                    const QStyleOptionViewItem &option, const QModelIndex &index) override;
+  bool helpEvent(QHelpEvent *event, QAbstractItemView *view,
+                 const QStyleOptionViewItem &option, const QModelIndex &index) override;
 };
 
 }

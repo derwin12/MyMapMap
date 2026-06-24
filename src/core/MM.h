@@ -25,6 +25,8 @@
 #include <QColor>
 #include <QPen>
 #include <QBrush>
+#include <QIcon>
+#include <QString>
 
 #ifndef MM_NAMESPACE
 #define MM_NAMESPACE mmp
@@ -105,6 +107,10 @@ public:
   static const QColor DARK_BLUE;
   static const QColor LIGHT_RED;
   static const QColor DARK_RED;
+
+  /// Loads an SVG icon resource, recoloring its white stroke/fill to dark
+  /// when the current application palette is light.
+  static QIcon themedIcon(const QString& resource);
 
   static const QColor CROSSHAIR_STROKE;
   static const QColor CONTROL_COLOR;

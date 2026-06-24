@@ -42,6 +42,9 @@ public:
 
   void enableZoomToolBar(bool enabled);
 
+  // Re-applies themed icons (call after a light/dark theme switch).
+  void refreshIcons();
+
   // Return enable statut
   bool buttonsAreEnable() { return _areEnable; }
 

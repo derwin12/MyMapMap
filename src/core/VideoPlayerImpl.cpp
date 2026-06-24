@@ -74,7 +74,7 @@ bool VideoPlayerImpl::loadMovie(const QString& path)
   _audioIsConnected = true;
 
   _player->setPlaybackRate(_rate);
-  _audioOutput->setVolume(_volume);
+  _audioOutput->setVolume(_muted ? 0.0 : _volume);
   _player->play();
   _playState = true;
 
@@ -150,7 +150,7 @@ void VideoPlayerImpl::setVolume(double volume)
 {
   _volume = volume;
   if (_audioOutput)
-    _audioOutput->setVolume(volume);
+    _audioOutput->setVolume(_muted ? 0.0 : volume);
 }
 
 void VideoPlayerImpl::update()

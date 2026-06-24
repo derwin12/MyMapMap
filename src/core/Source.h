@@ -381,6 +381,12 @@ public:
   /// Returns audio playback volume.
   double getVolume() const;
 
+  /// Mutes/unmutes audio without discarding the stored volume level.
+  void setMuted(bool muted);
+
+  /// Returns whether audio is currently muted.
+  bool isMuted() const;
+
   /**
    * Checks whether or not video is supported on this platform.
    */

@@ -19,6 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "VideoImpl.h"
+#include <QCoreApplication>
 #include <QElapsedTimer>
 #include <QSettings>
 #include <QDebug>
@@ -77,6 +78,7 @@ VideoImpl::VideoImpl()
     _seekEnabled(false),
     _rate(1.0),
     _volume(1.0),
+    _muted(false),
     _terminate(false),
     _movieReady(false),
     _playState(false),
@@ -157,6 +159,10 @@ bool VideoImpl::waitForNextBits(int timeout, const uchar** bits)
   QElapsedTimer timer;
   timer.start();
   while (timer.elapsed() < timeout) {
+    // The video frame and duration arrive via QMediaPlayer's signals, which
+    // are only delivered when the event loop runs. Pump it here so this
+    // synchronous wait can actually observe them.
+    QCoreApplication::processEvents();
     if (hasBits() && bitsHaveChanged()) {
       if (bits)
         *bits = getBits();

@@ -40,7 +40,7 @@ void LayerItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opt
 
     if (option.state & QStyle::State_Selected)
     {
-      painter->fillRect(rect, MM::DARK_GRAY);
+      painter->fillRect(rect, option.palette.color(QPalette::Highlight));
     }
 
     if (index.column() == MM::HideColumn)
@@ -52,7 +52,7 @@ void LayerItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opt
         mappingMuteButton.state |= QStyle::State_Enabled;
         mappingMuteButton.rect = QRect(x + 4, y + 12,
                 MM::MAPPING_LIST_ICON_SIZE, MM::MAPPING_LIST_ICON_SIZE);
-        mappingMuteButton.icon = QIcon(":/visible-mapping");
+        mappingMuteButton.icon = MM::themedIcon(":/visible-mapping");
         mappingMuteButton.iconSize = QSize(MM::MAPPING_LIST_ICON_SIZE,
                 MM::MAPPING_LIST_ICON_SIZE);
 
@@ -74,11 +74,12 @@ void LayerItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opt
       // Draw Text
       QString mappingName = index.model()->data(index, Qt::EditRole).toString();
       QRect textRect(x + 40, y, rect.width() - 40, rect.height());
-      QPalette textColor = QPalette(MM::WHITE);
+      QPalette::ColorRole textRole = (option.state & QStyle::State_Selected)
+                                        ? QPalette::HighlightedText : QPalette::Text;
 
       QApplication::style()->drawItemText(painter, textRect,
               Qt::AlignLeft | Qt::AlignVCenter,
-              textColor, true, mappingName, QPalette::Window);
+              option.palette, true, mappingName, textRole);
     }
 
     if (index.column() == MM::GroupButtonColum)
@@ -94,7 +95,7 @@ void LayerItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opt
       mappingSoloButton.state |= QStyle::State_Enabled;
       mappingSoloButton.rect = QRect(buttonX - 118, y + 12,
               MM::MAPPING_LIST_ICON_SIZE, MM::MAPPING_LIST_ICON_SIZE);
-      mappingSoloButton.icon = QIcon(":/solo-mapping");
+      mappingSoloButton.icon = MM::themedIcon(":/solo-mapping");
       mappingSoloButton.iconSize = QSize(MM::MAPPING_LIST_ICON_SIZE,
               MM::MAPPING_LIST_ICON_SIZE);
       mappingSoloButton.text = tr("Solo mapping");
@@ -106,7 +107,7 @@ void LayerItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opt
       mappingLockButton.state |= QStyle::State_Enabled;
       mappingLockButton.rect = QRect(buttonX - 88, y + 12, MM::MAPPING_LIST_ICON_SIZE,
               MM::MAPPING_LIST_ICON_SIZE);
-      mappingLockButton.icon = QIcon(":/lock-mapping");
+      mappingLockButton.icon = MM::themedIcon(":/lock-mapping");
       mappingLockButton.iconSize = QSize(MM::MAPPING_LIST_ICON_SIZE,
               MM::MAPPING_LIST_ICON_SIZE);
       mappingLockButton.text = tr("Lock mapping");
@@ -118,7 +119,7 @@ void LayerItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opt
       mappingDuplicateButton.state |= QStyle::State_Enabled;
       mappingDuplicateButton.rect = QRect(buttonX - 58, y + 12,
               MM::MAPPING_LIST_ICON_SIZE, MM::MAPPING_LIST_ICON_SIZE);
-      mappingDuplicateButton.icon = QIcon(":/duplicate-mapping");
+      mappingDuplicateButton.icon = MM::themedIcon(":/duplicate-mapping");
       mappingDuplicateButton.iconSize = QSize(MM::MAPPING_LIST_ICON_SIZE,
               MM::MAPPING_LIST_ICON_SIZE);
       mappingDuplicateButton.text = tr("Duplicate mapping");
@@ -130,7 +131,7 @@ void LayerItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opt
       mappingDeleteButton.state |= QStyle::State_Enabled;
       mappingDeleteButton.rect = QRect(buttonX - 28, y + 12,
               MM::MAPPING_LIST_ICON_SIZE, MM::MAPPING_LIST_ICON_SIZE);
-      mappingDeleteButton.icon = QIcon(":/delete-mapping");
+      mappingDeleteButton.icon = MM::themedIcon(":/delete-mapping");
       mappingDeleteButton.iconSize = QSize(MM::MAPPING_LIST_ICON_SIZE,
               MM::MAPPING_LIST_ICON_SIZE);
       mappingDeleteButton.text = tr("Delete mapping");
@@ -274,6 +275,53 @@ bool LayerItemDelegate::editorEvent(QEvent *event, QAbstractItemModel *model,
     }
   }
   return QAbstractItemDelegate::editorEvent(event, model, option, index);
+}
+
+bool LayerItemDelegate::helpEvent(QHelpEvent *event, QAbstractItemView *view,
+        const QStyleOptionViewItem &option, const QModelIndex &index)
+{
+  if (event->type() == QEvent::ToolTip && index.isValid())
+  {
+    QRect rect = option.rect;
+    int x = rect.x();
+    int y = rect.y();
+    int buttonX = rect.width() + x;
+
+    if (index.column() == MM::HideColumn)
+    {
+      QRect hideButtonRect = QRect(x + 4, y + 12, MM::MAPPING_LIST_ICON_SIZE,
+              MM::MAPPING_LIST_ICON_SIZE);
+      if (hideButtonRect.contains(event->pos()))
+      {
+        QToolTip::showText(event->globalPos(), tr("Show/hide layer"), view->viewport());
+        return true;
+      }
+    }
+    else if (index.column() == MM::GroupButtonColum)
+    {
+      QRect soloButtonRect = QRect(buttonX - 118, y + 12, MM::MAPPING_LIST_ICON_SIZE,
+              MM::MAPPING_LIST_ICON_SIZE);
+      QRect lockButtonRect = QRect(buttonX - 88, y + 12, MM::MAPPING_LIST_ICON_SIZE,
+              MM::MAPPING_LIST_ICON_SIZE);
+      QRect duplicateButtonRect = QRect(buttonX - 58, y + 12, MM::MAPPING_LIST_ICON_SIZE,
+              MM::MAPPING_LIST_ICON_SIZE);
+      QRect deleteButtonRect = QRect(buttonX - 28, y + 12, MM::MAPPING_LIST_ICON_SIZE,
+              MM::MAPPING_LIST_ICON_SIZE);
+
+      if (soloButtonRect.contains(event->pos()))
+        QToolTip::showText(event->globalPos(), tr("Solo this layer"), view->viewport());
+      else if (lockButtonRect.contains(event->pos()))
+        QToolTip::showText(event->globalPos(), tr("Lock this layer"), view->viewport());
+      else if (duplicateButtonRect.contains(event->pos()))
+        QToolTip::showText(event->globalPos(), tr("Duplicate this layer"), view->viewport());
+      else if (deleteButtonRect.contains(event->pos()))
+        QToolTip::showText(event->globalPos(), tr("Delete this layer"), view->viewport());
+      else
+        return QStyledItemDelegate::helpEvent(event, view, option, index);
+      return true;
+    }
+  }
+  return QStyledItemDelegate::helpEvent(event, view, option, index);
 }
 
 }

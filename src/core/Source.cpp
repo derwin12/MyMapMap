@@ -137,6 +137,8 @@ void Image::build()
 
 void Image::update()
 {
+  Texture::update();
+
   if (isAnimation() && isPlaying())
   {
     // Compute the interval of time since last call to update().
@@ -326,6 +328,16 @@ void Video::setVolume(double volume)
 double Video::getVolume() const
 {
   return _impl->getVolume();
+}
+
+void Video::setMuted(bool muted)
+{
+  _impl->setMuted(muted);
+}
+
+bool Video::isMuted() const
+{
+  return _impl->isMuted();
 }
 
 bool Video::hasVideoSupport()

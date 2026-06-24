@@ -19,8 +19,30 @@
  */
 
 #include "MM.h"
+#include <QApplication>
+#include <QFile>
+#include <QPalette>
+#include <QPixmap>
 
 namespace mmp {
+
+QIcon MM::themedIcon(const QString& resource)
+{
+  bool isDark = (qApp->palette().color(QPalette::Window).lightness() < 128);
+  if (isDark)
+    return QIcon(resource);
+
+  QFile f(resource);
+  if (!f.open(QFile::ReadOnly))
+    return QIcon(resource);
+  QByteArray svg = f.readAll();
+  svg.replace("stroke=\"white\"", "stroke=\"#2e2e2e\"");
+  svg.replace("stroke=\"#fff\"",  "stroke=\"#2e2e2e\"");
+  svg.replace("fill=\"white\"",   "fill=\"#2e2e2e\"");
+  QPixmap pix;
+  pix.loadFromData(svg, "svg");
+  return QIcon(pix);
+}
 
 const QString MM::APPLICATION_NAME = "MyMapMap";
 const QString MM::VERSION = "1.0.1";

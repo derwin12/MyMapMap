@@ -53,7 +53,7 @@ void MapperGLCanvasToolbar::createZoomToolsLayout()
   // Create buttons
   // Zoom In button
   _zoomInButton = new QToolButton;
-  _zoomInButton->setIcon(QIcon(":/zoom-in"));
+  _zoomInButton->setIcon(MM::themedIcon(":/zoom-in"));
   _zoomInButton->setIconSize(QSize(MM::ZOOM_TOOLBAR_ICON_SIZE, MM::ZOOM_TOOLBAR_ICON_SIZE));
   _zoomInButton->setToolTip(tr("Enlarge the shape"));
   _zoomInButton->setFixedSize(QSize(MM::ZOOM_TOOLBAR_BUTTON_SIZE, MM::ZOOM_TOOLBAR_BUTTON_SIZE));
@@ -61,7 +61,7 @@ void MapperGLCanvasToolbar::createZoomToolsLayout()
   connect(_zoomInButton, SIGNAL(clicked()), _canvas, SLOT(increaseZoomLevel()));
   // Zoom Out button
   _zoomOutButton = new QToolButton;
-  _zoomOutButton->setIcon(QIcon(":/zoom-out"));
+  _zoomOutButton->setIcon(MM::themedIcon(":/zoom-out"));
   _zoomOutButton->setIconSize(QSize(MM::ZOOM_TOOLBAR_ICON_SIZE, MM::ZOOM_TOOLBAR_ICON_SIZE));
   _zoomOutButton->setToolTip(tr("Shrink the shape"));
   _zoomOutButton->setFixedSize(QSize(MM::ZOOM_TOOLBAR_BUTTON_SIZE, MM::ZOOM_TOOLBAR_BUTTON_SIZE));
@@ -69,7 +69,7 @@ void MapperGLCanvasToolbar::createZoomToolsLayout()
   connect(_zoomOutButton, SIGNAL(clicked()), _canvas, SLOT(decreaseZoomLevel()));
   // Reset to normal size button.
   _resetZoomButton = new QToolButton;
-  _resetZoomButton->setIcon(QIcon(":/reset-zoom"));
+  _resetZoomButton->setIcon(MM::themedIcon(":/reset-zoom"));
   _resetZoomButton->setIconSize(QSize(MM::ZOOM_TOOLBAR_ICON_SIZE, MM::ZOOM_TOOLBAR_ICON_SIZE));
   _resetZoomButton->setToolTip(tr("Reset the shape to the normal size"));
   _resetZoomButton->setFixedSize(QSize(MM::ZOOM_TOOLBAR_BUTTON_SIZE, MM::ZOOM_TOOLBAR_BUTTON_SIZE));
@@ -77,7 +77,7 @@ void MapperGLCanvasToolbar::createZoomToolsLayout()
   connect(_resetZoomButton, SIGNAL(clicked()), _canvas, SLOT(resetZoomLevel()));
   // Fit to view button
   _fitToViewButton = new QToolButton;
-  _fitToViewButton->setIcon(QIcon(":/zoom-fit"));
+  _fitToViewButton->setIcon(MM::themedIcon(":/zoom-fit"));
   _fitToViewButton->setIconSize(QSize(MM::ZOOM_TOOLBAR_ICON_SIZE, MM::ZOOM_TOOLBAR_ICON_SIZE));
   _fitToViewButton->setToolTip(tr("Fit the shape to content view"));
   _fitToViewButton->setFixedSize(QSize(MM::ZOOM_TOOLBAR_BUTTON_SIZE, MM::ZOOM_TOOLBAR_BUTTON_SIZE));
@@ -112,6 +112,14 @@ void MapperGLCanvasToolbar::createZoomToolsLayout()
 void MapperGLCanvasToolbar::showZoomToolBar(bool visible)
 {
   setVisible(visible);
+}
+
+void MapperGLCanvasToolbar::refreshIcons()
+{
+  _zoomInButton->setIcon(MM::themedIcon(":/zoom-in"));
+  _zoomOutButton->setIcon(MM::themedIcon(":/zoom-out"));
+  _resetZoomButton->setIcon(MM::themedIcon(":/reset-zoom"));
+  _fitToViewButton->setIcon(MM::themedIcon(":/zoom-fit"));
 }
 
 void MapperGLCanvasToolbar::enableZoomToolBar(bool enabled)

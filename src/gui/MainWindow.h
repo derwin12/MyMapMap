@@ -237,6 +237,7 @@ public slots:
   void enableDisplayControls(bool display);
   void enableDisplaySourceControls(bool display);
   void enableStickyVertices(bool display);
+  void toggleMuteAll(bool muted);
   void displayUndoHistory(bool display);
 
   // Show Mapping Context Menu
@@ -413,6 +414,7 @@ private:
   QAction *playAction;
   QAction *pauseAction;
   QAction *rewindAction;
+  QAction *muteAllAction;
 
   QAction *outputFullScreenAction;
   QAction *displayControlsAction;
@@ -534,6 +536,9 @@ private:
   // True iff we want vertices to stick to each other.
   bool _stickyVertices;
 
+  // True iff all source audio is currently muted.
+  bool _audioMuted;
+
   bool _displayUndoStack;
 
   // Menu bar hidden state
@@ -624,7 +629,8 @@ public:
   // Constants. ///////////////////////////////////////////////////////////////////////////////////////
   static const int DEFAULT_WIDTH = 1360;
   static const int DEFAULT_HEIGHT = 768;
-  static const int PAINT_LIST_ITEM_HEIGHT = 72;
+  static const int PAINT_LIST_ITEM_HEIGHT = 40;
+  static const int PAINT_LIST_ICON_SIZE = 32;
   static const int SHAPE_LIST_ITEM_HEIGHT = 40;
   static const int PAINT_LIST_MINIMUM_HEIGHT = 290;
   static const int MAPPING_LIST_MINIMUM_HEIGHT = 290;

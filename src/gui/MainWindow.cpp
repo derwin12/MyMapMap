@@ -76,6 +76,7 @@ MainWindow::MainWindow()
   _displayControls = true;
   _displaySourceControls = true;
   _stickyVertices = true;
+  _audioMuted = false;
   _displayUndoStack = false;
   _showMenuBar = true; // Show menubar by default
 
@@ -390,10 +391,9 @@ void MainWindow::closeEvent(QCloseEvent *event)
   else
   {
     event->ignore();
+    // We're not actually closing after all: restart video playback. XXX Hack
+    play(false);
   }
-
-  // Restart video playback. XXX Hack
-  play(false);
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *event)
@@ -1569,7 +1569,7 @@ void MainWindow::createLayout()
   sourceList->setDefaultDropAction(Qt::MoveAction);
   sourceList->setDragDropMode(QAbstractItemView::InternalMove);
   sourceList->setMinimumWidth(PAINT_LIST_MINIMUM_HEIGHT);
-  sourceList->setIconSize(QSize(MM::SOURCE_THUMBNAIL_SIZE, MM::SOURCE_THUMBNAIL_SIZE));
+  sourceList->setIconSize(QSize(MainWindow::PAINT_LIST_ICON_SIZE, MainWindow::PAINT_LIST_ICON_SIZE));
 
   // Create source panel.
   sourcePropertyPanel = new QStackedWidget;
@@ -1679,8 +1679,8 @@ void MainWindow::createLayout()
 
   // Content tab.
   contentTab = new QTabWidget;
-  contentTab->addTab(sourceSplitter, QIcon(":/add-video"), tr("Library"));
-  contentTab->addTab(layerSplitter, QIcon(":/add-mesh"), tr("Layers"));
+  contentTab->addTab(sourceSplitter, themedIcon(":/add-video"), tr("Library"));
+  contentTab->addTab(layerSplitter, themedIcon(":/add-mesh"), tr("Layers"));
 
   canvasSplitter = new QSplitter(Qt::Vertical);
   canvasSplitter->addWidget(sourcePanel);
@@ -2102,6 +2102,18 @@ void MainWindow::createActions()
   addAction(rewindAction);
   connect(rewindAction, SIGNAL(triggered()), this, SLOT(rewind()));
 
+  // Mute all source audio.
+  muteAllAction = new QAction(tr("&Mute All Audio"), this);
+  muteAllAction->setShortcut(Qt::CTRL | Qt::Key_M);
+  muteAllAction->setIcon(themedIcon(":/mute"));
+  muteAllAction->setToolTip(tr("Mute all audio"));
+  muteAllAction->setIconVisibleInMenu(false);
+  muteAllAction->setCheckable(true);
+  muteAllAction->setChecked(_audioMuted);
+  muteAllAction->setShortcutContext(Qt::ApplicationShortcut);
+  addAction(muteAllAction);
+  connect(muteAllAction, SIGNAL(toggled(bool)), this, SLOT(toggleMuteAll(bool)));
+
   // Toggle display of output window.
   outputFullScreenAction = new QAction(tr("Toggle &Fullscreen"), this);
   outputFullScreenAction->setShortcut(Qt::CTRL | Qt::Key_F);
@@ -2249,27 +2261,35 @@ void MainWindow::createActions()
   // Zoom In
   zoomInAction = new QAction(tr("Zoom In"), this);
   zoomInAction->setShortcut(QKeySequence::ZoomIn);
+  zoomInAction->setIcon(themedIcon(":/zoom-in"));
   zoomInAction->setToolTip(tr("Zoom In"));
+  zoomInAction->setIconVisibleInMenu(false);
   zoomInAction->setEnabled(false);
   connect(zoomInAction, SIGNAL(triggered()), sourceCanvas, SLOT(increaseZoomLevel()));
   connect(zoomInAction, SIGNAL(triggered()), destinationCanvas, SLOT(increaseZoomLevel()));
   // Zoom Out
   zoomOutAction = new QAction(tr("Zoom Out"), this);
   zoomOutAction->setShortcut(QKeySequence::ZoomOut);
+  zoomOutAction->setIcon(themedIcon(":/zoom-out"));
   zoomOutAction->setToolTip(tr("Zoom Out"));
+  zoomOutAction->setIconVisibleInMenu(false);
   zoomOutAction->setEnabled(false);
   connect(zoomOutAction, SIGNAL(triggered()), sourceCanvas, SLOT(decreaseZoomLevel()));
   connect(zoomOutAction, SIGNAL(triggered()), destinationCanvas, SLOT(decreaseZoomLevel()));
   // Reset zoom
   resetZoomAction = new QAction(tr("Original Size"), this);
   resetZoomAction->setShortcut(Qt::CTRL | Qt::Key_0);
+  resetZoomAction->setIcon(themedIcon(":/reset-zoom"));
   resetZoomAction->setToolTip(tr("Reset zoom to original size"));
+  resetZoomAction->setIconVisibleInMenu(false);
   resetZoomAction->setEnabled(false);
   connect(resetZoomAction, SIGNAL(triggered()), sourceCanvas, SLOT(resetZoomLevel()));
   connect(resetZoomAction, SIGNAL(triggered()), destinationCanvas, SLOT(resetZoomLevel()));
   // Fit to view
   fitToViewAction = new QAction(tr("Fit To View"), this);
-  fitToViewAction->setToolTip(tr("Fit to viewport"));
+  fitToViewAction->setIcon(themedIcon(":/zoom-fit"));
+  fitToViewAction->setToolTip(tr("Fit to viewport (bring all shapes into view)"));
+  fitToViewAction->setIconVisibleInMenu(false);
   fitToViewAction->setEnabled(false);
   connect(fitToViewAction, SIGNAL(triggered()), sourceCanvas, SLOT(fitShapeToView()));
   connect(fitToViewAction, SIGNAL(triggered()), destinationCanvas, SLOT(fitShapeToView()));
@@ -2399,6 +2419,7 @@ void MainWindow::createMenus()
   viewMenu->addAction(playAction);
   viewMenu->addAction(pauseAction);
   viewMenu->addAction(rewindAction);
+  viewMenu->addAction(muteAllAction);
 
   // Window
   windowMenu = menuBar->addMenu(tr("&Window"));
@@ -2532,6 +2553,7 @@ void MainWindow::createToolBars()
   mainToolBar->addAction(playAction);
   mainToolBar->addAction(pauseAction);
   mainToolBar->addAction(rewindAction);
+  mainToolBar->addAction(muteAllAction);
 
   // Disable toolbar context menu
   mainToolBar->setContextMenuPolicy(Qt::PreventContextMenu);
@@ -2623,6 +2645,7 @@ void MainWindow::readSettings()
   // New in 0.4.1
    displaySourceControlsAction->setChecked(settings.value("displayAllControls", MM::DISPLAY_ALL_CONTROLS).toBool());
    stickyVerticesAction->setChecked(settings.value("stickyVertices", MM::STICKY_VERTICES).toBool());
+   muteAllAction->setChecked(settings.value("audioMuted", false).toBool());
    // Set toolbar icon size
    int toolBarIconSize = settings.value("toolbarIconSize", MM::TOOLBAR_ICON_SIZE).toInt();
    mainToolBar->setIconSize(QSize(toolBarIconSize, toolBarIconSize));
@@ -2650,6 +2673,7 @@ void MainWindow::writeSettings()
   settings.setValue("zoomToolBar", displayZoomToolAction->isChecked());
   settings.setValue("showMenuBar", showMenuBarAction->isChecked());
   settings.setValue("stickyVertices", stickyVerticesAction->isChecked());
+  settings.setValue("audioMuted", muteAllAction->isChecked());
 }
 
 bool MainWindow::okToContinue()
@@ -3019,7 +3043,10 @@ void MainWindow::addSourceItem(uid sourceId, const QIcon& icon, const QString& n
   SourceGui::ptr sourceGui;
   SourceType sourceType = source->getSourceType();
   if (sourceType == SourceType::Video)
+  {
     sourceGui = SourceGui::ptr(new VideoGui(source));
+    qSharedPointerCast<Video>(source)->setMuted(_audioMuted);
+  }
   else if (sourceType == SourceType::Image)
     sourceGui = SourceGui::ptr(new ImageGui(source));
   else if (sourceType == SourceType::Color)
@@ -3051,6 +3078,10 @@ void MainWindow::addSourceItem(uid sourceId, const QIcon& icon, const QString& n
   // TODO: attention: if mapping is invisible canvases will be updated for no reason
   connect(source.data(), SIGNAL(propertyChanged(uid, QString, QVariant)),
           this,           SLOT(updateCanvases()));
+
+  // A source property edit is a real project change.
+  connect(source.data(), SIGNAL(propertyChanged(uid, QString, QVariant)),
+          this,           SLOT(windowModified()));
 
 #ifdef HAVE_SYPHON
   // Fit input shapes once a Syphon source's real resolution becomes known.
@@ -3146,7 +3177,7 @@ void MainWindow::addLayerItem(uid layerId)
   if (shapeType == ShapeType::Triangle)
   {
     defaultName = QString("Triangle %1").arg(layerId);
-    icon = QIcon(":/shape-triangle");
+    icon = MM::themedIcon(":/shape-triangle");
 
     if (sourceType == SourceType::Color)
       mapper = LayerGui::ptr(new PolygonColorLayerGui(layer));
@@ -3157,7 +3188,7 @@ void MainWindow::addLayerItem(uid layerId)
   else if (shapeType == ShapeType::Mesh)
   {
     defaultName = QString("Mesh %1").arg(layerId);
-    icon = QIcon(":/shape-mesh");
+    icon = MM::themedIcon(":/shape-mesh");
     if (sourceType == SourceType::Color)
       mapper = LayerGui::ptr(new MeshColorLayerGui(layer));
     else
@@ -3166,7 +3197,7 @@ void MainWindow::addLayerItem(uid layerId)
   else if (shapeType == ShapeType::Ellipse)
   {
     defaultName = QString("Ellipse %1").arg(layerId);
-    icon = QIcon(":/shape-ellipse");
+    icon = MM::themedIcon(":/shape-ellipse");
     if (sourceType == SourceType::Color)
       mapper = LayerGui::ptr(new EllipseColorLayerGui(layer));
     else
@@ -3193,6 +3224,10 @@ void MainWindow::addLayerItem(uid layerId)
   connect(mapper.data(), SIGNAL(valueChanged()),
           this,          SLOT(updateCanvases()));
 
+  // Shape/vertex edits go straight through the mapper, not Layer::propertyChanged.
+  connect(mapper.data(), SIGNAL(valueChanged()),
+          this,          SLOT(windowModified()));
+
   // Also update playing state in case source was changed.
   connect(mapper.data(), SIGNAL(sourceChanged()),
           this,          SLOT(updatePlayingState()));
@@ -3209,6 +3244,11 @@ void MainWindow::addLayerItem(uid layerId)
   // TODO: attention: if mapping is invisible canvases will be updated for no reason
   connect(layer.data(), SIGNAL(propertyChanged(uid, QString, QVariant)),
           this,           SLOT(updateCanvases()));
+
+  // A layer property edit (opacity, blend, source, visibility, etc.) is a
+  // real project change.
+  connect(layer.data(), SIGNAL(propertyChanged(uid, QString, QVariant)),
+          this,           SLOT(windowModified()));
 
   // Switch to mapping tab.
   contentTab->setCurrentWidget(layerSplitter);
@@ -3588,6 +3628,19 @@ void MainWindow::enableStickyVertices(bool value)
 {
   _stickyVertices = value;
   settings.setValue("stickyVertices", _stickyVertices);
+}
+
+void MainWindow::toggleMuteAll(bool muted)
+{
+  _audioMuted = muted;
+  settings.setValue("audioMuted", _audioMuted);
+
+  for (int i = 0; i < mappingManager->nSources(); i++)
+  {
+    Source::ptr source = mappingManager->getSource(i);
+    if (source->getSourceType() == SourceType::Video)
+      qSharedPointerCast<Video>(source)->setMuted(muted);
+  }
 }
 
 void MainWindow::showLayerContextMenu(const QPoint &point)
@@ -4028,20 +4081,7 @@ void MainWindow::quitMapMap()
 
 QIcon MainWindow::themedIcon(const QString& resource)
 {
-  bool isDark = (qApp->palette().color(QPalette::Window).lightness() < 128);
-  if (isDark)
-    return QIcon(resource);
-
-  QFile f(resource);
-  if (!f.open(QFile::ReadOnly))
-    return QIcon(resource);
-  QByteArray svg = f.readAll();
-  svg.replace("stroke=\"white\"", "stroke=\"#2e2e2e\"");
-  svg.replace("stroke=\"#fff\"",  "stroke=\"#2e2e2e\"");
-  svg.replace("fill=\"white\"",   "fill=\"#2e2e2e\"");
-  QPixmap pix;
-  pix.loadFromData(svg, "svg");
-  return QIcon(pix);
+  return MM::themedIcon(resource);
 }
 
 void MainWindow::refreshIcons()
@@ -4065,11 +4105,28 @@ void MainWindow::refreshIcons()
     { displaySourceControlsAction,":/control-points"    },
     { stickyVerticesAction,       ":/control-points"    },
     { displayTestSignalAction,    ":/toggle-test-signal"},
+    { muteAllAction,              ":/mute"              },
+    { zoomInAction,               ":/zoom-in"           },
+    { zoomOutAction,              ":/zoom-out"          },
+    { resetZoomAction,            ":/reset-zoom"        },
+    { fitToViewAction,            ":/zoom-fit"          },
   };
   for (auto& e : entries) {
     if (e.action)
       e.action->setIcon(themedIcon(e.resource));
   }
+  if (contentTab) {
+    int sourceIdx = contentTab->indexOf(sourceSplitter);
+    if (sourceIdx != -1)
+      contentTab->setTabIcon(sourceIdx, themedIcon(":/add-video"));
+    int layerIdx = contentTab->indexOf(layerSplitter);
+    if (layerIdx != -1)
+      contentTab->setTabIcon(layerIdx, themedIcon(":/add-mesh"));
+  }
+  if (sourceCanvasToolbar)
+    sourceCanvasToolbar->refreshIcons();
+  if (destinationCanvasToolbar)
+    destinationCanvasToolbar->refreshIcons();
 #ifdef Q_OS_MAC
   if (addSyphonAction)
     addSyphonAction->setIcon(themedIcon(":/add-syphon"));
