@@ -304,9 +304,10 @@ void TextureGraphicsItem::_prePaint(QPainter* painter,
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-  // Set texture color (apply opacity).
+  // Set texture color. For output, per-vertex color in _doDrawOutput handles opacity+blend.
+  // For input, use global source opacity.
   glColor4f(1.0f, 1.0f, 1.0f,
-            isOutput() ? getLayer()->getComputedOpacity() : getLayer()->getSource()->getOpacity());
+            isOutput() ? 1.0f : getLayer()->getSource()->getOpacity());
 
 }
 
@@ -318,6 +319,33 @@ void TextureGraphicsItem::_postPaint(QPainter* painter,
   glDisable(GL_TEXTURE_2D);
 
   painter->endNativePainting();
+}
+
+static float _smoothstep(float edge0, float edge1, float x) {
+    if (qAbs(edge1 - edge0) < 1e-6f) return x >= edge0 ? 1.0f : 0.0f;
+    float t = qBound(0.0f, (x - edge0) / (edge1 - edge0), 1.0f);
+    return t * t * (3.0f - 2.0f * t);
+}
+
+float TextureGraphicsItem::_computeBlendAlpha(const QPointF& localPt) const
+{
+    Layer::ptr layer = getLayer();
+    if (!layer) return 1.0f;
+    float bl = layer->getBlendLeft(),  br = layer->getBlendRight();
+    float bt = layer->getBlendTop(),   bb = layer->getBlendBottom();
+    if (bl == 0.0f && br == 0.0f && bt == 0.0f && bb == 0.0f) return 1.0f;
+
+    QRectF bbox = boundingRect();
+    if (bbox.width() < 1e-6f || bbox.height() < 1e-6f) return 1.0f;
+    float nx = (localPt.x() - bbox.left()) / bbox.width();
+    float ny = (localPt.y() - bbox.top())  / bbox.height();
+
+    float alpha = 1.0f;
+    if (bl > 0.0f) alpha *= _smoothstep(0.0f, bl,        nx);
+    if (br > 0.0f) alpha *= _smoothstep(1.0f, 1.0f - br, nx);
+    if (bt > 0.0f) alpha *= _smoothstep(0.0f, bt,        ny);
+    if (bb > 0.0f) alpha *= _smoothstep(1.0f, 1.0f - bb, ny);
+    return alpha;
 }
 
 QSharedPointer<Texture> TextureGraphicsItem::_getTexture()
@@ -432,13 +460,17 @@ void MeshTextureGraphicsItem::_doDrawOutput(QPainter* painter)
           _buildCacheQuadItem(item, inputQuad, outputQuad, area, 0.0001f, 0.001f, MM::MESH_SUBDIVISION_MIN_AREA, maxDepth);
         }
 
-        // Draw all the cached items.
+        // Draw all the cached items with per-vertex opacity and soft-edge blending.
+        float baseOpacity = getLayer()->getComputedOpacity();
         for (CacheQuadMapping m: item.subQuads)
         {
           glBegin(GL_QUADS);
           for (int i = 0; i < outputQuad->nVertices(); i++)
           {
-            Util::setGlTexPoint(*_getTexture(), m.input->getVertex(i), mapFromScene(m.output->getVertex(i)));
+            QPointF localPt = mapFromScene(m.output->getVertex(i));
+            float a = baseOpacity * _computeBlendAlpha(localPt);
+            glColor4f(1.0f, 1.0f, 1.0f, a);
+            Util::setGlTexPoint(*_getTexture(), m.input->getVertex(i), localPt);
           }
           glEnd();
         }

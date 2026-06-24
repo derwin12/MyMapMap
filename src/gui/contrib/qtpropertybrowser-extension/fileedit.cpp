@@ -27,6 +27,8 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFocusEvent>
+#include <QApplication>
+#include <QStyle>
 
 FileEdit::FileEdit(QWidget *parent)
     : QWidget(parent)
@@ -40,8 +42,9 @@ FileEdit::FileEdit(QWidget *parent)
     theLineEdit->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred));
     QToolButton *button = new QToolButton(this);
     button->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred));
-    button->setFixedWidth(18);
-    button->setText(QLatin1String("..."));
+    button->setFixedWidth(22);
+    button->setIcon(QApplication::style()->standardIcon(QStyle::SP_DirOpenIcon));
+    button->setToolTip(tr("Browse..."));
     layout->addWidget(theLineEdit);
     layout->addWidget(button);
     setFocusProxy(button);

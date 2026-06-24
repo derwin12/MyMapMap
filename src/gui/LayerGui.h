@@ -112,6 +112,11 @@ protected:
 	QtVariantProperty* _sourceItem;
   QtProperty* _outputItem;
 
+  QtVariantProperty* _blendLeftItem;
+  QtVariantProperty* _blendRightItem;
+  QtVariantProperty* _blendTopItem;
+  QtVariantProperty* _blendBottomItem;
+
   std::map<QtProperty*, std::pair<MShape*, int> > _propertyToVertex;
 
   QSharedPointer<ShapeGraphicsItem> _graphicsItem;

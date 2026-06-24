@@ -67,6 +67,11 @@ class Layer : public Element
   Q_PROPERTY(uid  sourceId  READ getSourceId WRITE setSourceById STORED false)
 //  Q_PROPERTY(Source::ptr source READ getSource WRITE setSource)
 
+  Q_PROPERTY(float blendLeft   READ getBlendLeft   WRITE setBlendLeft)
+  Q_PROPERTY(float blendRight  READ getBlendRight  WRITE setBlendRight)
+  Q_PROPERTY(float blendTop    READ getBlendTop    WRITE setBlendTop)
+  Q_PROPERTY(float blendBottom READ getBlendBottom WRITE setBlendBottom)
+
 protected:
   /// The input Source instance.
   Source::ptr _source;
@@ -83,6 +88,11 @@ private:
   bool _isSolo;
   bool _isVisible;
   int _depth; // depth of the layer
+
+  float _blendLeft   = 0.0f;
+  float _blendRight  = 0.0f;
+  float _blendTop    = 0.0f;
+  float _blendBottom = 0.0f;
 
 protected:
   Layer(int id=NULL_UID);
@@ -146,6 +156,15 @@ public:
   virtual void toggleVisible() { setVisible(!isVisible()); }
 
   virtual float getComputedOpacity() const { return getOpacity() * _source->getOpacity(); }
+
+  float getBlendLeft()   const { return _blendLeft;   }
+  float getBlendRight()  const { return _blendRight;  }
+  float getBlendTop()    const { return _blendTop;    }
+  float getBlendBottom() const { return _blendBottom; }
+  void setBlendLeft(float v)   { _blendLeft   = qBound(0.0f, v, 0.5f); _emitPropertyChanged("blendLeft");   }
+  void setBlendRight(float v)  { _blendRight  = qBound(0.0f, v, 0.5f); _emitPropertyChanged("blendRight");  }
+  void setBlendTop(float v)    { _blendTop    = qBound(0.0f, v, 0.5f); _emitPropertyChanged("blendTop");    }
+  void setBlendBottom(float v) { _blendBottom = qBound(0.0f, v, 0.5f); _emitPropertyChanged("blendBottom"); }
 
   virtual void setSource(Source::ptr source);
 	virtual void setSourceById(uid sourceId);

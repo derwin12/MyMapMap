@@ -54,6 +54,31 @@ LayerGui::LayerGui(Layer::ptr layer)
   _opacityItem->setValue(_layer->getOpacity()*100.0);
   _propertyBrowser->addProperty(_opacityItem);
 
+  // Edge blending controls.
+  QtVariantProperty* blendGroup = _variantManager->addProperty(
+      QtVariantPropertyManager::groupTypeId(), QObject::tr("Edge Blending"));
+
+  _blendLeftItem   = _variantManager->addProperty(QMetaType::Double, QObject::tr("Left (%)"));
+  _blendRightItem  = _variantManager->addProperty(QMetaType::Double, QObject::tr("Right (%)"));
+  _blendTopItem    = _variantManager->addProperty(QMetaType::Double, QObject::tr("Top (%)"));
+  _blendBottomItem = _variantManager->addProperty(QMetaType::Double, QObject::tr("Bottom (%)"));
+
+  for (auto* item : {_blendLeftItem, _blendRightItem, _blendTopItem, _blendBottomItem}) {
+    item->setAttribute("minimum", 0.0);
+    item->setAttribute("maximum", 50.0);
+    item->setAttribute("decimals", 1);
+    item->setAttribute("singleStep", 1.0);
+    blendGroup->addSubProperty(item);
+  }
+  _blendLeftItem->setValue(_layer->getBlendLeft()   * 100.0);
+  _blendRightItem->setValue(_layer->getBlendRight()  * 100.0);
+  _blendTopItem->setValue(_layer->getBlendTop()    * 100.0);
+  _blendBottomItem->setValue(_layer->getBlendBottom() * 100.0);
+
+  _propertyBrowser->addProperty(blendGroup);
+  // Collapse blend group by default.
+  _propertyBrowser->setExpanded(_propertyBrowser->items(blendGroup).at(0), false);
+
   _sourceItem = _variantManager->addProperty(QtVariantPropertyManager::enumTypeId(), "Source");
   _propertyBrowser->addProperty(_sourceItem);
   updateSources();
@@ -94,6 +119,26 @@ void LayerGui::setValue(QtProperty* property, const QVariant& value)
       emit valueChanged();
       emit sourceChanged();
     }
+  }
+  else if (property == _blendLeftItem)
+  {
+    _layer->setBlendLeft(value.toDouble() / 100.0);
+    emit valueChanged();
+  }
+  else if (property == _blendRightItem)
+  {
+    _layer->setBlendRight(value.toDouble() / 100.0);
+    emit valueChanged();
+  }
+  else if (property == _blendTopItem)
+  {
+    _layer->setBlendTop(value.toDouble() / 100.0);
+    emit valueChanged();
+  }
+  else if (property == _blendBottomItem)
+  {
+    _layer->setBlendBottom(value.toDouble() / 100.0);
+    emit valueChanged();
   }
   else
   {

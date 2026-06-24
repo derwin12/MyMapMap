@@ -189,6 +189,8 @@ protected:
   virtual void _doDrawOutput(QPainter* painter) = 0;
   virtual void _doDrawInput(QPainter* painter);
 
+  float _computeBlendAlpha(const QPointF& localPt) const;
+
 protected:
   QWeakPointer<TextureLayer> _textureMapping;
   QWeakPointer<MShape> _inputShape;
