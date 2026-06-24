@@ -6,7 +6,8 @@ The `upstream` git remote points at the original project; `origin` points at thi
 module) with Visual Studio 2022, via `build_msvc2022.bat` (qmake + nmake). Output binary
 is `bin/mapmap.exe`, kept inside the project folder (`DESTDIR` in `mapmap.pro`; the
 upstream `win32` block in `src/src.pri` used to redirect `TARGET` outside the repo —
-that override was removed).
+that override was removed). Full build steps and the MSVC-specific source fixes are
+documented in `INSTALL.md` under "MyMapMap fork: building with Visual Studio 2022 / MSVC".
 
 ## NEVER push to upstream
 

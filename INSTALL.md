@@ -93,6 +93,40 @@ Build on Windows
 - Replace all the `*.qm` files that exists in `released-binary`/translations folder by the ones from `source-code`/translations folder
 - Download and install [Inno Setup](https://jrsoftware.org/isdl.php) to create an installation wizard setup
 
+### MyMapMap fork: building with Visual Studio 2022 / MSVC
+
+This fork additionally supports building with MSVC instead of MinGW:
+
+1. Install **Qt 6.8.x** with the **`msvc2022_64`** kit and the **Multimedia** module,
+   via the Qt Maintenance Tool (`C:\Qt\MaintenanceTool.exe` → "Add or remove
+   components" → expand the Qt 6.8.x version → check `MSVC 2022 64-bit` and
+   `Additional Libraries > Qt Multimedia`).
+2. Build from a Visual Studio 2022 x64 command prompt (or run `vcvars64.bat` first),
+   using the Qt 6.8.x msvc2022_64 kit's `qmake`:
+   ```
+   qmake mapmap.pro CONFIG+=release
+   nmake
+   ```
+   See `build_msvc2022.bat` in the repo root for a script that does this end to end.
+3. The built binary lands at `bin/mapmap.exe` inside the project folder (set via
+   `DESTDIR` in `mapmap.pro`).
+4. To open/build in the Visual Studio 2022 IDE instead of the command line, generate
+   a solution file: `qmake -tp vc mapmap.pro CONFIG+=release`, then open the resulting
+   `mapmap.sln`.
+
+#### MSVC-specific source notes
+
+A couple of fixes were needed for this codebase to compile under MSVC (it was
+previously only built with MinGW upstream):
+
+- `src/core/Util.h`, `src/core/Source.h`, `src/gui/SourceGui.h`,
+  `src/gui/ShapeGraphicsItem.h`, `src/gui/LayerGui.h`: include `<windows.h>` before
+  `<GL/gl.h>` on Windows — the Windows SDK's `gl.h` requires Windows types
+  (`WINGDIAPI`, `APIENTRY`) to already be defined.
+- `src/gui/ShapeGraphicsItem.cpp`: a GNU-only compound-literal cast
+  (`(CacheQuadMapping){ ... }`) was replaced with standard brace-initialization
+  (`CacheQuadMapping{ ... }`), since MSVC doesn't support that GCC/Clang extension.
+
 Editing translations
 --------------------
 You might need to update the files:
