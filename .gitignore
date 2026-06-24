@@ -30,6 +30,9 @@ Release/
 *.ai
 *.gif
 *.svg
+!resources/images/icons/svg/*.svg
+!resources/images/test-signal/*.svg
+!resources/images/logo/*.svg
 *.ps
 *.pdf
 
