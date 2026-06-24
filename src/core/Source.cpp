@@ -184,11 +184,9 @@ QIcon Image::getIcon() const
   static QFileIconProvider provider;
 
   if (!_images.isEmpty())
-    // Create icon from image.
-    return QIcon(QPixmap::fromImage(_images[0]).scaled(MM::MAPPING_LIST_ICON_SIZE, MM::MAPPING_LIST_ICON_SIZE,
-                                    Qt::IgnoreAspectRatio));
+    return QIcon(QPixmap::fromImage(_images[0]).scaled(MM::SOURCE_THUMBNAIL_SIZE, MM::SOURCE_THUMBNAIL_SIZE,
+                                    Qt::KeepAspectRatio, Qt::SmoothTransformation));
   else
-    // Return default icon from filesystem.
     return provider.icon(QFileInfo(_uri));
 }
 
@@ -431,8 +429,8 @@ bool Video::_generateThumbnail()
     }
 
   // Generate icon.
-  _icon = QIcon(QPixmap::fromImage(thumbnail).scaled(MM::MAPPING_LIST_ICON_SIZE, MM::MAPPING_LIST_ICON_SIZE,
-                                                     Qt::IgnoreAspectRatio));
+  _icon = QIcon(QPixmap::fromImage(thumbnail).scaled(MM::SOURCE_THUMBNAIL_SIZE, MM::SOURCE_THUMBNAIL_SIZE,
+                                                     Qt::KeepAspectRatio, Qt::SmoothTransformation));
 
   // Reset movie.
   _impl->resetMovie();

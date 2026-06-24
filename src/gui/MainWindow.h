@@ -650,7 +650,7 @@ public:
   // Constants. ///////////////////////////////////////////////////////////////////////////////////////
   static const int DEFAULT_WIDTH = 1360;
   static const int DEFAULT_HEIGHT = 768;
-  static const int PAINT_LIST_ITEM_HEIGHT = 40;
+  static const int PAINT_LIST_ITEM_HEIGHT = 72;
   static const int SHAPE_LIST_ITEM_HEIGHT = 40;
   static const int PAINT_LIST_MINIMUM_HEIGHT = 290;
   static const int MAPPING_LIST_MINIMUM_HEIGHT = 290;

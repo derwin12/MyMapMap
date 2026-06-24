@@ -1646,6 +1646,7 @@ void MainWindow::createLayout()
   sourceList->setDefaultDropAction(Qt::MoveAction);
   sourceList->setDragDropMode(QAbstractItemView::InternalMove);
   sourceList->setMinimumWidth(PAINT_LIST_MINIMUM_HEIGHT);
+  sourceList->setIconSize(QSize(MM::SOURCE_THUMBNAIL_SIZE, MM::SOURCE_THUMBNAIL_SIZE));
 
   // Create source panel.
   sourcePropertyPanel = new QStackedWidget;
@@ -3706,9 +3707,9 @@ const QIcon MainWindow::getSourceIcon(Source::ptr source)
     return source->getIcon();
   else
   {
-    QPixmap pixmap = source->getIcon().pixmap(MM::MAPPING_LIST_ICON_SIZE, MM::MAPPING_LIST_ICON_SIZE);
+    QPixmap pixmap = source->getIcon().pixmap(MM::SOURCE_THUMBNAIL_SIZE, MM::SOURCE_THUMBNAIL_SIZE);
     QPainter painter(&pixmap);
-    painter.setPen(QPen(QColor(255, 0, 0, 128), 4));
+    painter.setPen(QPen(QColor(255, 0, 0, 180), 6));
     painter.drawLine(0, 0, pixmap.width(), pixmap.height());
     return QIcon(pixmap);
   }

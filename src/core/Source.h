@@ -147,7 +147,7 @@ public:
   virtual SourceType getSourceType() const { return SourceType::Color; }
 
   virtual QIcon getIcon() const {
-    QPixmap pixmap(MM::MAPPING_LIST_ICON_SIZE, MM::MAPPING_LIST_ICON_SIZE);
+    QPixmap pixmap(MM::SOURCE_THUMBNAIL_SIZE, MM::SOURCE_THUMBNAIL_SIZE);
     pixmap.fill(color);
     return QIcon(pixmap);
   }
