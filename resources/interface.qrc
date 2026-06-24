@@ -1,25 +1,26 @@
 <RCC>
     <qresource prefix="/">
-        <file alias="new">images/icons/newdoc_w.png</file>
-        <file alias="open">images/icons/open_w.png</file>
-        <file alias="save">images/icons/save_w.png</file>
-        <file alias="save-as">images/icons/save_w.png</file>
-        <file alias="fullscreen">images/icons/fullscreen_w.png</file>
-        <file alias="output-window">images/icons/nofullscreen_w.png</file>
-        <file alias="control-points">images/icons/ctrl2_w.png</file>
-        <file alias="add-video">images/icons/add_movie_w.png</file>
-        <file alias="add-camera">images/icons/add_camera_w.png</file>
-        <file alias="add-color">images/icons/add_paint_w.png</file>
+        <file alias="new">images/icons/svg/new.svg</file>
+        <file alias="open">images/icons/svg/open.svg</file>
+        <file alias="save">images/icons/svg/save.svg</file>
+        <file alias="save-as">images/icons/svg/save.svg</file>
+        <file alias="fullscreen">images/icons/svg/fullscreen.svg</file>
+        <file alias="output-window">images/icons/svg/output-window.svg</file>
+        <file alias="control-points">images/icons/svg/control-points.svg</file>
+        <file alias="add-video">images/icons/svg/add-video.svg</file>
+        <file alias="add-camera">images/icons/svg/add-camera.svg</file>
+        <file alias="add-color">images/icons/svg/add-color.svg</file>
         <file alias="add-syphon">images/icons/syphon-white.png</file>
-        <file alias="add-mesh">images/shapes/add_quad.png</file>
-        <file alias="add-triangle">images/shapes/add_triangle.png</file>
-        <file alias="add-ellipse">images/shapes/add_circle.png</file>
-        <file alias="play">images/icons/play_w.png</file>
-        <file alias="rewind">images/icons/rewind_w.png</file>
-        <file alias="shape-mesh">images/shapes/add_quad.png</file>
-        <file alias="shape-triangle">images/shapes/add_triangle.png</file>
-        <file alias="shape-ellipse">images/shapes/add_circle.png</file>
-        <file alias="shape-polygon">images/shapes/add_circle.png</file>
+        <file alias="add-mesh">images/icons/svg/add-mesh.svg</file>
+        <file alias="add-triangle">images/icons/svg/add-triangle.svg</file>
+        <file alias="add-ellipse">images/icons/svg/add-ellipse.svg</file>
+        <file alias="play">images/icons/svg/play.svg</file>
+        <file alias="pause">images/icons/svg/pause.svg</file>
+        <file alias="rewind">images/icons/svg/rewind.svg</file>
+        <file alias="shape-mesh">images/icons/svg/add-mesh.svg</file>
+        <file alias="shape-triangle">images/icons/svg/add-triangle.svg</file>
+        <file alias="shape-ellipse">images/icons/svg/add-ellipse.svg</file>
+        <file alias="shape-polygon">images/icons/svg/add-ellipse.svg</file>
         <file alias="mapmap-title">images/logo/logomapmap.png</file>
         <file alias="mapmap-title-light">images/logo/logomapmap-light.png</file>
         <file alias="mapmap-logo">images/logo/mapmap-logo.png</file>
@@ -27,10 +28,10 @@
         <file alias="logo-title">fonts/DroidSans.otf</file>
         <file alias="base-font">fonts/DroidSans.otf</file>
         <file alias="test-signal">images/test-signal/test-signal.svg</file>
-        <file alias="delete-mapping">images/icons/small/delete_w.png</file>
-        <file alias="lock-mapping">images/icons/small/lock_w.png</file>
-        <file alias="visible-mapping">images/icons/small/visible_w.png</file>
-        <file alias="duplicate-mapping">images/icons/small/duplicate_w.png</file>
+        <file alias="delete-mapping">images/icons/svg/delete.svg</file>
+        <file alias="lock-mapping">images/icons/svg/lock.svg</file>
+        <file alias="visible-mapping">images/icons/svg/visible.svg</file>
+        <file alias="duplicate-mapping">images/icons/svg/duplicate.svg</file>
         <file alias="stylesheet">qss/mapmap.qss</file>
         <file alias="console-font">fonts/Hack-Regular.otf</file>
         <file alias="pal-test-card">images/test-signal/pal-test-signal.svg</file>
@@ -47,17 +48,16 @@
         <file>images/checkbox/radio-checked-focused.png</file>
         <file>images/checkbox/radio-unchecked.png</file>
         <file>images/checkbox/radio-unchecked-focused.png</file>
-        <file alias="zoom-out">images/icons/zoom_out_w.svg.png</file>
-        <file alias="pause">images/icons/pause_w_1.png</file>
-        <file alias="zoom-in">images/icons/zoom_in.png</file>
-        <file alias="reset-zoom">images/icons/zoom_1.png</file>
-        <file alias="zoom-fit">images/icons/zoom_fit.png</file>
-        <file alias="pref-controls">images/icons/controls.png</file>
-        <file alias="pref-advanced">images/icons/advanced.png</file>
-        <file alias="pref-interface">images/icons/interface.png</file>
-        <file alias="solo-mapping">images/icons/solo.png</file>
-        <file alias="toggle-test-signal">images/icons/testsignal.png</file>
-        <file alias="vertex-scale">images/icons/scale-vertex.png</file>
-        <file alias="vertex-rotate">images/icons/rotate-vertex.png</file>
+        <file alias="zoom-out">images/icons/svg/zoom-out.svg</file>
+        <file alias="zoom-in">images/icons/svg/zoom-in.svg</file>
+        <file alias="reset-zoom">images/icons/svg/reset-zoom.svg</file>
+        <file alias="zoom-fit">images/icons/svg/zoom-fit.svg</file>
+        <file alias="pref-controls">images/icons/svg/prefs-controls.svg</file>
+        <file alias="pref-advanced">images/icons/svg/prefs-advanced.svg</file>
+        <file alias="pref-interface">images/icons/svg/prefs-interface.svg</file>
+        <file alias="solo-mapping">images/icons/svg/solo.svg</file>
+        <file alias="toggle-test-signal">images/icons/svg/test-signal.svg</file>
+        <file alias="vertex-scale">images/icons/svg/vertex-scale.svg</file>
+        <file alias="vertex-rotate">images/icons/svg/vertex-rotate.svg</file>
     </qresource>
 </RCC>
