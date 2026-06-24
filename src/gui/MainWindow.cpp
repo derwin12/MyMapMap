@@ -578,15 +578,20 @@ bool MainWindow::saveAs()
   // Stop video playback to avoid lags. XXX Hack
   pause(false);
 
+  // Suggest the current project's name, or "untitled" for a new project.
+  QString defaultName = curFile.isEmpty() ? tr("untitled") : QFileInfo(curFile).completeBaseName();
+  QString defaultPath = QDir(settings.value("defaultProjectDir").toString())
+                           .filePath(QString("%1.%2").arg(defaultName, MM::FILE_EXTENSION));
+
 #ifdef Q_OS_LINUX
   QString fileName = QFileDialog::getSaveFileName(this,
-                                                  tr("Save project"), settings.value("defaultProjectDir").toString(),
+                                                  tr("Save project"), defaultPath,
                                                   tr("MyMapMap files (*.%1)").arg(MM::FILE_EXTENSION),
                                                   nullptr, QFileDialog::DontUseNativeDialog);
 #else
   // Popul file dialog to choose filename.
   QString fileName = QFileDialog::getSaveFileName(this,
-                                                  tr("Save project"), settings.value("defaultProjectDir").toString(),
+                                                  tr("Save project"), defaultPath,
                                                   tr("MyMapMap files (*.%1)").arg(MM::FILE_EXTENSION));
 #endif
 
