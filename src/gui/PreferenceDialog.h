@@ -81,6 +81,7 @@ private:
   QComboBox *_languageBox;
   void createLanguageList();
   QComboBox *_toolbarIconSizeBox;
+  QComboBox *_themeBox;
 
   // Shape widgets
   // Sticky vertices

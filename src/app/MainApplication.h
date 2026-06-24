@@ -24,6 +24,8 @@
 
 #include <QApplication>
 #include <QDebug>
+#include <QFile>
+#include <QPalette>
 #include "MM.h"
 #include <QSettings>
 #include <QDir>
@@ -37,6 +39,9 @@ public:
   virtual ~MainApplication();
 
   bool notify(QObject *receiver, QEvent *event);
+
+  // Apply "dark" or "light" theme to the running application immediately.
+  static void applyTheme(const QString& theme);
 };
 
 }

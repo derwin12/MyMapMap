@@ -24,32 +24,13 @@ triggered by, audio to create an audio-visual narrative.
 Build status
 ---------------
 
-![Build on macOS](https://github.com/mapmapteam/mapmap/workflows/Build%20on%20macOS/badge.svg) ![Build on Ubuntu](https://github.com/mapmapteam/mapmap/workflows/Build%20on%20Ubuntu/badge.svg) ![Build on Windows](https://github.com/mapmapteam/mapmap/workflows/Build%20on%20Windows/badge.svg)
-
-Acknowledgements
-----------------
-This project is sponsored by Art Plus Code.
-https://www.artpluscode.com/
-
-This project was made possible by the support of the International
-Organization of La Francophonie.
-http://www.francophonie.org/
-
-Ce projet a été rendu possible grâce au support de l'Organisation
-internationale de la Francophonie.
-http://www.francophonie.org/
-
-This project also received the support of Perte de Signal.
-https://perte-de-signal.org/
+![Build on Windows](https://github.com/derwin12/MyMapMap/workflows/Build%20and%20Release%20Windows/badge.svg)
 
 
 Build and installation
 ----------------------
 To build and install it, see the INSTALL file provided with the source code.
 
-To use this software on Gnu/Linux with window managers other than Unity, 
-make sure that this package is NOT installed: appmenu-qt5
-or else the menu will not show.
 
 Authors
 -------
@@ -78,7 +59,7 @@ Contributors
 
 More info
 ---------
-Get more info from [mapmapteam.github.io](https://mapmapteam.github.io/)
+Get more info about MapMap from [mapmapteam.github.io](https://mapmapteam.github.io/)
 
 Licence
 ---------

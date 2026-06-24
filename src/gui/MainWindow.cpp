@@ -4152,4 +4152,61 @@ void MainWindow::quitMapMap()
   close();
 }
 
+QIcon MainWindow::themedIcon(const QString& resource)
+{
+  bool isDark = (qApp->palette().color(QPalette::Window).lightness() < 128);
+  if (isDark)
+    return QIcon(resource);
+
+  QFile f(resource);
+  if (!f.open(QFile::ReadOnly))
+    return QIcon(resource);
+  QByteArray svg = f.readAll();
+  svg.replace("stroke=\"white\"", "stroke=\"#2e2e2e\"");
+  svg.replace("stroke=\"#fff\"",  "stroke=\"#2e2e2e\"");
+  svg.replace("fill=\"white\"",   "fill=\"#2e2e2e\"");
+  QPixmap pix;
+  pix.loadFromData(svg, "svg");
+  return QIcon(pix);
+}
+
+void MainWindow::refreshIcons()
+{
+  struct { QAction* action; const char* resource; } entries[] = {
+    { newAction,                  ":/new"               },
+    { openAction,                 ":/open"              },
+    { saveAction,                 ":/save"              },
+    { saveAsAction,               ":/save-as"           },
+    { importMediaAction,          ":/add-video"         },
+    { AddCameraAction,            ":/add-camera"        },
+    { addColorAction,             ":/add-color"         },
+    { addMeshAction,              ":/add-mesh"          },
+    { addTriangleAction,          ":/add-triangle"      },
+    { addEllipseAction,           ":/add-ellipse"       },
+    { playAction,                 ":/play"              },
+    { pauseAction,                ":/pause"             },
+    { rewindAction,               ":/rewind"            },
+    { outputFullScreenAction,     ":/fullscreen"        },
+    { displayControlsAction,      ":/control-points"    },
+    { displaySourceControlsAction,":/control-points"    },
+    { stickyVerticesAction,       ":/control-points"    },
+    { displayTestSignalAction,    ":/toggle-test-signal"},
+  };
+  for (auto& e : entries) {
+    if (e.action)
+      e.action->setIcon(themedIcon(e.resource));
+  }
+#ifdef Q_OS_MAC
+  if (addSyphonAction)
+    addSyphonAction->setIcon(themedIcon(":/add-syphon"));
+#endif
+}
+
+void MainWindow::changeEvent(QEvent* event)
+{
+  if (event->type() == QEvent::ApplicationPaletteChange)
+    refreshIcons();
+  QMainWindow::changeEvent(event);
+}
+
 }

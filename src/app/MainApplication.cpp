@@ -20,6 +20,7 @@
  */
 
 #include "MainApplication.h"
+#include <QStyleFactory>
 
 namespace mmp {
 
@@ -40,6 +41,77 @@ MainApplication::MainApplication(int &argc, char *argv[])
 
 MainApplication::~MainApplication()
 {
+}
+
+void MainApplication::applyTheme(const QString& theme)
+{
+  qApp->setStyle(QStyleFactory::create("Fusion"));
+
+  if (theme == "light") {
+    const QColor bg(0xf2, 0xf2, 0xf2);
+    const QColor surface(0xff, 0xff, 0xff);
+    const QColor text(0x1e, 0x1e, 0x2e);
+    const QColor textDisabled(0xa0, 0xa0, 0xa0);
+    const QColor accent(0x29, 0x80, 0xb9);
+    const QColor border(0xc8, 0xc8, 0xc8);
+
+    QPalette p;
+    p.setColor(QPalette::Window,          bg);
+    p.setColor(QPalette::WindowText,      text);
+    p.setColor(QPalette::Base,            surface);
+    p.setColor(QPalette::AlternateBase,   bg);
+    p.setColor(QPalette::ToolTipBase,     surface);
+    p.setColor(QPalette::ToolTipText,     text);
+    p.setColor(QPalette::Text,            text);
+    p.setColor(QPalette::Button,          bg);
+    p.setColor(QPalette::ButtonText,      text);
+    p.setColor(QPalette::BrightText,      Qt::black);
+    p.setColor(QPalette::Link,            accent);
+    p.setColor(QPalette::Highlight,       accent);
+    p.setColor(QPalette::HighlightedText, Qt::white);
+    p.setColor(QPalette::Disabled, QPalette::Text,       textDisabled);
+    p.setColor(QPalette::Disabled, QPalette::ButtonText, textDisabled);
+    p.setColor(QPalette::Disabled, QPalette::WindowText, textDisabled);
+    p.setColor(QPalette::Mid,             border);
+    p.setColor(QPalette::Dark,            QColor(0xb0, 0xb0, 0xb0));
+    p.setColor(QPalette::Shadow,          QColor(0x80, 0x80, 0x80));
+    qApp->setPalette(p);
+    qApp->setStyleSheet(QString()); // clear dark stylesheet
+  } else {
+    // Dark theme
+    const QColor bg(0x27, 0x2a, 0x36);
+    const QColor surface(0x32, 0x35, 0x41);
+    const QColor border(0x4c, 0x4f, 0x5b);
+    const QColor text(0xf6, 0xf5, 0xf5);
+    const QColor textDisabled(0x6a, 0x6d, 0x7c);
+    const QColor accent(0x4a, 0x9e, 0xe0);
+
+    QPalette p;
+    p.setColor(QPalette::Window,          bg);
+    p.setColor(QPalette::WindowText,      text);
+    p.setColor(QPalette::Base,            surface);
+    p.setColor(QPalette::AlternateBase,   bg);
+    p.setColor(QPalette::ToolTipBase,     surface);
+    p.setColor(QPalette::ToolTipText,     text);
+    p.setColor(QPalette::Text,            text);
+    p.setColor(QPalette::Button,          surface);
+    p.setColor(QPalette::ButtonText,      text);
+    p.setColor(QPalette::BrightText,      Qt::white);
+    p.setColor(QPalette::Link,            accent);
+    p.setColor(QPalette::Highlight,       accent);
+    p.setColor(QPalette::HighlightedText, Qt::white);
+    p.setColor(QPalette::Disabled, QPalette::Text,       textDisabled);
+    p.setColor(QPalette::Disabled, QPalette::ButtonText, textDisabled);
+    p.setColor(QPalette::Disabled, QPalette::WindowText, textDisabled);
+    p.setColor(QPalette::Mid,             border);
+    p.setColor(QPalette::Dark,            bg);
+    p.setColor(QPalette::Shadow,          QColor(0x10, 0x12, 0x18));
+    qApp->setPalette(p);
+
+    QFile stylesheet(":/stylesheet");
+    (void)stylesheet.open(QFile::ReadOnly);
+    qApp->setStyleSheet(QLatin1String(stylesheet.readAll()));
+  }
 }
 
 bool MainApplication::notify(QObject *receiver, QEvent *event)

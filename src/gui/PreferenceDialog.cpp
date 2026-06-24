@@ -20,6 +20,7 @@
  */
 
 #include "PreferenceDialog.h"
+#include "MainApplication.h"
 
 namespace mmp {
 
@@ -119,6 +120,8 @@ bool PreferenceDialog::loadSettings()
                                          settings.value("toolbarIconSize", MM::TOOLBAR_ICON_SIZE)));
   // Set language
   _languageBox->setCurrentIndex(_languageBox->findData(settings.value("language", MM::DEFAULT_LANGUAGE)));
+  // Set theme
+  _themeBox->setCurrentIndex(_themeBox->findData(settings.value("theme", "dark")));
 
   // Allow OSC message with same media source
   _oscSameMediaSourceBox->setChecked(settings.value("oscSameMediaSource", MM::OSC_SAME_MEDIA_SOURCE).toBool());
@@ -158,6 +161,10 @@ void PreferenceDialog::applySettings()
   settings.setValue("toolbarIconSize", _toolbarIconSizeBox->currentData());
   // Set language
   settings.setValue("language", _languageBox->currentData());
+  // Set theme and apply immediately
+  QString theme = _themeBox->currentData().toString();
+  settings.setValue("theme", theme);
+  MainApplication::applyTheme(theme);
   // Allow OSC message with same media source
   settings.setValue("oscSameMediaSource", _oscSameMediaSourceBox->isChecked());
 #ifdef HAVE_MCP
@@ -192,6 +199,10 @@ void PreferenceDialog::createInterfacePage()
   _toolbarIconSizeBox->addItem(tr("Medium"), 48);
   _toolbarIconSizeBox->addItem(tr("Small"), 32);
 
+  _themeBox = new QComboBox;
+  _themeBox->addItem(tr("Dark"), "dark");
+  _themeBox->addItem(tr("Light"), "light");
+
   QFormLayout *languageForm = new QFormLayout;
   languageForm->setFieldGrowthPolicy(QFormLayout::FieldsStayAtSizeHint);
   languageForm->addRow(tr("Language (requires restart)"), _languageBox);
@@ -200,9 +211,14 @@ void PreferenceDialog::createInterfacePage()
   toolbarIconSizeForm->setFieldGrowthPolicy(QFormLayout::FieldsStayAtSizeHint);
   toolbarIconSizeForm->addRow(tr("Toolbar icon size (requires restart)"), _toolbarIconSizeBox);
 
+  QFormLayout *themeForm = new QFormLayout;
+  themeForm->setFieldGrowthPolicy(QFormLayout::FieldsStayAtSizeHint);
+  themeForm->addRow(tr("Theme"), _themeBox);
+
   QVBoxLayout *interfaceLayout = new QVBoxLayout;
   interfaceLayout->addLayout(languageForm);
   interfaceLayout->addLayout(toolbarIconSizeForm);
+  interfaceLayout->addLayout(themeForm);
 
   _interfacePage->setLayout(interfaceLayout);
 }

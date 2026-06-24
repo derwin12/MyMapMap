@@ -6,8 +6,6 @@
 #include <QCommandLineParser>
 #include <QCommandLineOption>
 #include <QOpenGLContext>
-#include <QStyleFactory>
-#include <QPalette>
 #include <QPainter>
 #include <QSplashScreen>
 
@@ -227,42 +225,8 @@ int main(int argc, char *argv[])
   QString family = QFontDatabase::applicationFontFamilies(id).at(0);
   app.setFont(QFont(family, 11, QFont::Normal));
 
-  // Use Fusion style as base — renders dark palettes cleanly on Windows.
-  app.setStyle(QStyleFactory::create("Fusion"));
-
-  // Dark palette covers widgets not reached by QSS (spinbox arrows, etc.).
-  QPalette darkPalette;
-  const QColor bg(0x27, 0x2a, 0x36);
-  const QColor surface(0x32, 0x35, 0x41);
-  const QColor border(0x4c, 0x4f, 0x5b);
-  const QColor text(0xf6, 0xf5, 0xf5);
-  const QColor textDisabled(0x6a, 0x6d, 0x7c);
-  const QColor accent(0x4a, 0x9e, 0xe0);
-  darkPalette.setColor(QPalette::Window,          bg);
-  darkPalette.setColor(QPalette::WindowText,      text);
-  darkPalette.setColor(QPalette::Base,            surface);
-  darkPalette.setColor(QPalette::AlternateBase,   bg);
-  darkPalette.setColor(QPalette::ToolTipBase,     surface);
-  darkPalette.setColor(QPalette::ToolTipText,     text);
-  darkPalette.setColor(QPalette::Text,            text);
-  darkPalette.setColor(QPalette::Button,          surface);
-  darkPalette.setColor(QPalette::ButtonText,      text);
-  darkPalette.setColor(QPalette::BrightText,      Qt::white);
-  darkPalette.setColor(QPalette::Link,            accent);
-  darkPalette.setColor(QPalette::Highlight,       accent);
-  darkPalette.setColor(QPalette::HighlightedText, Qt::white);
-  darkPalette.setColor(QPalette::Disabled, QPalette::Text,       textDisabled);
-  darkPalette.setColor(QPalette::Disabled, QPalette::ButtonText, textDisabled);
-  darkPalette.setColor(QPalette::Disabled, QPalette::WindowText, textDisabled);
-  darkPalette.setColor(QPalette::Mid,             border);
-  darkPalette.setColor(QPalette::Dark,            bg);
-  darkPalette.setColor(QPalette::Shadow,          QColor(0x10, 0x12, 0x18));
-  app.setPalette(darkPalette);
-
-  // Load stylesheet.
-  QFile stylesheet(":/stylesheet");
-  (void)stylesheet.open(QFile::ReadOnly);
-  app.setStyleSheet(QLatin1String(stylesheet.readAll()));
+  // Apply theme from saved preference (default: dark).
+  MainApplication::applyTheme(settings.value("theme", "dark").toString());
 
   // read positional argument:
   const QStringList args = parser.positionalArguments();

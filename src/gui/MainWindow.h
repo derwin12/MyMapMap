@@ -85,6 +85,7 @@ protected:
   void closeEvent(QCloseEvent *event);
   void keyPressEvent(QKeyEvent *event);
   bool eventFilter(QObject *object, QEvent *event);
+  void changeEvent(QEvent *event) override;
 
   void dragEnterEvent(QDragEnterEvent *event);
   void dragMoveEvent(QDragMoveEvent *event);
@@ -295,6 +296,10 @@ private:
   void createMenus();
   void createLayerContextMenu();
   void createSourceContextMenu();
+
+  // Theme helpers.
+  static QIcon themedIcon(const QString& resource);
+  void refreshIcons();
   void createToolBars();
   void createStatusBar();
   void updateRecentFileActions();
