@@ -2,12 +2,21 @@
 
 MyMapMap is a fork of [MapMap](https://github.com/mapmapteam/mapmap), licensed GPLv3.
 The `upstream` git remote points at the original project; `origin` points at this fork
-(derwin12/MyMapMap). Upstream CI (`.github/workflows/windows-build.yml`) builds with
-Qt 6.8.0 + MinGW + QtMultimedia. Build verification has not yet been done locally — the
-machine only has Qt 5.15.2 (msvc2019_64), which is likely insufficient since the project
-uses Qt6 APIs (notably QtMultimedia). To build with Visual Studio 2022 instead of MinGW,
-install Qt 6.8.x with the official `msvc2022_64` kit + Multimedia module via
-`C:\Qt\MaintenanceTool.exe` before attempting a build.
+(derwin12/MyMapMap). Build verified working: Qt 6.8.3 (`msvc2022_64` kit + Multimedia
+module) with Visual Studio 2022, via `build_msvc2022.bat` (qmake + nmake). Output binary
+is `bin/mapmap.exe`, kept inside the project folder (`DESTDIR` in `mapmap.pro`; the
+upstream `win32` block in `src/src.pri` used to redirect `TARGET` outside the repo —
+that override was removed).
+
+## NEVER push to upstream
+
+`upstream` (mapmapteam/mapmap) is read-only for this project — fetch/merge from it only.
+**Never run `git push` with `upstream` as the remote, and never create issues, PRs, or
+any other writes against `mapmapteam/mapmap`.** All pushes, issues, and PRs go to
+`origin` (derwin12/MyMapMap) only. This rule applies even if a command would otherwise
+default to the wrong remote (e.g. `gh issue create` without `--repo` has previously
+picked `upstream` by mistake) — always pass `--repo derwin12/MyMapMap` explicitly to
+`gh` commands, and double-check the remote before any `git push`.
 
 ## GPLv3 obligations (apply on any distribution outside this machine)
 
