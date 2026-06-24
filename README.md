@@ -1,5 +1,9 @@
-MapMap
-====== 
+MyMapMap
+======
+
+MyMapMap is a fork of [MapMap](https://github.com/mapmapteam/mapmap) by the MapMap
+team, licensed under the GNU General Public License v3 (GPLv3). See `upstream` remote
+for the original project.
 
 MapMap is a free video mapping software.
 
