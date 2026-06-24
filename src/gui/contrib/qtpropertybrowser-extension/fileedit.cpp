@@ -25,6 +25,7 @@
 #include <QHBoxLayout>
 #include <QToolButton>
 #include <QFileDialog>
+#include <QFileInfo>
 #include <QFocusEvent>
 
 FileEdit::FileEdit(QWidget *parent)
@@ -34,32 +35,45 @@ FileEdit::FileEdit(QWidget *parent)
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
     theLineEdit = new QLineEdit(this);
+    theLineEdit->setReadOnly(true);
+    theLineEdit->setFrame(false);
     theLineEdit->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred));
     QToolButton *button = new QToolButton(this);
     button->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred));
+    button->setFixedWidth(18);
     button->setText(QLatin1String("..."));
     layout->addWidget(theLineEdit);
     layout->addWidget(button);
-    setFocusProxy(theLineEdit);
+    setFocusProxy(button);
     setFocusPolicy(Qt::StrongFocus);
-    setAttribute(Qt::WA_InputMethodEnabled);
-    connect(theLineEdit, SIGNAL(textEdited(const QString &)),
-                this, SIGNAL(filePathChanged(const QString &)));
     connect(button, SIGNAL(clicked()),
                 this, SLOT(buttonClicked()));
+}
+
+QSize FileEdit::sizeHint() const
+{
+    return QSize(100, theLineEdit->sizeHint().height());
+}
+
+void FileEdit::setFilePath(const QString &filePath)
+{
+    if (theFilePath == filePath)
+        return;
+    theFilePath = filePath;
+    theLineEdit->setText(QFileInfo(filePath).fileName());
 }
 
 void FileEdit::buttonClicked()
 {
 #ifdef Q_OS_LINUX
-    QString filePath = QFileDialog::getOpenFileName(this, tr("Choose a file"), theLineEdit->text(), filter(), nullptr, QFileDialog::DontUseNativeDialog );
+    QString filePath = QFileDialog::getOpenFileName(this, tr("Choose a file"), theFilePath, filter(), nullptr, QFileDialog::DontUseNativeDialog);
 #else
-    QString filePath = QFileDialog::getOpenFileName(this, tr("Choose a file"), theLineEdit->text(), filter() );
+    QString filePath = QFileDialog::getOpenFileName(this, tr("Choose a file"), theFilePath, filter());
 #endif
 
     if (filePath.isNull())
         return;
-    theLineEdit->setText(filePath);
+    setFilePath(filePath);
     emit filePathChanged(filePath);
 }
 

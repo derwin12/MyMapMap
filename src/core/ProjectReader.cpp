@@ -19,6 +19,7 @@
  */
 #include "ProjectReader.h"
 #include <iostream>
+#include <QFileInfo>
 
 namespace mmp {
 
@@ -87,20 +88,24 @@ void ProjectReader::parseProject(const QJsonObject& project)
       manager.addSource(source);
       _window->addSourceItem(source->getId(), source->getIcon(), source->getName());
 
-      // Locate media file if not found
+      // Resolve relative URIs to absolute paths so sources can load their media.
+      // Always resolve relative URIs (not only when the file is missing),
+      // because QImageReader/QMediaPlayer need absolute paths.
       if (source->getSourceType() == Source::SourceType::Video)
       {
         QSharedPointer<Video> media = qSharedPointerCast<Video>(source);
         Q_CHECK_PTR(media);
-        if (!_window->fileExists(media->getUri()))
-          media->setUri(_window->locateMediaFile(media->getUri(), false));
+        QString uri = media->getUri();
+        if (!QFileInfo(uri).isAbsolute() || !_window->fileExists(uri))
+          media->setUri(_window->locateMediaFile(uri, false));
       }
       if (source->getSourceType() == Source::SourceType::Image)
       {
         QSharedPointer<Image> image = qSharedPointerCast<Image>(source);
         Q_CHECK_PTR(image);
-        if (!_window->fileExists(image->getUri()))
-          image->setUri(_window->locateMediaFile(image->getUri(), true));
+        QString uri = image->getUri();
+        if (!QFileInfo(uri).isAbsolute() || !_window->fileExists(uri))
+          image->setUri(_window->locateMediaFile(uri, true));
       }
     }
   }

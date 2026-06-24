@@ -409,7 +409,7 @@ void QtPropertyEditorDelegate::drawDisplay(QPainter *painter, const QStyleOption
 QSize QtPropertyEditorDelegate::sizeHint(const QStyleOptionViewItem &option,
             const QModelIndex &index) const
 {
-    return QItemDelegate::sizeHint(option, index) + QSize(3, 4);
+    return QItemDelegate::sizeHint(option, index) + QSize(3, 8);
 }
 
 bool QtPropertyEditorDelegate::eventFilter(QObject *object, QEvent *event)

@@ -31,10 +31,11 @@ class FileEdit : public QWidget
     Q_OBJECT
 public:
     FileEdit(QWidget *parent = 0);
-    void setFilePath(const QString &filePath) { if (theLineEdit->text() != filePath) theLineEdit->setText(filePath); }
-    QString filePath() const { return theLineEdit->text(); }
+    void setFilePath(const QString &filePath);
+    QString filePath() const { return theFilePath; }
     void setFilter(const QString &filter) { theFilter = filter; }
     QString filter() const { return theFilter; }
+    QSize sizeHint() const override;
 signals:
     void filePathChanged(const QString &filePath);
 protected:
@@ -47,6 +48,7 @@ private slots:
 private:
     QLineEdit *theLineEdit;
     QString theFilter;
+    QString theFilePath;
 };
 
 #endif
