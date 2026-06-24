@@ -931,10 +931,12 @@ void MainWindow::addEllipse()
   undoStack->push(new AddLayerCommand(this, layerId));
 }
 
-void MainWindow::checkForUpdates()
+void MainWindow::checkForUpdates(bool autoCheck)
 {
-  checkForUpdatesAction->setEnabled(false);
-  checkForUpdatesAction->setText(tr("Checking..."));
+  if (!autoCheck) {
+    checkForUpdatesAction->setEnabled(false);
+    checkForUpdatesAction->setText(tr("Checking..."));
+  }
 
   QNetworkAccessManager *nam = new QNetworkAccessManager(this);
   QNetworkRequest req(QUrl("https://api.github.com/repos/derwin12/MyMapMap/releases/latest"));
@@ -942,41 +944,93 @@ void MainWindow::checkForUpdates()
   req.setRawHeader("User-Agent", "MyMapMap");
 
   QNetworkReply *reply = nam->get(req);
-  connect(reply, &QNetworkReply::finished, this, [this, reply, nam]() {
+  connect(reply, &QNetworkReply::finished, this, [this, reply, nam, autoCheck]() {
     checkForUpdatesAction->setEnabled(true);
     checkForUpdatesAction->setText(tr("Check for &Updates..."));
     reply->deleteLater();
     nam->deleteLater();
 
     if (reply->error() != QNetworkReply::NoError) {
-      QMessageBox::warning(this, tr("Update Check Failed"),
-        tr("Could not reach the update server.\n\n%1").arg(reply->errorString()));
+      if (!autoCheck)
+        QMessageBox::warning(this, tr("Update Check Failed"),
+          tr("Could not reach the update server.\n\n%1").arg(reply->errorString()));
       return;
     }
 
     QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
     QString latestTag = doc.object().value("tag_name").toString().remove(0, 1); // strip leading 'v'
-    QString current   = MM::VERSION.section('-', 0, 0); // e.g. "0.6.3" from "0.6.3-mymapmap.1"
+    QString current   = MM::VERSION;
 
     if (latestTag.isEmpty()) {
-      QMessageBox::warning(this, tr("Update Check"), tr("Could not parse version information."));
+      if (!autoCheck)
+        QMessageBox::warning(this, tr("Update Check"), tr("Could not parse version information."));
       return;
     }
 
+    // On auto-check, skip versions the user has chosen to ignore.
+    QSettings settings;
+    if (autoCheck && settings.value("skipVersion").toString() == latestTag)
+      return;
+
     if (latestTag == current) {
-      QMessageBox::information(this, tr("Up to Date"),
-        tr("You are running the latest version of MyMapMap (%1).").arg(current));
-    } else {
-      QMessageBox btn;
-      btn.setWindowTitle(tr("Update Available"));
-      btn.setText(tr("<b>MyMapMap %1 is available.</b><br>You are running %2.")
-                    .arg(latestTag, current));
-      btn.setInformativeText(tr("Would you like to go to the releases page?"));
-      btn.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-      btn.setDefaultButton(QMessageBox::Yes);
-      if (btn.exec() == QMessageBox::Yes)
-        QDesktopServices::openUrl(QUrl("https://github.com/derwin12/MyMapMap/releases/latest"));
+      if (!autoCheck)
+        QMessageBox::information(this, tr("Up to Date"),
+          tr("You are running the latest version of MyMapMap (%1).").arg(current));
+      return;
     }
+
+    // Update available — show dialog with three choices.
+    QDialog dlg(this);
+    dlg.setWindowTitle(tr("Update Available"));
+    dlg.setMinimumWidth(420);
+
+    QLabel *icon = new QLabel;
+    icon->setPixmap(style()->standardPixmap(QStyle::SP_MessageBoxInformation).scaled(48, 48, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    icon->setAlignment(Qt::AlignTop);
+
+    QLabel *title = new QLabel(tr("<b style='font-size:13pt'>MyMapMap %1 is available</b>").arg(latestTag));
+    QLabel *body  = new QLabel(tr("You are currently running version <b>%1</b>.<br>"
+                                  "Would you like to download the new release?").arg(current));
+    body->setWordWrap(true);
+
+    QPushButton *btnDownload = new QPushButton(tr("Open Download Page"));
+    QPushButton *btnIgnore   = new QPushButton(tr("Ignore This Version"));
+    QPushButton *btnLater    = new QPushButton(tr("Remind Me Later"));
+    btnDownload->setDefault(true);
+
+    QHBoxLayout *btnRow = new QHBoxLayout;
+    btnRow->addStretch();
+    btnRow->addWidget(btnLater);
+    btnRow->addWidget(btnIgnore);
+    btnRow->addWidget(btnDownload);
+
+    QVBoxLayout *text = new QVBoxLayout;
+    text->addWidget(title);
+    text->addSpacing(6);
+    text->addWidget(body);
+    text->addSpacing(16);
+    text->addLayout(btnRow);
+
+    QHBoxLayout *root = new QHBoxLayout(&dlg);
+    root->addWidget(icon);
+    root->addSpacing(12);
+    root->addLayout(text);
+
+    connect(btnDownload, &QPushButton::clicked, &dlg, [&]() {
+      settings.remove("skipVersion");
+      QDesktopServices::openUrl(QUrl("https://github.com/derwin12/MyMapMap/releases/latest"));
+      dlg.accept();
+    });
+    connect(btnIgnore, &QPushButton::clicked, &dlg, [&]() {
+      settings.setValue("skipVersion", latestTag);
+      dlg.reject();
+    });
+    connect(btnLater, &QPushButton::clicked, &dlg, [&]() {
+      settings.remove("skipVersion");
+      dlg.reject();
+    });
+
+    dlg.exec();
   });
 }
 

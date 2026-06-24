@@ -106,7 +106,7 @@ private slots:
   void addColor();
   void addSyphon();
   void about();
-  void checkForUpdates();
+  void checkForUpdates(bool autoCheck = false);
   void updateStatusBar();
   void showMenuBar(bool shown);
   void openRecentFile();
