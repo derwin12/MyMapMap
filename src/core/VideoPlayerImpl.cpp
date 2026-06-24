@@ -21,11 +21,23 @@ VideoPlayerImpl::VideoPlayerImpl()
     _videoSink(nullptr),
     _eos(false)
 {
+  // Worker thread + converter live for the lifetime of this object;
+  // only the QVideoSink -> converter connection is redone per loadMovie().
+  _converterThread = new QThread();
+  _converter = new VideoFrameConverter();
+  _converter->moveToThread(_converterThread);
+  connect(_converterThread, &QThread::finished, _converter, &QObject::deleteLater);
+  connect(_converter, &VideoFrameConverter::frameReady,
+          this, &VideoPlayerImpl::onFrameConverted);
+  _converterThread->start();
 }
 
 VideoPlayerImpl::~VideoPlayerImpl()
 {
   freeResources();
+  _converterThread->quit();
+  _converterThread->wait();
+  delete _converterThread;
 }
 
 void VideoPlayerImpl::freeResources()
@@ -59,7 +71,7 @@ bool VideoPlayerImpl::loadMovie(const QString& path)
   _player->setVideoSink(_videoSink);
 
   connect(_videoSink, &QVideoSink::videoFrameChanged,
-          this, &VideoPlayerImpl::onVideoFrameChanged);
+          _converter, &VideoFrameConverter::convertFrame);
   connect(_player, &QMediaPlayer::mediaStatusChanged,
           this, &VideoPlayerImpl::onMediaStatusChanged);
 
@@ -81,22 +93,19 @@ bool VideoPlayerImpl::loadMovie(const QString& path)
   return true;
 }
 
-void VideoPlayerImpl::onVideoFrameChanged(const QVideoFrame& frame)
+void VideoPlayerImpl::onFrameConverted(QImage img)
 {
-  if (!frame.isValid())
+  if (img.isNull())
     return;
 
   lockMutex();
 
-  QImage img = frame.toImage().convertToFormat(QImage::Format_RGBA8888);
-  if (!img.isNull()) {
-    _currentFrame = img;
-    _width  = _currentFrame.width();
-    _height = _currentFrame.height();
-    _data   = _currentFrame.bits();
-    _bitsChanged = true;
-    _videoIsConnected = true;
-  }
+  _currentFrame = img;
+  _width  = _currentFrame.width();
+  _height = _currentFrame.height();
+  _data   = _currentFrame.constBits();
+  _bitsChanged = true;
+  _videoIsConnected = true;
 
   unlockMutex();
 }

@@ -20,20 +20,26 @@ CameraSurface::CameraSurface(QObject *parent)
   : QObject(parent),
     _videoSink(new QVideoSink(this))
 {
+  _converterThread = new QThread();
+  _converter = new VideoFrameConverter();
+  _converter->moveToThread(_converterThread);
+  connect(_converterThread, &QThread::finished, _converter, &QObject::deleteLater);
   connect(_videoSink, &QVideoSink::videoFrameChanged,
-          this, &CameraSurface::onVideoFrameChanged);
+          _converter, &VideoFrameConverter::convertFrame);
+  connect(_converter, &VideoFrameConverter::frameReady,
+          this, &CameraSurface::onFrameConverted);
+  _converterThread->start();
 }
 
 CameraSurface::~CameraSurface()
 {
+  _converterThread->quit();
+  _converterThread->wait();
+  delete _converterThread;
 }
 
-void CameraSurface::onVideoFrameChanged(const QVideoFrame& frame)
+void CameraSurface::onFrameConverted(QImage img)
 {
-  if (!frame.isValid())
-    return;
-
-  QImage img = frame.toImage().convertToFormat(QImage::Format_RGBA8888);
   if (img.isNull())
     return;
 

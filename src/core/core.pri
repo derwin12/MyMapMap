@@ -16,6 +16,7 @@ HEADERS += $$PWD/Commands.h \
     $$PWD/ProjectWriter.h \
     $$PWD/Serializable.h \
     $$PWD/UidAllocator.h \
+    $$PWD/VideoFrameConverter.h \
     $$PWD/VideoImpl.h \
     $$PWD/VideoPlayerImpl.h \
     $$PWD/Util.h
@@ -34,6 +35,7 @@ SOURCES += $$PWD/Commands.cpp \
     $$PWD/ProjectWriter.cpp \
     $$PWD/Serializable.cpp \
     $$PWD/UidAllocator.cpp \
+    $$PWD/VideoFrameConverter.cpp \
     $$PWD/VideoImpl.cpp \
     $$PWD/VideoPlayerImpl.cpp \
     $$PWD/Util.cpp

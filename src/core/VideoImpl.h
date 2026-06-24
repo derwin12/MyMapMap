@@ -122,8 +122,11 @@ protected:
 
   // Latest decoded frame — always Format_RGBA8888.
   QImage _currentFrame;
-  /// Raw pointer into _currentFrame.bits(); kept for ABI with getBits().
-  uchar *_data;
+  /// Raw pointer into _currentFrame.constBits(); kept for ABI with getBits().
+  /// Must stay const — calling the non-const QImage::bits() here would force
+  /// a full deep copy every frame, since _currentFrame is still shared with
+  /// the QImage that arrived by value over a queued cross-thread signal.
+  const uchar *_data;
   bool   _bitsChanged;
 
   int _width;

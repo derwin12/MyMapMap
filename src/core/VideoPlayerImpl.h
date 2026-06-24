@@ -15,8 +15,10 @@
 #define VIDEO_PLAYER_IMPL_H_
 
 #include "VideoImpl.h"
+#include "VideoFrameConverter.h"
 
 #include <QObject>
+#include <QThread>
 #include <QMediaPlayer>
 #include <QAudioOutput>
 #include <QVideoSink>
@@ -52,7 +54,7 @@ protected:
   void freeResources() override;
 
 private slots:
-  void onVideoFrameChanged(const QVideoFrame& frame);
+  void onFrameConverted(QImage img);
   void onMediaStatusChanged(QMediaPlayer::MediaStatus status);
 
 private:
@@ -60,6 +62,11 @@ private:
   QAudioOutput *_audioOutput;
   QVideoSink   *_videoSink;
   bool          _eos;
+
+  // Runs VideoFrameConverter off the GUI thread so the per-frame
+  // QVideoFrame -> QImage pixel conversion never blocks UI/input.
+  QThread             *_converterThread;
+  VideoFrameConverter *_converter;
 };
 
 }

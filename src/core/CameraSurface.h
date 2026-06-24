@@ -41,7 +41,10 @@
 #ifndef CAMERA_SURFACE_H_
 #define CAMERA_SURFACE_H_
 
+#include "VideoFrameConverter.h"
+
 #include <QObject>
+#include <QThread>
 #include <QImage>
 #include <QVideoSink>
 #include <QVideoFrame>
@@ -73,11 +76,16 @@ public:
     int frameHeight() const { return _temporaryImage.height(); }
 
 private slots:
-    void onVideoFrameChanged(const QVideoFrame& frame);
+    void onFrameConverted(QImage img);
 
 private:
     QVideoSink *_videoSink;
     QImage      _temporaryImage;
+
+    // Runs VideoFrameConverter off the GUI thread so the per-frame
+    // QVideoFrame -> QImage pixel conversion never blocks UI/input.
+    QThread             *_converterThread;
+    VideoFrameConverter *_converter;
 };
 
 }
