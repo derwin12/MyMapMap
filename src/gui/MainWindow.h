@@ -31,6 +31,8 @@
 #include <QVariant>
 #include <QMap>
 #include <QMessageLogger>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
 
 #include "MM.h"
 
@@ -103,6 +105,7 @@ private slots:
   void addColor();
   void addSyphon();
   void about();
+  void checkForUpdates();
   void updateStatusBar();
   void showMenuBar(bool shown);
   void openRecentFile();
@@ -429,6 +432,7 @@ private:
   QAction *renameSourceAction;
   QAction *preferencesAction;
   QAction *aboutAction;
+  QAction *checkForUpdatesAction;
   QAction *clearRecentFileActions;
   QAction *emptyRecentVideos;
 

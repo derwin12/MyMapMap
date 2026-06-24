@@ -35,6 +35,12 @@
 #include <QOpenGLWidget>
 #include <QGuiApplication>
 #include <QScreen>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QDesktopServices>
 
 namespace mmp {
 
@@ -923,6 +929,55 @@ void MainWindow::addEllipse()
 
   // Lets undo-stack handle Undo/Redo the adding of mapping item.
   undoStack->push(new AddLayerCommand(this, layerId));
+}
+
+void MainWindow::checkForUpdates()
+{
+  checkForUpdatesAction->setEnabled(false);
+  checkForUpdatesAction->setText(tr("Checking..."));
+
+  QNetworkAccessManager *nam = new QNetworkAccessManager(this);
+  QNetworkRequest req(QUrl("https://api.github.com/repos/derwin12/MyMapMap/releases/latest"));
+  req.setRawHeader("Accept", "application/vnd.github+json");
+  req.setRawHeader("User-Agent", "MyMapMap");
+
+  QNetworkReply *reply = nam->get(req);
+  connect(reply, &QNetworkReply::finished, this, [this, reply, nam]() {
+    checkForUpdatesAction->setEnabled(true);
+    checkForUpdatesAction->setText(tr("Check for &Updates..."));
+    reply->deleteLater();
+    nam->deleteLater();
+
+    if (reply->error() != QNetworkReply::NoError) {
+      QMessageBox::warning(this, tr("Update Check Failed"),
+        tr("Could not reach the update server.\n\n%1").arg(reply->errorString()));
+      return;
+    }
+
+    QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
+    QString latestTag = doc.object().value("tag_name").toString().remove(0, 1); // strip leading 'v'
+    QString current   = MM::VERSION.section('-', 0, 0); // e.g. "0.6.3" from "0.6.3-mymapmap.1"
+
+    if (latestTag.isEmpty()) {
+      QMessageBox::warning(this, tr("Update Check"), tr("Could not parse version information."));
+      return;
+    }
+
+    if (latestTag == current) {
+      QMessageBox::information(this, tr("Up to Date"),
+        tr("You are running the latest version of MyMapMap (%1).").arg(current));
+    } else {
+      QMessageBox btn;
+      btn.setWindowTitle(tr("Update Available"));
+      btn.setText(tr("<b>MyMapMap %1 is available.</b><br>You are running %2.")
+                    .arg(latestTag, current));
+      btn.setInformativeText(tr("Would you like to go to the releases page?"));
+      btn.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+      btn.setDefaultButton(QMessageBox::Yes);
+      if (btn.exec() == QMessageBox::Yes)
+        QDesktopServices::openUrl(QUrl("https://github.com/derwin12/MyMapMap/releases/latest"));
+    }
+  });
 }
 
 void MainWindow::about()
@@ -1924,6 +1979,13 @@ void MainWindow::createActions()
   redoAction->setShortcutContext(Qt::ApplicationShortcut);
   addAction(redoAction);
 
+  // Check for updates.
+  checkForUpdatesAction = new QAction(tr("Check for &Updates..."), this);
+  checkForUpdatesAction->setToolTip(tr("Check if a newer version of MyMapMap is available"));
+  checkForUpdatesAction->setIconVisibleInMenu(false);
+  addAction(checkForUpdatesAction);
+  connect(checkForUpdatesAction, &QAction::triggered, this, &MainWindow::checkForUpdates);
+
   // About.
   aboutAction = new QAction(tr("&About %1").arg(MM::APPLICATION_NAME), this);
   aboutAction->setToolTip(tr("Show the application's About box"));
@@ -2499,6 +2561,8 @@ void MainWindow::createMenus()
   helpMenu->addAction(docAction);
   helpMenu->addAction(shortcutAction);
   helpMenu->addAction(bugReportAction);
+  helpMenu->addSeparator();
+  helpMenu->addAction(checkForUpdatesAction);
   helpMenu->addSeparator();
   helpMenu->addAction(aboutAction);
 
