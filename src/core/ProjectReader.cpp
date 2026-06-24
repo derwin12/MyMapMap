@@ -36,8 +36,17 @@ bool ProjectReader::isValidVersion(const QString& versionString)
 
 bool ProjectReader::readFile(QIODevice *device)
 {
+  QByteArray data = device->readAll();
+
+  if (data.trimmed().startsWith("<?xml") || data.trimmed().startsWith("<project")) {
+    _errorString = QObject::tr("This file is in the old XML project format, which is no longer "
+                                "supported. Please open it with an older version of MapMap and "
+                                "re-save it, or recreate the project from scratch.");
+    return false;
+  }
+
   QJsonParseError parseError;
-  QJsonDocument doc = QJsonDocument::fromJson(device->readAll(), &parseError);
+  QJsonDocument doc = QJsonDocument::fromJson(data, &parseError);
   if (doc.isNull()) {
     _errorString = QString("Parse error at offset %1: %2")
         .arg(parseError.offset).arg(parseError.errorString());
