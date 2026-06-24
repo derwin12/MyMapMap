@@ -82,6 +82,10 @@ MainWindow::MainWindow()
 
   // UndoStack
   undoStack = new QUndoStack(this);
+  // Any undo-stack change (including shape vertex/move/rotate/scale
+  // transforms, which have no other windowModified() call site) is a
+  // real project edit.
+  connect(undoStack, &QUndoStack::indexChanged, this, &MainWindow::windowModified);
 
   // Create everything.
   createLayout();
