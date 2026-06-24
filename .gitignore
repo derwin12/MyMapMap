@@ -58,6 +58,7 @@ tests/target_wrapper.sh
 # Shadow build directory
 build/
 bin/
+release/
 
 # Folders not to be included
 html/

@@ -1,0 +1,67 @@
+name: Release (Windows MSVC)
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Qt 6.8.3 (MSVC 2022 64-bit)
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          host: 'windows'
+          target: 'desktop'
+          arch: 'win64_msvc2022_64'
+          modules: 'qtmultimedia'
+
+      - name: Set up MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Configure with qmake
+        run: qmake mapmap.pro CONFIG+=release
+
+      - name: Build
+        run: nmake
+
+      - name: Deploy Qt dependencies
+        run: windeployqt --release --no-system-d3d-compiler bin\mapmap.exe
+
+      - name: Determine version string
+        id: version
+        shell: bash
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Stage release contents
+        shell: bash
+        run: |
+          STAGE="MyMapMap-${{ steps.version.outputs.version }}-win64"
+          mkdir -p "release/$STAGE"
+          cp -r bin/* "release/$STAGE/"
+          cp LICENSE README.md CHANGELOG.md "release/$STAGE/"
+          echo "stage_dir=release/$STAGE" >> "$GITHUB_ENV"
+
+      - name: Zip release
+        shell: bash
+        run: |
+          cd release
+          7z a -tzip "MyMapMap-${{ steps.version.outputs.version }}-win64.zip" "MyMapMap-${{ steps.version.outputs.version }}-win64"
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/MyMapMap-*-win64.zip
+          generate_release_notes: true
