@@ -8,7 +8,6 @@
 #include <QOpenGLContext>
 #include <QPainter>
 #include <QSplashScreen>
-
 #include "MM.h"
 #include "MainWindow.h"
 #include "MainApplication.h"

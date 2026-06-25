@@ -12,9 +12,12 @@
 #include <QObject>
 #include <QImage>
 #include <QSize>
-#include <QMediaCaptureSession>
-#include <QVideoFrameInput>
-#include <QMediaRecorder>
+#include <QScopedPointer>
+// Forward-declare Qt Multimedia types to avoid pulling in their headers
+// (and triggering any static initialisation) until start() actually needs them.
+class QMediaCaptureSession;
+class QVideoFrameInput;
+class QMediaRecorder;
 
 namespace mmp {
 
@@ -65,13 +68,15 @@ signals:
   void errorOccurred(const QString& errorString);
 
 private:
-  QMediaCaptureSession _session;
-  QVideoFrameInput     _frameInput;
-  QMediaRecorder       _recorder;
-  bool                 _recording = false;
-  QString              _filePath;
-  qreal                _fps = 0.0;
-  qint64               _frameCount = 0;
+  // Qt Multimedia objects are heap-allocated lazily inside start() so their
+  // constructors (which trigger WMF/FFmpeg backend init) don't run at startup.
+  QScopedPointer<QMediaCaptureSession> _session;
+  QScopedPointer<QVideoFrameInput>     _frameInput;
+  QScopedPointer<QMediaRecorder>       _recorder;
+  bool                                 _recording = false;
+  QString                              _filePath;
+  qreal                                _fps = 0.0;
+  qint64                               _frameCount = 0;
 };
 
 } // namespace mmp

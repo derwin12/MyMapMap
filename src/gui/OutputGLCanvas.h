@@ -58,6 +58,9 @@ signals:
 protected:
   void paintEvent(QPaintEvent* event) override;
 
+private slots:
+  void _doGrabFrame();
+
 private:
   void _drawClassicTestSignal(QPainter* painter);
   void _drawPALTestCard(QPainter *painter);
@@ -68,6 +71,7 @@ private:
   bool _displayCrosshair;
   bool _displayTestSignal;
   bool _frameGrabEnabled = false;
+  bool _grabPending = false;
   QImage _classicTestCard;
   QBrush _brush_test_signal;
   QImage _palTestCard;

@@ -57,7 +57,6 @@ MainWindow::MainWindow()
 
   mappingManager = new MappingManager;
 
-
   // Initialize internal variables.
   currentSourceId = NULL_UID;
   currentLayerId = NULL_UID;
@@ -82,12 +81,8 @@ MainWindow::MainWindow()
 
   // UndoStack
   undoStack = new QUndoStack(this);
-  // Any undo-stack change (including shape vertex/move/rotate/scale
-  // transforms, which have no other windowModified() call site) is a
-  // real project edit.
   connect(undoStack, &QUndoStack::indexChanged, this, &MainWindow::windowModified);
 
-  // Create everything.
   createLayout();
   createActions();
   createMenus();
@@ -98,8 +93,51 @@ MainWindow::MainWindow()
   updateRecentFileActions();
   updateRecentVideoActions();
 
-  // Load settings.
   readSettings();
+
+  // Defer all UI state restoration to after the singleton is assigned and
+  // the event loop starts. Any restoreGeometry/restoreState/setChecked called
+  // during construction triggers a resize → canvas repaint → MainWindow::window()
+  // re-entry, causing infinite recursive construction.
+  QTimer::singleShot(0, this, [this]() {
+    QSettings s;
+
+    // Window / pane geometry
+    restoreGeometry(s.value("geometry").toByteArray());
+    restoreState(s.value("windowState").toByteArray());
+    mainSplitter->restoreState(s.value("mainSplitter").toByteArray());
+    sourceSplitter->restoreState(s.value("sourceSplitter").toByteArray());
+    layerSplitter->restoreState(s.value("layerSplitter").toByteArray());
+    canvasSplitter->restoreState(s.value("canvasSplitter").toByteArray());
+    outputWindow->restoreGeometry(s.value("outputWindow").toByteArray());
+
+    // Action toggle states
+    outputFullScreenAction->setChecked(s.value("displayOutputWindow", MM::DISPLAY_OUTPUT_WINDOW).toBool());
+    displayTestSignalAction->setChecked(s.value("displayTestSignal", MM::DISPLAY_TEST_SIGNAL).toBool());
+    displayControlsAction->setChecked(s.value("displayControls", MM::DISPLAY_CONTROLS).toBool());
+    outputWindow->setCanvasDisplayCrosshair(s.value("displayControls", MM::DISPLAY_CONTROLS).toBool());
+    displayUndoHistoryAction->setChecked(s.value("displayUndoStack", MM::DISPLAY_UNDO_HISTORY).toBool());
+    displayZoomToolAction->setChecked(s.value("zoomToolBar", MM::DISPLAY_ZOOM_TOOLBAR).toBool());
+    showMenuBarAction->setChecked(s.value("showMenuBar", MM::DISPLAY_MENU_BAR).toBool());
+    displaySourceControlsAction->setChecked(s.value("displayAllControls", MM::DISPLAY_ALL_CONTROLS).toBool());
+    stickyVerticesAction->setChecked(s.value("stickyVertices", MM::STICKY_VERTICES).toBool());
+    muteAllAction->setChecked(s.value("audioMuted", false).toBool());
+    int toolBarIconSize = s.value("toolbarIconSize", MM::TOOLBAR_ICON_SIZE).toInt();
+    mainToolBar->setIconSize(QSize(toolBarIconSize, toolBarIconSize));
+
+    // Recent file/video menus
+    updateRecentFileActions();
+    updateRecentVideoActions();
+
+    // VideoExporter (Qt Multimedia backend init also deferred)
+    _videoExporter = new VideoExporter(this);
+    connect(_videoExporter, &VideoExporter::recordingStopped,
+            this, &MainWindow::onRecordingStopped);
+    connect(_videoExporter, &VideoExporter::errorOccurred, this, [this](const QString& msg) {
+      statusBar()->showMessage(tr("Recording error: %1").arg(msg), 5000);
+      recordAction->setChecked(false);
+    });
+  });
 
   // Start osc.
   startOscReceiver();
@@ -1647,14 +1685,9 @@ void MainWindow::createLayout()
   // Preferences dialog
   _preferenceDialog = new PreferenceDialog(this);
 
-  // Video exporter
-  _videoExporter = new VideoExporter(this);
-  connect(_videoExporter, &VideoExporter::recordingStopped,
-          this, &MainWindow::onRecordingStopped);
-  connect(_videoExporter, &VideoExporter::errorOccurred, this, [this](const QString& msg) {
-    statusBar()->showMessage(tr("Recording error: %1").arg(msg), 5000);
-    recordAction->setChecked(false);
-  });
+  // Video exporter — created lazily after the window is shown so that
+  // Qt Multimedia / WMF initialization doesn't block the main thread during startup.
+  _videoExporter = nullptr;
 
   outputWindow = new OutputGLWindow(this, destinationCanvas);
   outputWindow->installEventFilter(destinationCanvas);
@@ -2645,46 +2678,15 @@ void MainWindow::createStatusBar()
 
 void MainWindow::readSettings()
 {
-  // FIXME: for each setting that is new since the first release in the major version number branch,
-  // make sure it exists before reading its value.
+  // All UI state restoration is done in the deferred singleShot in the constructor.
+  // Any restoreGeometry/restoreState/setChecked call here triggers a resize or repaint
+  // which calls MainWindow::window() before the singleton is fully initialized,
+  // causing infinite recursive construction. Only read non-UI values here.
   QSettings settings;
-
-  // settings present since 0.1.0:
-  restoreGeometry(settings.value("geometry").toByteArray());
-  restoreState(settings.value("windowState").toByteArray());
-
-  mainSplitter->restoreState(settings.value("mainSplitter").toByteArray());
-  sourceSplitter->restoreState(settings.value("sourceSplitter").toByteArray());
-  layerSplitter->restoreState(settings.value("layerSplitter").toByteArray());
-  canvasSplitter->restoreState(settings.value("canvasSplitter").toByteArray());
-  outputWindow->restoreGeometry(settings.value("outputWindow").toByteArray());
-
-  // new in 0.1.2:
-  outputFullScreenAction->setChecked(settings.value("displayOutputWindow", MM::DISPLAY_OUTPUT_WINDOW).toBool());
-  displayTestSignalAction->setChecked(settings.value("displayTestSignal", MM::DISPLAY_TEST_SIGNAL).toBool());
-  displayControlsAction->setChecked(settings.value("displayControls", MM::DISPLAY_CONTROLS).toBool());
-  outputWindow->setCanvasDisplayCrosshair(settings.value("displayControls", MM::DISPLAY_CONTROLS).toBool());
   oscListeningPort = settings.value("oscListeningPort", MM::DEFAULT_OSC_PORT).toInt();
 #ifdef HAVE_MCP
   mcpListeningPort = settings.value("mcpListeningPort", MM::DEFAULT_MCP_PORT).toInt();
 #endif
-
-  // Update Recent files and video
-  updateRecentFileActions();
-  updateRecentVideoActions();
-
-  // new in 0.3.2
-  displayUndoHistoryAction->setChecked(settings.value("displayUndoStack", MM::DISPLAY_UNDO_HISTORY).toBool());
-  displayZoomToolAction->setChecked(settings.value("zoomToolBar", MM::DISPLAY_ZOOM_TOOLBAR).toBool());
-  showMenuBarAction->setChecked(settings.value("showMenuBar", MM::DISPLAY_MENU_BAR).toBool());
-
-  // New in 0.4.1
-   displaySourceControlsAction->setChecked(settings.value("displayAllControls", MM::DISPLAY_ALL_CONTROLS).toBool());
-   stickyVerticesAction->setChecked(settings.value("stickyVertices", MM::STICKY_VERTICES).toBool());
-   muteAllAction->setChecked(settings.value("audioMuted", false).toBool());
-   // Set toolbar icon size
-   int toolBarIconSize = settings.value("toolbarIconSize", MM::TOOLBAR_ICON_SIZE).toInt();
-   mainToolBar->setIconSize(QSize(toolBarIconSize, toolBarIconSize));
 }
 
 void MainWindow::writeSettings()
@@ -3582,15 +3584,9 @@ void MainWindow::processFrame()
   // Update canvases.
   updateCanvases();
 
-  // Capture output frame and feed to recorder.
-  if (_videoExporter->isRecording()) {
-    outputWindow->getCanvas()->repaint();
-    QOpenGLWidget* glw = qobject_cast<QOpenGLWidget*>(outputWindow->getCanvas()->viewport());
-    if (glw) {
-      QImage frame = glw->grabFramebuffer();
-      if (!frame.isNull())
-        _videoExporter->sendFrame(frame);
-    }
+  // Update recording: drive output canvas repaint so framePainted fires each tick.
+  if (_videoExporter && _videoExporter->isRecording()) {
+    outputWindow->getCanvas()->update();
 
     qint64 ms = _videoExporter->duration();
     if (_recordingTotalMs > 0 && ms >= _recordingTotalMs) {
@@ -3624,6 +3620,11 @@ void MainWindow::processFrame()
 
 void MainWindow::toggleRecording(bool on)
 {
+  if (!_videoExporter) {
+    statusBar()->showMessage(tr("Video recorder still initializing, try again."), 3000);
+    recordAction->setChecked(false);
+    return;
+  }
   if (on) {
     QSettings s;
     auto format  = (VideoExporter::Format)  s.value("videoFormat",  (int)VideoExporter::H264_MP4).toInt();
@@ -3662,16 +3663,13 @@ void MainWindow::toggleRecording(bool on)
       }
     }
 
-    // Ensure the output canvas has a live GL context for grabFramebuffer().
-    // Show the output window off-screen so Windows gives it a real device context
-    // without it appearing on any monitor. WA_DontShowOnScreen does NOT work on
-    // Windows for OpenGL — it creates a HWND but without a proper pixel format.
-    _recordingOpenedOutputWindow = !outputWindow->isVisible();
+    // QScreen::grabWindow only captures pixels that are composited to the display.
+    // A windowed output that is hidden or occluded returns black frames. Go fullscreen
+    // when recording starts so the compositor always has real content to grab.
+    _recordingOpenedOutputWindow = !outputFullScreenAction->isChecked();
     if (_recordingOpenedOutputWindow) {
-      QSize destSize = destinationCanvas->viewport()->size();
-      outputWindow->move(-10000, -10000);
-      outputWindow->resize(destSize);
-      outputWindow->show();
+      startFullScreen();
+      // Allow the GL context and compositor to settle before the first frame grab.
       QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
     }
 
@@ -3691,20 +3689,34 @@ void MainWindow::toggleRecording(bool on)
       _savedLoopStates.clear();
       _recordingTotalMs = 0;
       if (_recordingOpenedOutputWindow) {
-        outputWindow->hide();
+        exitFullScreen();
         _recordingOpenedOutputWindow = false;
       }
     } else {
+      // Enable frame grab: main update loop drives canvas->update() each tick,
+      // paintEvent captures the frame and emits framePainted → sendFrame.
+      OutputGLCanvas* canvas = outputWindow->getCanvas();
+      canvas->setFrameGrabEnabled(true);
+      connect(canvas, &OutputGLCanvas::framePainted,
+              _videoExporter, &VideoExporter::sendFrame);
+
       recordingTimerLabel->setText("● REC  00:00 / --:--");
       recordingTimerLabel->show();
     }
   } else {
-    _videoExporter->stop();
+    if (_videoExporter)
+      _videoExporter->stop();
   }
 }
 
 void MainWindow::onRecordingStopped(const QString& filePath)
 {
+  // Disconnect frame capture signals before hiding the window.
+  OutputGLCanvas* canvas = outputWindow->getCanvas();
+  canvas->setFrameGrabEnabled(false);
+  disconnect(canvas, &OutputGLCanvas::framePainted,
+             _videoExporter, &VideoExporter::sendFrame);
+
   if (_recordingOpenedOutputWindow) {
     outputWindow->hide();
     _recordingOpenedOutputWindow = false;

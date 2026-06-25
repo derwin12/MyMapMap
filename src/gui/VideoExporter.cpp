@@ -4,25 +4,22 @@
 
 #include "VideoExporter.h"
 
+#include <QMediaCaptureSession>
+#include <QVideoFrameInput>
+#include <QMediaRecorder>
 #include <QMediaFormat>
 #include <QVideoFrame>
 #include <QVideoFrameFormat>
 #include <QUrl>
+#include <QDebug>
 
 namespace mmp {
 
 VideoExporter::VideoExporter(QObject* parent) : QObject(parent)
 {
-  _session.setVideoFrameInput(&_frameInput);
-  _session.setRecorder(&_recorder);
-
-  connect(&_recorder, &QMediaRecorder::durationChanged,
-          this, &VideoExporter::durationChanged);
-
-  connect(&_recorder, &QMediaRecorder::errorOccurred,
-          this, [this](QMediaRecorder::Error, const QString& msg) {
-    emit errorOccurred(msg);
-  });
+  // _session / _frameInput / _recorder are constructed lazily inside start()
+  // so their constructors (which trigger WMF/FFmpeg backend init) don't run
+  // at app startup and don't freeze the main thread.
 }
 
 VideoExporter::~VideoExporter()
@@ -36,6 +33,24 @@ bool VideoExporter::start(const QString& filePath, Format format,
 {
   if (_recording)
     return false;
+
+  // Lazy construction: allocate Qt Multimedia objects on first record call so
+  // the WMF/FFmpeg backend initialisation happens here, not at app startup.
+  if (!_recorder) {
+    _session.reset(new QMediaCaptureSession);
+    _frameInput.reset(new QVideoFrameInput);
+    _recorder.reset(new QMediaRecorder);
+
+    _session->setVideoFrameInput(_frameInput.data());
+    _session->setRecorder(_recorder.data());
+
+    connect(_recorder.data(), &QMediaRecorder::durationChanged,
+            this, &VideoExporter::durationChanged);
+    connect(_recorder.data(), &QMediaRecorder::errorOccurred,
+            this, [this](QMediaRecorder::Error, const QString& msg) {
+      emit errorOccurred(msg);
+    });
+  }
 
   QMediaFormat mediaFormat;
   switch (format) {
@@ -60,16 +75,16 @@ bool VideoExporter::start(const QString& filePath, Format format,
     QMediaRecorder::VeryHighQuality
   };
 
-  _recorder.setMediaFormat(mediaFormat);
-  _recorder.setOutputLocation(QUrl::fromLocalFile(filePath));
-  _recorder.setVideoResolution(size);
-  _recorder.setVideoFrameRate(fps);
-  _recorder.setQuality(qualityMap[quality]);
+  _recorder->setMediaFormat(mediaFormat);
+  _recorder->setOutputLocation(QUrl::fromLocalFile(filePath));
+  _recorder->setVideoResolution(size);
+  _recorder->setVideoFrameRate(fps);
+  _recorder->setQuality(qualityMap[quality]);
 
-  _recorder.record();
+  _recorder->record();
 
-  if (_recorder.error() != QMediaRecorder::NoError) {
-    emit errorOccurred(_recorder.errorString());
+  if (_recorder->error() != QMediaRecorder::NoError) {
+    emit errorOccurred(_recorder->errorString());
     return false;
   }
 
@@ -93,11 +108,18 @@ bool VideoExporter::sendFrame(const QImage& frame)
                         QVideoFrameFormat::Format_RGBA8888);
   QVideoFrame videoFrame(vff);
 
-  if (!videoFrame.map(QVideoFrame::WriteOnly))
+  if (!videoFrame.map(QVideoFrame::WriteOnly)) {
     return false;
+  }
 
-  memcpy(videoFrame.bits(0), converted.constBits(),
-         static_cast<size_t>(converted.sizeInBytes()));
+  // Copy row-by-row so mismatched strides (QImage padding vs QVideoFrame padding)
+  // don't cause each row to shift and produce the diagonal-skew artifact.
+  const int rowBytes = converted.width() * 4;
+  for (int y = 0; y < converted.height(); ++y) {
+    memcpy(videoFrame.bits(0) + y * static_cast<size_t>(videoFrame.bytesPerLine(0)),
+           converted.constScanLine(y),
+           static_cast<size_t>(rowBytes));
+  }
   videoFrame.unmap();
 
   // Stamp presentation time so Qt Multimedia sees a non-zero frame rate.
@@ -110,7 +132,8 @@ bool VideoExporter::sendFrame(const QImage& frame)
   }
   ++_frameCount;
 
-  return _frameInput.sendVideoFrame(videoFrame);
+  bool sent = _frameInput->sendVideoFrame(videoFrame);
+  return sent;
 }
 
 void VideoExporter::stop()
@@ -118,14 +141,14 @@ void VideoExporter::stop()
   if (!_recording)
     return;
 
-  _recorder.stop();
+  _recorder->stop();
   _recording = false;
   emit recordingStopped(_filePath);
 }
 
 qint64 VideoExporter::duration() const
 {
-  return _recorder.duration();
+  return _recorder ? _recorder->duration() : 0;
 }
 
 QString VideoExporter::formatLabel(Format f)

@@ -25,6 +25,8 @@
 #include <QGuiApplication>
 #include <QScreen>
 #include <QOpenGLWidget>
+#include <QTimer>
+#include <QDebug>
 
 namespace mmp {
 
@@ -45,14 +47,44 @@ void OutputGLCanvas::paintEvent(QPaintEvent* event)
 {
   MapperGLCanvas::paintEvent(event);
 
-  if (_frameGrabEnabled) {
-    QOpenGLWidget* glw = qobject_cast<QOpenGLWidget*>(viewport());
-    if (glw) {
-      QImage frame = glw->grabFramebuffer();
-      if (!frame.isNull())
-        emit framePainted(frame);
-    }
+  // Defer the framebuffer grab to after this paintEvent returns.
+  // grabFramebuffer() called *inside* paintEvent disrupts Qt's FBO→screen compositing
+  // step (which happens after paintEvent), causing a blank display and blank video.
+  // A zero-delay timer fires in the next event-loop iteration, after compositing.
+  if (_frameGrabEnabled && !_grabPending) {
+    _grabPending = true;
+    QTimer::singleShot(0, this, &OutputGLCanvas::_doGrabFrame);
   }
+}
+
+void OutputGLCanvas::_doGrabFrame()
+{
+  _grabPending = false;
+  if (!_frameGrabEnabled)
+    return;
+
+  // QOpenGLWidget::grabFramebuffer() reads the widget's *private* FBO, which is
+  // NOT written to when QOpenGLWidget is used as a QGraphicsView viewport — the
+  // scene paints into the window backing store instead.  Use QScreen::grabWindow()
+  // to capture what the compositor actually displays.
+  QWindow* wh = window()->windowHandle();
+  if (!wh)
+    return;
+  QScreen* scr = wh->screen();
+  if (!scr)
+    return;
+
+  QPixmap px = scr->grabWindow(window()->winId());
+
+  // On HiDPI displays the pixmap is in device pixels; scale back to logical.
+  QSize target = viewport()->size();
+  if (px.size() != target)
+    px = px.scaled(target, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+
+  QImage frame = px.toImage();
+
+  if (!frame.isNull())
+    emit framePainted(frame);
 }
 
 void OutputGLCanvas::setSceneRectToViewportGeometry()
