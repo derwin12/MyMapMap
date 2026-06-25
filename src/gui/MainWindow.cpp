@@ -121,8 +121,10 @@ MainWindow::MainWindow()
     // Action toggle states
     outputFullScreenAction->setChecked(false); // always start windowed
     displayTestSignalAction->setChecked(s.value("displayTestSignal", MM::DISPLAY_TEST_SIGNAL).toBool());
-    displayControlsAction->setChecked(s.value("displayControls", MM::DISPLAY_CONTROLS).toBool());
-    outputWindow->setCanvasDisplayCrosshair(s.value("displayControls", MM::DISPLAY_CONTROLS).toBool());
+    // Always start with controls ON — persisting this setting lets a stale
+    // "false" (e.g. from a crashed recording session) permanently hide handles.
+    displayControlsAction->setChecked(true);
+    outputWindow->setCanvasDisplayCrosshair(true);
     displayUndoHistoryAction->setChecked(s.value("displayUndoStack", MM::DISPLAY_UNDO_HISTORY).toBool());
     displayZoomToolAction->setChecked(s.value("zoomToolBar", MM::DISPLAY_ZOOM_TOOLBAR).toBool());
     showMenuBarAction->setChecked(s.value("showMenuBar", MM::DISPLAY_MENU_BAR).toBool());
@@ -189,7 +191,7 @@ void MainWindow::handleSourceItemSelectionChanged()
   QListWidgetItem* item = sourceList->currentItem();
 
   // Ignore clicks on section-header items (they are not selectable sources).
-  if (item == _sourceSectionImages || item == _sourceSectionVideos) {
+  if (item == _sourceSectionImages || item == _sourceSectionVideos || item == _sourceSectionFolders) {
     sourceList->clearSelection();
     return;
   }
@@ -730,6 +732,28 @@ void MainWindow::importFolder()
     statusBar()->showMessage(tr("Imported %1 file(s) from folder").arg(imported), 4000);
   else
     statusBar()->showMessage(tr("No supported media files found in folder"), 4000);
+}
+
+void MainWindow::importFolderAsSource()
+{
+  QString dirPath = QFileDialog::getExistingDirectory(
+    this, tr("Add Image Folder"),
+    settings.value("defaultImageDir").toString());
+
+  if (dirPath.isEmpty())
+    return;
+
+  QApplication::setOverrideCursor(Qt::WaitCursor);
+  uid id = createFolderSource(NULL_UID, dirPath);
+  QApplication::restoreOverrideCursor();
+
+  if (id != NULL_UID) {
+    settings.setValue("defaultImageDir", dirPath);
+    statusBar()->showMessage(tr("Folder added: %1").arg(QDir(dirPath).dirName()), 3000);
+  } else {
+    QMessageBox::warning(this, tr("Empty Folder"),
+      tr("No image files found in the selected folder."));
+  }
 }
 
 void MainWindow::openCameraDevice()
@@ -1399,8 +1423,9 @@ bool MainWindow::clearProject()
   sourceList->clear();
   // clear() deletes all QListWidgetItems including the section headers.
   // Re-create them so addSourceItem() can find them again.
-  _sourceSectionImages = nullptr;
-  _sourceSectionVideos = nullptr;
+  _sourceSectionImages  = nullptr;
+  _sourceSectionVideos  = nullptr;
+  _sourceSectionFolders = nullptr;
   initSourceListSections();
 
   // Clear property panel.
@@ -1491,6 +1516,26 @@ uid MainWindow::createColorSource(uid sourceId, QColor color)
 
     return id;
   }
+}
+
+uid MainWindow::createFolderSource(uid sourceId, const QString& dirPath)
+{
+  if (Source::getUidAllocator().exists(sourceId))
+    return NULL_UID;
+
+  FolderSource* fs = new FolderSource(dirPath, sourceId);
+  if (fs->imageCount() == 0) {
+    delete fs;
+    return NULL_UID;
+  }
+
+  Source::ptr source(fs);
+  source->setName(QDir(dirPath).dirName());
+  source->play();
+
+  uid id = mappingManager->addSource(source);
+  undoStack->push(new AddSourceCommand(this, id, source->getIcon(), source->getName()));
+  return id;
 }
 
 uid MainWindow::createSyphonSource(uid sourceId, const QString& serverUUID,
@@ -2745,7 +2790,6 @@ void MainWindow::writeSettings()
   settings.setValue("outputScreen", outputWindow->getPreferredScreen());
   settings.setValue("displayOutputWindow", outputFullScreenAction->isChecked());
   settings.setValue("displayTestSignal", displayTestSignalAction->isChecked());
-  settings.setValue("displayControls", displayControlsAction->isChecked());
   settings.setValue("displayAllControls", displaySourceControlsAction->isChecked());
   settings.setValue("oscListeningPort", oscListeningPort);
 #ifdef HAVE_MCP
@@ -3124,21 +3168,48 @@ bool MainWindow::addColorSource(const QColor& color)
 
 void MainWindow::initSourceListSections()
 {
-  auto makeHeader = [](const QString& title) -> QListWidgetItem* {
-    QListWidgetItem* h = new QListWidgetItem(title);
-    h->setFlags(Qt::ItemIsEnabled); // not selectable, not draggable
-    QFont f = h->font();
+  auto makeHeader = [this](const QString& title, const char* addSlot) -> QListWidgetItem* {
+    QListWidgetItem* h = new QListWidgetItem();
+    h->setFlags(Qt::ItemIsEnabled);
+    h->setSizeHint(QSize(0, 26));
+    sourceList->addItem(h);
+
+    QWidget* container = new QWidget;
+    container->setAutoFillBackground(false);
+
+    QHBoxLayout* layout = new QHBoxLayout(container);
+    layout->setContentsMargins(6, 2, 4, 2);
+    layout->setSpacing(4);
+
+    QLabel* label = new QLabel(title);
+    QFont f = label->font();
     f.setBold(true);
     f.setPointSizeF(f.pointSizeF() * 0.85);
-    h->setFont(f);
-    h->setForeground(QColor(160, 160, 160));
-    h->setSizeHint(QSize(0, 22));
+    label->setFont(f);
+    label->setStyleSheet("color: rgb(160,160,160);");
+
+    QToolButton* btn = new QToolButton;
+    btn->setText("+");
+    btn->setFixedSize(18, 18);
+    btn->setAutoRaise(true);
+    btn->setCursor(Qt::ArrowCursor);
+    btn->setStyleSheet(
+      "QToolButton { color: rgb(160,160,160); font-weight: bold; "
+      "border: 1px solid rgb(100,100,100); border-radius: 3px; }"
+      "QToolButton:hover { background: rgb(80,80,80); }");
+    connect(btn, SIGNAL(clicked()), this, addSlot);
+
+    layout->addWidget(label);
+    layout->addStretch();
+    layout->addWidget(btn);
+
+    sourceList->setItemWidget(h, container);
     return h;
   };
-  _sourceSectionImages = makeHeader(tr("IMAGES"));
-  _sourceSectionVideos = makeHeader(tr("VIDEOS"));
-  sourceList->addItem(_sourceSectionImages);
-  sourceList->addItem(_sourceSectionVideos);
+
+  _sourceSectionImages  = makeHeader(tr("Images"),        SLOT(importMedia()));
+  _sourceSectionVideos  = makeHeader(tr("Movies"),        SLOT(importMedia()));
+  _sourceSectionFolders = makeHeader(tr("Image Folders"), SLOT(importFolderAsSource()));
 }
 
 void MainWindow::addSourceItem(uid sourceId, const QIcon& icon, const QString& name)
@@ -3158,6 +3229,8 @@ void MainWindow::addSourceItem(uid sourceId, const QIcon& icon, const QString& n
     sourceGui = SourceGui::ptr(new ImageGui(source));
   else if (sourceType == SourceType::Color)
     sourceGui = SourceGui::ptr(new ColorGui(source));
+  else if (sourceType == SourceType::Folder)
+    sourceGui = SourceGui::ptr(new FolderGui(source));
 #ifdef Q_OS_MAC
   else if (sourceType == SourceType::Syphon)
     sourceGui = SourceGui::ptr(new SyphonGui(source));
@@ -3215,12 +3288,17 @@ void MainWindow::addSourceItem(uid sourceId, const QIcon& icon, const QString& n
   contentTab->setCurrentWidget(sourceSplitter);
 
   // Insert under the appropriate section header.
-  // Images go before the Videos header; videos (and cameras/colors) go at the end.
   if (source->getSourceType() == SourceType::Image) {
+    // Images go before the Movies header.
     int videosRow = sourceList->row(_sourceSectionVideos);
     sourceList->insertItem(videosRow, item);
-  } else {
+  } else if (source->getSourceType() == SourceType::Folder) {
+    // Folders go at the end, after the Image Folders header.
     sourceList->addItem(item);
+  } else {
+    // Videos and other types go before the Image Folders header.
+    int foldersRow = sourceList->row(_sourceSectionFolders);
+    sourceList->insertItem(foldersRow, item);
   }
   sourceList->setCurrentItem(item);
 
@@ -3273,6 +3351,7 @@ void MainWindow::addLayerItem(uid layerId)
   // XXX hardcoded for textures
   QSharedPointer<TextureLayer> textureLayer;
   if (sourceType == SourceType::Video || sourceType == SourceType::Image
+      || sourceType == SourceType::Folder
 #ifdef Q_OS_MAC
       || sourceType == SourceType::Syphon
 #endif
