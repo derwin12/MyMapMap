@@ -38,6 +38,7 @@ bool VideoExporter::start(const QString& filePath, Format format,
   if (_recording)
     return false;
 
+  // ── Lazy one-time construction ────────────────────────────────────────────
   if (!_recorder) {
     _session.reset(new QMediaCaptureSession);
     _frameInput.reset(new QVideoFrameInput);
@@ -59,33 +60,18 @@ bool VideoExporter::start(const QString& filePath, Format format,
     }
 
     if (!loopbackDev.isNull()) {
-      // Use QAudioSource + QAudioBufferInput so we push audio the same way
-      // we push video — both streams share the same session clock and the
-      // FFmpeg muxer can interleave them correctly.
-      QAudioFormat fmt;
-      fmt.setSampleRate(44100);
-      fmt.setChannelCount(2);
-      fmt.setSampleFormat(QAudioFormat::Int16);
+      _audioFormat.setSampleRate(44100);
+      _audioFormat.setChannelCount(2);
+      _audioFormat.setSampleFormat(QAudioFormat::Int16);
 
-      _audioBufferInput.reset(new QAudioBufferInput(fmt));
+      // QAudioBufferInput is the audio push-source equivalent of QVideoFrameInput.
+      // We drive it manually from a QAudioSource so both streams share the session
+      // clock and the FFmpeg muxer can interleave them correctly.
+      _audioBufferInput.reset(new QAudioBufferInput(_audioFormat));
       _session->setAudioBufferInput(_audioBufferInput.data());
 
-      _audioSource.reset(new QAudioSource(loopbackDev, fmt));
-      QIODevice* iodev = _audioSource->start(); // pull-mode: returns QIODevice*
-      _audioDevice = iodev;
-
-      if (iodev) {
-        connect(iodev, &QIODevice::readyRead, this, [this, fmt]() {
-          if (!_audioDevice || !_audioBufferInput) return;
-          const QByteArray data = _audioDevice->readAll();
-          if (!data.isEmpty())
-            _audioBufferInput->sendAudioBuffer(QAudioBuffer(data, fmt));
-        });
-        _audioDeviceName = loopbackDev.description();
-      } else {
-        _audioBufferInput.reset();
-        _audioSource.reset();
-      }
+      _audioSource.reset(new QAudioSource(loopbackDev, _audioFormat));
+      _audioDeviceName = loopbackDev.description();
     }
 
     connect(_recorder.data(), &QMediaRecorder::durationChanged,
@@ -96,6 +82,7 @@ bool VideoExporter::start(const QString& filePath, Format format,
     });
   }
 
+  // ── Configure and start the recorder ─────────────────────────────────────
   QMediaFormat mediaFormat;
   const bool hasAudio = !_audioDeviceName.isEmpty();
   switch (format) {
@@ -134,6 +121,21 @@ bool VideoExporter::start(const QString& filePath, Format format,
   if (_recorder->error() != QMediaRecorder::NoError) {
     emit errorOccurred(_recorder->errorString());
     return false;
+  }
+
+  // ── Start audio capture AFTER recorder is active ──────────────────────────
+  // Buffers sent to QAudioBufferInput before record() are discarded, so we
+  // always start the QAudioSource after the recorder is running.
+  if (_audioSource) {
+    _audioDevice = _audioSource->start(); // pull mode: returns readable QIODevice
+    if (_audioDevice) {
+      connect(_audioDevice, &QIODevice::readyRead, this, [this]() {
+        if (!_audioDevice || !_audioBufferInput || !_recording) return;
+        const QByteArray data = _audioDevice->readAll();
+        if (!data.isEmpty())
+          _audioBufferInput->sendAudioBuffer(QAudioBuffer(data, _audioFormat));
+      });
+    }
   }
 
   _recording   = true;
@@ -180,8 +182,12 @@ void VideoExporter::stop()
   if (!_recording)
     return;
 
-  if (_audioSource)
+  // Stop audio first: disconnect readyRead so no buffers arrive after recorder stops.
+  if (_audioSource && _audioDevice) {
+    disconnect(_audioDevice, &QIODevice::readyRead, this, nullptr);
     _audioSource->stop();
+    _audioDevice = nullptr;
+  }
 
   _recorder->stop();
   _recording = false;

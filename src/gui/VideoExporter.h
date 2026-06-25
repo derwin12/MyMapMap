@@ -10,6 +10,7 @@
 #define VIDEOEXPORTER_H
 
 #include <QObject>
+#include <QAudioFormat>
 #include <QImage>
 #include <QSize>
 #include <QScopedPointer>
@@ -71,7 +72,8 @@ private:
   QScopedPointer<QAudioBufferInput>    _audioBufferInput;
   QScopedPointer<QMediaRecorder>       _recorder;
   QScopedPointer<QAudioSource>         _audioSource;
-  QIODevice*                           _audioDevice = nullptr; // owned by _audioSource
+  QAudioFormat                         _audioFormat;
+  QIODevice*                           _audioDevice = nullptr; // valid only while recording
   bool                                 _recording   = false;
   QString                              _filePath;
   QString                              _audioDeviceName;
