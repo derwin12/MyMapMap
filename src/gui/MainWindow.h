@@ -305,6 +305,7 @@ public:
   void addLayerItem(uid mappingId);
   void removeLayerItem(uid mappingId);
   void moveLayerItem(uid mappingId, int steps);
+  void initSourceListSections(); // (re)create Images / Videos header items
   void addSourceItem(uid sourceId, const QIcon& icon, const QString& name);
   void updateSourceItem(uid sourceId, const QIcon& icon, const QString& name);
   void removeSourceItem(uid sourceId);

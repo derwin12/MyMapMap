@@ -1397,6 +1397,11 @@ bool MainWindow::clearProject()
   // Empty list widgets.
   layerListModel->clear();
   sourceList->clear();
+  // clear() deletes all QListWidgetItems including the section headers.
+  // Re-create them so addSourceItem() can find them again.
+  _sourceSectionImages = nullptr;
+  _sourceSectionVideos = nullptr;
+  initSourceListSections();
 
   // Clear property panel.
   for (int i=layerPropertyPanel->count()-1; i>=0; i--)
@@ -1641,22 +1646,7 @@ void MainWindow::createLayout()
   sourceList->setMinimumWidth(PAINT_LIST_MINIMUM_HEIGHT);
   sourceList->setIconSize(QSize(MainWindow::PAINT_LIST_ICON_SIZE, MainWindow::PAINT_LIST_ICON_SIZE));
 
-  // Section header helper — creates a non-selectable, non-editable label row.
-  auto makeSectionHeader = [](const QString& title) -> QListWidgetItem* {
-    QListWidgetItem* h = new QListWidgetItem(title);
-    h->setFlags(Qt::ItemIsEnabled); // not selectable, not draggable
-    QFont f = h->font();
-    f.setBold(true);
-    f.setPointSizeF(f.pointSizeF() * 0.85);
-    h->setFont(f);
-    h->setForeground(QColor(160, 160, 160));
-    h->setSizeHint(QSize(0, 22));
-    return h;
-  };
-  _sourceSectionImages = makeSectionHeader(tr("IMAGES"));
-  _sourceSectionVideos = makeSectionHeader(tr("VIDEOS"));
-  sourceList->addItem(_sourceSectionImages);
-  sourceList->addItem(_sourceSectionVideos);
+  initSourceListSections();
 
   // Create source panel.
   sourcePropertyPanel = new QStackedWidget;
@@ -3130,6 +3120,25 @@ bool MainWindow::addColorSource(const QColor& color)
   statusBar()->showMessage(tr("Color source added"), 2000);
 
   return true;
+}
+
+void MainWindow::initSourceListSections()
+{
+  auto makeHeader = [](const QString& title) -> QListWidgetItem* {
+    QListWidgetItem* h = new QListWidgetItem(title);
+    h->setFlags(Qt::ItemIsEnabled); // not selectable, not draggable
+    QFont f = h->font();
+    f.setBold(true);
+    f.setPointSizeF(f.pointSizeF() * 0.85);
+    h->setFont(f);
+    h->setForeground(QColor(160, 160, 160));
+    h->setSizeHint(QSize(0, 22));
+    return h;
+  };
+  _sourceSectionImages = makeHeader(tr("IMAGES"));
+  _sourceSectionVideos = makeHeader(tr("VIDEOS"));
+  sourceList->addItem(_sourceSectionImages);
+  sourceList->addItem(_sourceSectionVideos);
 }
 
 void MainWindow::addSourceItem(uid sourceId, const QIcon& icon, const QString& name)
