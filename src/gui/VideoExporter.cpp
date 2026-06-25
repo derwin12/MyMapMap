@@ -48,17 +48,22 @@ bool VideoExporter::start(const QString& filePath, Format format,
     // "What U Hear").  Only attach audio if one is found; recording mic audio
     // by default would capture the wrong source.
     QAudioDevice loopbackDev;
-    const QStringList keywords = {"mix", "stereo", "loopback", "what u hear", "wave out"};
+    const QStringList keywords = {"mix", "stereo", "loopback", "what u hear", "wave out", "output"};
+    qDebug() << "Available audio input devices:";
     for (const QAudioDevice& dev : QMediaDevices::audioInputs()) {
+      qDebug() << " " << dev.description();
       QString name = dev.description().toLower();
-      for (const QString& kw : keywords) {
-        if (name.contains(kw)) { loopbackDev = dev; break; }
+      if (loopbackDev.isNull()) {
+        for (const QString& kw : keywords)
+          if (name.contains(kw)) { loopbackDev = dev; break; }
       }
-      if (!loopbackDev.isNull()) break;
     }
     if (!loopbackDev.isNull()) {
+      qDebug() << "Recording audio from:" << loopbackDev.description();
       _audioInput.reset(new QAudioInput(loopbackDev));
       _session->setAudioInput(_audioInput.data());
+    } else {
+      qDebug() << "No loopback device found — recording video only.";
     }
 
     _session->setVideoFrameInput(_frameInput.data());

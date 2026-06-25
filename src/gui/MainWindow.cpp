@@ -2127,7 +2127,7 @@ void MainWindow::createActions()
   playAction->setIconVisibleInMenu(false);
   playAction->setShortcutContext(Qt::ApplicationShortcut);
   addAction(playAction);
-  connect(playAction, SIGNAL(triggered()), this, SLOT(play()));
+  connect(playAction, &QAction::triggered, this, [this](bool) { play(); });
   playAction->setVisible(true);
 
   // Pause.
@@ -2138,7 +2138,7 @@ void MainWindow::createActions()
   pauseAction->setIconVisibleInMenu(false);
   pauseAction->setShortcutContext(Qt::ApplicationShortcut);
   addAction(pauseAction);
-  connect(pauseAction, SIGNAL(triggered()), this, SLOT(pause()));
+  connect(pauseAction, &QAction::triggered, this, [this](bool) { pause(); });
   pauseAction->setVisible(false);
 
   // Rewind.
