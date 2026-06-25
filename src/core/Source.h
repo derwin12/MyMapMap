@@ -120,6 +120,13 @@ public:
 
   virtual SourceType getSourceType() const = 0;
 
+  virtual QIcon getIcon() const { return QIcon(); }
+
+  /// Returns a pixmap for the large preview panel. Default: scales the icon up.
+  virtual QPixmap getPreviewPixmap(int maxW, int maxH) const {
+    return getIcon().pixmap(maxW, maxH);
+  }
+
 protected:
   virtual void _doPlay() {}
   virtual void _doPause() {}
@@ -301,6 +308,12 @@ public:
   virtual bool bitsHaveChanged() const { return bitsChanged; }
 
   virtual QIcon getIcon() const;
+
+  virtual QPixmap getPreviewPixmap(int maxW, int maxH) const override {
+    if (!_images.isEmpty())
+      return QPixmap::fromImage(_images[0]).scaled(maxW, maxH, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    return Source::getPreviewPixmap(maxW, maxH);
+  }
 
   /// Sets playback rate (in %). Negative values mean reverse playback.
   virtual void setRate(double rate);

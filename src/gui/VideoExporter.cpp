@@ -101,6 +101,11 @@ bool VideoExporter::start(const QString& filePath, Format format,
     mediaFormat.setVideoCodec(QMediaFormat::VideoCodec::MotionJPEG);
     if (hasAudio) mediaFormat.setAudioCodec(QMediaFormat::AudioCodec::MP3);
     break;
+  case H264_MOV:
+    mediaFormat.setFileFormat(QMediaFormat::QuickTime);
+    mediaFormat.setVideoCodec(QMediaFormat::VideoCodec::H264);
+    if (hasAudio) mediaFormat.setAudioCodec(QMediaFormat::AudioCodec::AAC);
+    break;
   }
 
   static const QMediaRecorder::Quality qualityMap[] = {
@@ -205,6 +210,7 @@ QString VideoExporter::formatLabel(Format f)
   case H264_MP4:  return tr("H.264 (MP4)  — best compatibility");
   case H265_MP4:  return tr("H.265 (MP4)  — smaller files, Windows 10+");
   case MJPEG_AVI: return tr("Motion JPEG (AVI)  — near-lossless");
+  case H264_MOV:  return tr("H.264 (MOV)  — QuickTime compatible");
   }
   return {};
 }
@@ -215,6 +221,7 @@ QString VideoExporter::formatFilter(Format f)
   case H264_MP4:
   case H265_MP4:  return tr("MPEG-4 Video (*.mp4)");
   case MJPEG_AVI: return tr("AVI Video (*.avi)");
+  case H264_MOV:  return tr("QuickTime Video (*.mov)");
   }
   return {};
 }
@@ -225,6 +232,7 @@ QString VideoExporter::formatExtension(Format f)
   case H264_MP4:
   case H265_MP4:  return "mp4";
   case MJPEG_AVI: return "avi";
+  case H264_MOV:  return "mov";
   }
   return "mp4";
 }

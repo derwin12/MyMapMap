@@ -322,7 +322,7 @@ void PreferenceDialog::createOutputPage()
 
   // Recording group box
   _videoFormatBox = new QComboBox;
-  for (int i = 0; i <= (int)VideoExporter::MJPEG_AVI; ++i)
+  for (int i = 0; i <= (int)VideoExporter::H264_MOV; ++i)
     _videoFormatBox->addItem(VideoExporter::formatLabel((VideoExporter::Format)i), i);
 
   _videoQualityBox = new QComboBox;
@@ -490,6 +490,8 @@ void PreferenceDialog::createPreferencesList()
 
   // Add items in the list
   _listWidget = new QListWidget;
+  _listWidget->setFixedWidth(140);
+  _listWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   _listWidget->addItem(interfaceItem);
   _listWidget->addItem(shapeItem);
   _listWidget->addItem(outputItem);
@@ -498,7 +500,7 @@ void PreferenceDialog::createPreferencesList()
 
   for (int i = 0; i < _listWidget->count(); i++) {
     QListWidgetItem *item = _listWidget->item(i);
-    item->setSizeHint(QSize(item->sizeHint().width(), PreferenceDialog::LIST_ITEM_HEIGHT));
+    item->setSizeHint(QSize(140, PreferenceDialog::LIST_ITEM_HEIGHT));
   }
 
   // Add pages in the stacked layout

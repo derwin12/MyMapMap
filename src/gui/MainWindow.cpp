@@ -43,8 +43,83 @@
 #include <QDesktopServices>
 #include <QDir>
 #include <QDirIterator>
+#include <QStandardPaths>
 
 namespace mmp {
+
+// Auto-scaling, optionally animated QLabel for the source preview panel.
+class SourcePreviewLabel : public QLabel {
+public:
+  explicit SourcePreviewLabel(QWidget* parent = nullptr) : QLabel(parent) {
+    setAlignment(Qt::AlignCenter);
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    setMinimumHeight(80);
+    connect(&_animTimer, &QTimer::timeout, this, [this]() {
+      if (_animFrames.isEmpty()) return;
+      _animIdx = (_animIdx + 1) % _animFrames.size();
+      _showFrame(_animIdx);
+    });
+  }
+
+  void setSourcePixmap(const QPixmap& px) {
+    _animTimer.stop();
+    _animFrames.clear();
+    _original = px;
+    _updateScaled();
+  }
+
+  void setAnimationFrames(const QVector<QPixmap>& frames, int fps = 4) {
+    _animTimer.stop();
+    _original = QPixmap();
+    _animFrames = frames;
+    _animIdx = 0;
+    _fps = fps;
+    if (frames.isEmpty()) { clear(); return; }
+    _showFrame(0);
+    if (frames.size() > 1) {
+      _animTimer.setInterval(1000 / qMax(1, _fps));
+      _animTimer.start();
+    }
+  }
+
+  void setAnimationFps(int fps) {
+    _fps = qMax(1, fps);
+    if (_animTimer.isActive())
+      _animTimer.setInterval(1000 / _fps);
+  }
+
+  void clearAll() {
+    _animTimer.stop();
+    _animFrames.clear();
+    _original = QPixmap();
+    clear();
+  }
+
+protected:
+  void resizeEvent(QResizeEvent* e) override {
+    QLabel::resizeEvent(e);
+    if (!_animFrames.isEmpty())
+      _showFrame(_animIdx);
+    else
+      _updateScaled();
+  }
+
+private:
+  QPixmap        _original;
+  QVector<QPixmap> _animFrames;
+  int            _animIdx = 0;
+  int            _fps = 4;
+  QTimer         _animTimer;
+
+  void _showFrame(int idx) {
+    if (idx < 0 || idx >= _animFrames.size()) return;
+    QLabel::setPixmap(_animFrames[idx].scaled(size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+  }
+  void _updateScaled() {
+    if (_original.isNull()) { clear(); return; }
+    QLabel::setPixmap(_original.scaled(size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+  }
+};
 
 MainWindow::MainWindow()
 {
@@ -147,6 +222,11 @@ MainWindow::MainWindow()
       recordAction->setChecked(false);
     });
   });
+
+  // Thumbnail cache (deferred start — needs event loop for async QMediaPlayer).
+  _thumbnailCache = new ThumbnailCache(this);
+  connect(_thumbnailCache, &ThumbnailCache::ready,
+          this, &MainWindow::onThumbnailReady);
 
   // Start osc.
   startOscReceiver();
@@ -345,6 +425,8 @@ void MainWindow::handleSourceChanged(Source::ptr source)
     updateSourceItem(sourceId, getSourceIcon(source), source->getName());
   }
 #endif
+
+  setCurrentSource(sourceId);
 
   if (curLayerId != NULL_UID)
   {
@@ -1488,6 +1570,10 @@ uid MainWindow::createMediaSource(uid sourceId, QString uri, float x, float y,
     // Add source to model and return its uid.
     uid id = mappingManager->addSource(source);
 
+    // Kick off async thumbnail generation for non-webcam videos.
+    if (!isImage && type != VIDEO_WEBCAM && _thumbnailCache)
+      _thumbnailCache->request(uri, thumbnailCacheDir());
+
     // Add source widget item.
     undoStack->push(new AddSourceCommand(this, id, source->getIcon(), source->getName()));
     return id;
@@ -1698,6 +1784,40 @@ void MainWindow::createLayout()
   sourcePropertyPanel->setDisabled(true);
   sourcePropertyPanel->setMinimumHeight(PAINT_PROPERTY_PANEL_MINIMUM_HEIGHT);
 
+  // Source preview widget — header pinned above the splitter, image inside the splitter.
+  {
+    _previewToggleBtn = new QCheckBox(tr("Preview"));
+    _previewToggleBtn->setChecked(true);
+
+    // Header row: always visible, lives OUTSIDE the splitter.
+    _sourcePreviewContainer = new QWidget;
+    auto* headerLayout = new QHBoxLayout(_sourcePreviewContainer);
+    headerLayout->setContentsMargins(4, 2, 4, 2);
+    headerLayout->addWidget(_previewToggleBtn);
+
+    // Image area: lives INSIDE the splitter so it can be resized.
+    _sourcePreviewLabel = new SourcePreviewLabel;
+    _sourcePreviewLabel->setMinimumHeight(20);
+
+    // Toggling the checkbox shows/hides the image area and adjusts splitter space.
+    // Toggling shows/hides the thumbnail at the bottom (index 2 in splitter).
+    connect(_previewToggleBtn, &QCheckBox::toggled, this, [this](bool on) {
+      QList<int> sizes = sourceSplitter->sizes();
+      if (sizes.size() < 3) return;
+      if (on) {
+        // Restore: carve out space for thumbnail from the property panel.
+        int want = qMax((sizes[1] + sizes[2]) / 2, 80);
+        sourceSplitter->setSizes({sizes[0], sizes[1] + sizes[2] - want, want});
+        _sourcePreviewLabel->setVisible(true);
+      } else {
+        // Collapse: give the thumbnail's space to the property panel.
+        sourceSplitter->setSizes({sizes[0], sizes[1] + sizes[2], 0});
+        _sourcePreviewLabel->setVisible(false);
+      }
+    });
+
+  }
+
   // Create mapping list.
   layerList = new QTableView;
   layerList->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -1793,11 +1913,20 @@ void MainWindow::createLayout()
   _shortcutWindow = new ShortcutWindow;
   _shortcutWindow->setVisible(false);
 
-  // Create layout.
+  // The preview image area goes inside the splitter; the header row is pinned above.
   sourceSplitter = new QSplitter(Qt::Vertical);
-  sourceSplitter->setChildrenCollapsible(false);
+  sourceSplitter->setChildrenCollapsible(true);
   sourceSplitter->addWidget(sourceList);
   sourceSplitter->addWidget(sourcePropertyPanel);
+  sourceSplitter->addWidget(_sourcePreviewLabel);   // thumbnail at bottom
+
+  // Source column: pinned header above the splitter.
+  auto* sourceColumn = new QWidget;
+  auto* sourceColumnLayout = new QVBoxLayout(sourceColumn);
+  sourceColumnLayout->setContentsMargins(0, 0, 0, 0);
+  sourceColumnLayout->setSpacing(0);
+  sourceColumnLayout->addWidget(_sourcePreviewContainer); // header, always visible
+  sourceColumnLayout->addWidget(sourceSplitter, 1);       // splitter fills rest
 
   layerSplitter = new QSplitter(Qt::Vertical);
   layerSplitter->setChildrenCollapsible(false);
@@ -1806,7 +1935,7 @@ void MainWindow::createLayout()
 
   // Content tab.
   contentTab = new QTabWidget;
-  contentTab->addTab(sourceSplitter, themedIcon(":/add-video"), tr("Library"));
+  contentTab->addTab(sourceColumn, themedIcon(":/add-video"), tr("Library"));
   contentTab->addTab(layerSplitter, themedIcon(":/add-mesh"), tr("Layers"));
 
   canvasSplitter = new QSplitter(Qt::Vertical);
@@ -4190,6 +4319,7 @@ void MainWindow::setCurrentSource(int uid)
       sourcePropertyPanel->setCurrentWidget(sourceGuis[uid]->getPropertiesEditor());
     }
     _hasCurrentSource = true;
+    updateSourcePreview(uid);
   }
 }
 
@@ -4212,12 +4342,95 @@ void MainWindow::removeCurrentSource() {
   _hasCurrentSource = false;
   currentSourceId = NULL_UID;
   sourceList->clearSelection();
+  if (_sourcePreviewLabel)
+    static_cast<SourcePreviewLabel*>(_sourcePreviewLabel)->clearAll();
 }
 
 void MainWindow::removeCurrentLayer() {
   _hasCurrentLayer = false;
   currentLayerId = NULL_UID;
   layerList->clearSelection();
+}
+
+void MainWindow::updateSourcePreview(uid sourceId)
+{
+  if (!_sourcePreviewLabel)
+    return;
+  auto* lbl = static_cast<SourcePreviewLabel*>(_sourcePreviewLabel);
+  Source::ptr source = mappingManager->getSourceById(sourceId);
+  if (source.isNull()) {
+    lbl->clearAll();
+    return;
+  }
+
+  // For video sources try the animated frame cache first.
+  if (source->getSourceType() == Source::SourceType::Video && _thumbnailCache) {
+    QSharedPointer<Video> vid = qSharedPointerCast<Video>(source);
+    if (!vid->getUri().isEmpty()) {
+      QStringList frames = ThumbnailCache::cachedFrames(vid->getUri(), thumbnailCacheDir());
+      if (!frames.isEmpty()) {
+        QVector<QPixmap> pixmaps;
+        pixmaps.reserve(frames.size());
+        for (const QString& f : frames) {
+          QPixmap px(f);
+          if (!px.isNull()) pixmaps << px;
+        }
+        int fps = qMax(1, qRound(4.0 * vid->getRate()));
+        lbl->setAnimationFrames(pixmaps, fps);
+        return;
+      }
+      // Not yet cached — request generation and show static fallback.
+      _thumbnailCache->request(vid->getUri(), thumbnailCacheDir());
+    }
+  }
+
+  // Static fallback (images, folders, colour, or uncached video).
+  int w = _sourcePreviewLabel->width();
+  int h = _sourcePreviewLabel->height();
+  if (w < 10) w = 320;
+  if (h < 10) h = 200;
+  lbl->setSourcePixmap(source->getPreviewPixmap(w, h));
+}
+
+void MainWindow::onThumbnailReady(const QString& videoPath, const QStringList& frames)
+{
+  if (!_sourcePreviewLabel || currentSourceId == NULL_UID)
+    return;
+  Source::ptr source = mappingManager->getSourceById(currentSourceId);
+  if (source.isNull() || source->getSourceType() != Source::SourceType::Video)
+    return;
+  auto vid = qSharedPointerCast<Video>(source);
+  if (vid->getUri() != videoPath)
+    return;
+
+  QVector<QPixmap> pixmaps;
+  pixmaps.reserve(frames.size());
+  for (const QString& f : frames) {
+    QPixmap px(f);
+    if (!px.isNull()) pixmaps << px;
+  }
+  int fps = qMax(1, qRound(4.0 * vid->getRate()));
+  static_cast<SourcePreviewLabel*>(_sourcePreviewLabel)->setAnimationFrames(pixmaps, fps);
+}
+
+void MainWindow::updatePreviewAnimSpeed()
+{
+  if (!_sourcePreviewLabel || currentSourceId == NULL_UID)
+    return;
+  Source::ptr source = mappingManager->getSourceById(currentSourceId);
+  if (source.isNull() || source->getSourceType() != Source::SourceType::Video)
+    return;
+  auto vid = qSharedPointerCast<Video>(source);
+  int fps = qMax(1, qRound(4.0 * vid->getRate()));
+  static_cast<SourcePreviewLabel*>(_sourcePreviewLabel)->setAnimationFps(fps);
+}
+
+QString MainWindow::thumbnailCacheDir() const
+{
+  if (!curFile.isEmpty())
+    return QFileInfo(curFile).absoluteDir().filePath(".thumbnails");
+  return QStandardPaths::writableLocation(QStandardPaths::TempLocation)
+         + "/MyMapMap/thumbnails";
 }
 
 void MainWindow::startOscReceiver()

@@ -19,11 +19,54 @@
 
 #include <SourceGui.h>
 
-#ifdef HAVE_SYPHON
 #include <QTimer>
-#endif
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QFrame>
 
 namespace mmp {
+
+// Helper: one labelled horizontal slider row with a live value label.
+static QWidget* makeSliderRow(const QString& label, int min, int max, int initValue,
+                               QSlider*& sliderOut, QLabel*& valueLblOut)
+{
+  auto* row = new QWidget;
+  auto* hl  = new QHBoxLayout(row);
+  hl->setContentsMargins(6, 2, 6, 2);
+  hl->setSpacing(6);
+
+  auto* lbl = new QLabel(label);
+  lbl->setMinimumWidth(70);
+
+  sliderOut = new QSlider(Qt::Horizontal);
+  sliderOut->setRange(min, max);
+  sliderOut->setValue(initValue);
+
+  valueLblOut = new QLabel(QString::number(initValue) + "%");
+  valueLblOut->setFixedWidth(38);
+  valueLblOut->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+
+  hl->addWidget(lbl);
+  hl->addWidget(sliderOut, 1);
+  hl->addWidget(valueLblOut);
+  return row;
+}
+
+// Build a composite widget: slider rows on top, a thin separator, then the property browser.
+static QWidget* makeComposite(QWidget* sliderPanel, QWidget* browser)
+{
+  auto* composite = new QWidget;
+  auto* vl = new QVBoxLayout(composite);
+  vl->setContentsMargins(0, 0, 0, 0);
+  vl->setSpacing(0);
+  vl->addWidget(sliderPanel);
+  auto* sep = new QFrame;
+  sep->setFrameShape(QFrame::HLine);
+  sep->setFrameShadow(QFrame::Sunken);
+  vl->addWidget(sep);
+  vl->addWidget(browser, 1);
+  return composite;
+}
 
 SourceGui::SourceGui(Source::ptr source)
   : _source(source)
@@ -55,12 +98,15 @@ SourceGui::SourceGui(Source::ptr source)
 
 SourceGui::~SourceGui()
 {
-  delete _propertyBrowser;
+  if (_compositeWidget)
+    delete _compositeWidget; // owns _propertyBrowser as a child
+  else
+    delete _propertyBrowser;
 }
 
 QWidget* SourceGui::getPropertiesEditor()
 {
-  return _propertyBrowser;
+  return _compositeWidget ? _compositeWidget : _propertyBrowser;
 }
 
 void SourceGui::setValue(QtProperty* property, const QVariant& value)
@@ -125,21 +171,48 @@ ImageGui::ImageGui(Source::ptr source)
   image = qSharedPointerCast<Image>(source);
   Q_CHECK_PTR(image);
 
-_imageFileItem = _variantManager->addProperty(VariantManager::filePathTypeId(),
-                                              tr("Image file"));
+  _imageFileItem = _variantManager->addProperty(VariantManager::filePathTypeId(),
+                                                tr("Image file"));
+  _imageFileItem->setAttribute("filter", tr("Image files (%1);;All files (*)").arg(MM::IMAGE_FILES_FILTER));
+  _imageFileItem->setValue(image->getUri());
 
-_imageFileItem->setAttribute("filter", tr("Image files (%1);;All files (*)").arg(MM::IMAGE_FILES_FILTER));
-_imageFileItem->setValue(image->getUri());
-
-  _imageRateItem = _variantManager->addProperty(QMetaType::Double,
-                                                tr("Speed (%)"));
-  // we need to save it because the call to setAttribute will set it to minimum
-  double rate = image->getRate()*100;
+  _imageRateItem = _variantManager->addProperty(QMetaType::Double, tr("Speed (%)"));
+  double rate = image->getRate() * 100;
   _imageRateItem->setAttribute("decimals", 1);
   _imageRateItem->setValue(rate);
 
+  _imageWidthItem = _variantManager->addProperty(QMetaType::Int, tr("Width (px)"));
+  _imageWidthItem->setEnabled(false);
+  _imageHeightItem = _variantManager->addProperty(QMetaType::Int, tr("Height (px)"));
+  _imageHeightItem->setEnabled(false);
+
   _propertyBrowser->addProperty(_imageFileItem);
   _propertyBrowser->addProperty(_imageRateItem);
+  _propertyBrowser->addProperty(_imageWidthItem);
+  _propertyBrowser->addProperty(_imageHeightItem);
+
+  // Defer size read — project loader resolves relative URIs after ImageGui is constructed.
+  QTimer::singleShot(0, this, [this]() { _refreshImageSize(); });
+
+  // Slider panel
+  auto* sliders = new QWidget;
+  auto* svl = new QVBoxLayout(sliders);
+  svl->setContentsMargins(0, 2, 0, 2);
+  svl->setSpacing(0);
+  svl->addWidget(makeSliderRow(tr("Speed (%)"), 0, 200, (int)rate, _speedSlider, _speedValueLbl));
+
+  _compositeWidget = makeComposite(sliders, _propertyBrowser);
+
+  connect(_speedSlider, &QSlider::valueChanged, this, [this](int v) {
+    _speedValueLbl->setText(QString::number(v) + "%");
+    _imageRateItem->setValue(double(v)); // flows through setValue(QtProperty*, ...)
+  });
+}
+
+void ImageGui::_refreshImageSize()
+{
+  if (_imageWidthItem)  _imageWidthItem->setValue(image->getWidth());
+  if (_imageHeightItem) _imageHeightItem->setValue(image->getHeight());
 }
 
 void ImageGui::setValue(QtProperty* property, const QVariant& value) {
@@ -147,15 +220,22 @@ void ImageGui::setValue(QtProperty* property, const QVariant& value) {
     QString newUri = value.toString();
     if (newUri != image->getUri()) {
       image->setUri(newUri);
+      _refreshImageSize();
       emit valueChanged(_source);
     }
   }
   else if (property == _imageRateItem)
   {
-    double newRate = value.toDouble()/100.0;
+    double newRate = value.toDouble() / 100.0;
     if (newRate != image->getRate()) {
       image->setRate(newRate);
       emit valueChanged(_source);
+    }
+    if (_speedSlider) {
+      _speedSlider->blockSignals(true);
+      _speedSlider->setValue((int)qRound(value.toDouble()));
+      _speedValueLbl->setText(QString::number(_speedSlider->value()) + "%");
+      _speedSlider->blockSignals(false);
     }
   }
   else
@@ -190,8 +270,23 @@ FolderGui::FolderGui(Source::ptr source)
 
   _rateItem = _variantManager->addProperty(QMetaType::Double, tr("Speed (%)"));
   _rateItem->setAttribute("decimals", 1);
-  _rateItem->setValue(folder->getRate() * 100.0);
+  double rate = folder->getRate() * 100.0;
+  _rateItem->setValue(rate);
   _propertyBrowser->addProperty(_rateItem);
+
+  // Slider panel
+  auto* sliders = new QWidget;
+  auto* svl = new QVBoxLayout(sliders);
+  svl->setContentsMargins(0, 2, 0, 2);
+  svl->setSpacing(0);
+  svl->addWidget(makeSliderRow(tr("Speed (%)"), 0, 200, (int)rate, _speedSlider, _speedValueLbl));
+
+  _compositeWidget = makeComposite(sliders, _propertyBrowser);
+
+  connect(_speedSlider, &QSlider::valueChanged, this, [this](int v) {
+    _speedValueLbl->setText(QString::number(v) + "%");
+    _rateItem->setValue(double(v));
+  });
 }
 
 void FolderGui::setValue(QtProperty* property, const QVariant& value)
@@ -201,6 +296,12 @@ void FolderGui::setValue(QtProperty* property, const QVariant& value)
     if (newRate != folder->getRate()) {
       folder->setRate(newRate);
       emit valueChanged(_source);
+    }
+    if (_speedSlider) {
+      _speedSlider->blockSignals(true);
+      _speedSlider->setValue((int)qRound(value.toDouble()));
+      _speedValueLbl->setText(QString::number(_speedSlider->value()) + "%");
+      _speedSlider->blockSignals(false);
     }
   } else {
     TextureGui::setValue(property, value);
@@ -223,35 +324,44 @@ VideoGui::VideoGui(Source::ptr source)
   media = qSharedPointerCast<Video>(source);
   Q_CHECK_PTR(media);
 
-  _mediaFileItem = _variantManager->addProperty(VariantManager::filePathTypeId(),
-                                                tr("Source"));
-
+  _mediaFileItem = _variantManager->addProperty(VariantManager::filePathTypeId(), tr("Source"));
   _mediaFileItem->setAttribute("filter", tr("Video files (%1);;All files (*)").arg(MM::VIDEO_FILES_FILTER));
   _mediaFileItem->setValue(media->getUri());
 
-  _mediaRateItem = _variantManager->addProperty(QMetaType::Double,
-                                                tr("Speed (%)"));
-  // we need to save it because the call to setAttribute will set it to minimum
-  double rate = media->getRate()*100;
+  _mediaRateItem = _variantManager->addProperty(QMetaType::Double, tr("Speed (%)"));
+  double rate = media->getRate() * 100;
   _mediaRateItem->setAttribute("decimals", 1);
   _mediaRateItem->setValue(rate);
 
-  _mediaVolumeItem = _variantManager->addProperty(QMetaType::Double,
-                                                tr("Volume (%)"));
-  double volume = media->getVolume()*100;
+  _mediaVolumeItem = _variantManager->addProperty(QMetaType::Double, tr("Volume (%)"));
+  double volume = media->getVolume() * 100;
   _mediaVolumeItem->setAttribute("minimum", 0.0);
   _mediaVolumeItem->setAttribute("maximum", 100.0);
   _mediaVolumeItem->setAttribute("decimals", 1);
   _mediaVolumeItem->setValue(volume);
 
-//  _mediaReverseItem = _variantManager->addProperty(QVariant::Bool,
-//                                                tr("Reverse"));
-//  _mediaReverseItem->setValue(false);
-
   _propertyBrowser->addProperty(_mediaFileItem);
   _propertyBrowser->addProperty(_mediaRateItem);
   _propertyBrowser->addProperty(_mediaVolumeItem);
-//  _propertyBrowser->addProperty(_mediaReverseItem);
+
+  // Slider panel
+  auto* sliders = new QWidget;
+  auto* svl = new QVBoxLayout(sliders);
+  svl->setContentsMargins(0, 2, 0, 2);
+  svl->setSpacing(0);
+  svl->addWidget(makeSliderRow(tr("Speed (%)"),  0, 200, (int)rate,   _speedSlider,  _speedValueLbl));
+  svl->addWidget(makeSliderRow(tr("Volume (%)"), 0, 100, (int)volume, _volumeSlider, _volumeValueLbl));
+
+  _compositeWidget = makeComposite(sliders, _propertyBrowser);
+
+  connect(_speedSlider, &QSlider::valueChanged, this, [this](int v) {
+    _speedValueLbl->setText(QString::number(v) + "%");
+    _mediaRateItem->setValue(double(v));
+  });
+  connect(_volumeSlider, &QSlider::valueChanged, this, [this](int v) {
+    _volumeValueLbl->setText(QString::number(v) + "%");
+    _mediaVolumeItem->setValue(double(v));
+  });
 }
 
 void VideoGui::setValue(QtProperty* property, const QVariant& value)
@@ -266,18 +376,30 @@ void VideoGui::setValue(QtProperty* property, const QVariant& value)
   }
   else if (property == _mediaRateItem)
   {
-    double newRate = value.toDouble()/100.0;
+    double newRate = value.toDouble() / 100.0;
     if (newRate != media->getRate()) {
       media->setRate(newRate);
       emit valueChanged(_source);
     }
+    if (_speedSlider) {
+      _speedSlider->blockSignals(true);
+      _speedSlider->setValue((int)qRound(value.toDouble()));
+      _speedValueLbl->setText(QString::number(_speedSlider->value()) + "%");
+      _speedSlider->blockSignals(false);
+    }
   }
   else if (property == _mediaVolumeItem)
   {
-    double newVolume = value.toDouble()/100.0;
+    double newVolume = value.toDouble() / 100.0;
     if (newVolume != media->getVolume()) {
       media->setVolume(newVolume);
       emit valueChanged(_source);
+    }
+    if (_volumeSlider) {
+      _volumeSlider->blockSignals(true);
+      _volumeSlider->setValue((int)qRound(value.toDouble()));
+      _volumeValueLbl->setText(QString::number(_volumeSlider->value()) + "%");
+      _volumeSlider->blockSignals(false);
     }
   }
   else

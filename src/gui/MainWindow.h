@@ -48,6 +48,7 @@
 #include "VideoExporter.h"
 
 #include "MappingManager.h"
+#include "ThumbnailCache.h"
 #include "LayerItemDelegate.h"
 #include "LayerListModel.h"
 
@@ -99,6 +100,11 @@ private slots:
   // Recording.
   void toggleRecording(bool on);
   void onRecordingStopped(const QString& filePath);
+
+  // Source preview.
+  void updateSourcePreview(uid sourceId);
+  void onThumbnailReady(const QString& videoPath, const QStringList& frames);
+  void updatePreviewAnimSpeed();
 
   // Menus slots.
   // File menu.
@@ -320,6 +326,7 @@ public:
   void syncLayerManager();
   // Check if the file exists
   bool fileExists(const QString& file);
+  QString thumbnailCacheDir() const;
   // Check if the file is supported
   bool fileSupported(const QString& file, bool isImage);
   bool fileSupported(const QString &file, const QString &extension);
@@ -473,6 +480,11 @@ private:
   QListWidgetItem* _sourceSectionVideos  = nullptr; // non-selectable section header
   QListWidgetItem* _sourceSectionFolders = nullptr; // non-selectable section header
   QStackedWidget* sourcePropertyPanel;
+
+  QWidget*      _sourcePreviewContainer = nullptr;
+  QLabel*       _sourcePreviewLabel     = nullptr;
+  QCheckBox*    _previewToggleBtn       = nullptr;
+  ThumbnailCache* _thumbnailCache       = nullptr;
 
   QSplitter* layerSplitter;
   QTableView* layerList;

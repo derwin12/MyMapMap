@@ -22,6 +22,8 @@
 
 
 #include <QtGlobal>
+#include <QSlider>
+#include <QLabel>
 
 #if __APPLE__
 #include <OpenGL/gl.h>
@@ -86,6 +88,7 @@ protected:
   QtAbstractPropertyBrowser* _propertyBrowser;
   QtVariantEditorFactory* _variantFactory;
   QtVariantPropertyManager* _variantManager;
+  QWidget* _compositeWidget = nullptr; // wraps slider rows + property browser when set
 
   QtVariantProperty* _idItem;
   QtVariantProperty* _opacityItem;
@@ -127,9 +130,14 @@ public slots:
   virtual void setValue(QString propertyName, QVariant value);
 
 protected:
+  void _refreshImageSize();
   QSharedPointer<Image> image;
   QtVariantProperty* _imageFileItem;
   QtVariantProperty* _imageRateItem;
+  QtVariantProperty* _imageWidthItem  = nullptr;
+  QtVariantProperty* _imageHeightItem = nullptr;
+  QSlider* _speedSlider    = nullptr;
+  QLabel*  _speedValueLbl  = nullptr;
 };
 
 class FolderGui : public TextureGui {
@@ -148,6 +156,8 @@ protected:
   QtVariantProperty* _folderPathItem;
   QtVariantProperty* _fileCountItem;
   QtVariantProperty* _rateItem;
+  QSlider* _speedSlider    = nullptr;
+  QLabel*  _speedValueLbl  = nullptr;
 };
 
 class VideoGui : public TextureGui {
@@ -167,6 +177,10 @@ protected:
   QtVariantProperty* _mediaRateItem;
   QtVariantProperty* _mediaVolumeItem;
 //  QtVariantProperty* _mediaReverseItem;
+  QSlider* _speedSlider    = nullptr;
+  QLabel*  _speedValueLbl  = nullptr;
+  QSlider* _volumeSlider   = nullptr;
+  QLabel*  _volumeValueLbl = nullptr;
 };
 
 #ifdef HAVE_SYPHON

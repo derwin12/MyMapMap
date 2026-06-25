@@ -1,7 +1,8 @@
 
 include(../src.pri)
 
-HEADERS += $$PWD/Commands.h \
+HEADERS += $$PWD/ThumbnailCache.h \
+    $$PWD/Commands.h \
     $$PWD/CameraImpl.h \
     $$PWD/CameraSurface.h \
     $$PWD/Element.h \
@@ -21,7 +22,8 @@ HEADERS += $$PWD/Commands.h \
     $$PWD/VideoPlayerImpl.h \
     $$PWD/Util.h
 
-SOURCES += $$PWD/Commands.cpp \
+SOURCES += $$PWD/ThumbnailCache.cpp \
+    $$PWD/Commands.cpp \
     $$PWD/CameraImpl.cpp \
     $$PWD/CameraSurface.cpp \
     $$PWD/Element.cpp \
