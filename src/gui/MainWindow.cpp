@@ -41,6 +41,8 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QDesktopServices>
+#include <QDir>
+#include <QDirIterator>
 
 namespace mmp {
 
@@ -185,6 +187,13 @@ void MainWindow::handleSourceItemSelectionChanged()
 {
   // Set current source.
   QListWidgetItem* item = sourceList->currentItem();
+
+  // Ignore clicks on section-header items (they are not selectable sources).
+  if (item == _sourceSectionImages || item == _sourceSectionVideos) {
+    sourceList->clearSelection();
+    return;
+  }
+
   currentSelectedItem = item;
 
   // Is a source item selected?
@@ -694,6 +703,33 @@ void MainWindow::importMedia()
     else
       importMediaFile(fileName, false);
   }
+}
+
+void MainWindow::importFolder()
+{
+  QString dirPath = QFileDialog::getExistingDirectory(
+      this, tr("Import Media Folder"),
+      settings.value("defaultVideoDir").toString());
+  if (dirPath.isEmpty())
+    return;
+
+  const QStringList allExts = (MM::IMAGE_FILES_FILTER + " " + MM::VIDEO_FILES_FILTER)
+                                .split(' ', Qt::SkipEmptyParts);
+
+  QDirIterator it(dirPath, allExts, QDir::Files, QDirIterator::Subdirectories);
+  int imported = 0;
+  while (it.hasNext()) {
+    QString filePath = it.next();
+    QString ext = QFileInfo(filePath).suffix();
+    bool isImage = MM::IMAGE_FILES_FILTER.contains(ext, Qt::CaseInsensitive);
+    if (importMediaFile(filePath, isImage))
+      ++imported;
+  }
+
+  if (imported > 0)
+    statusBar()->showMessage(tr("Imported %1 file(s) from folder").arg(imported), 4000);
+  else
+    statusBar()->showMessage(tr("No supported media files found in folder"), 4000);
 }
 
 void MainWindow::openCameraDevice()
@@ -1601,10 +1637,26 @@ void MainWindow::createLayout()
   sourceList = new QListWidget;
   sourceList->setSelectionMode(QAbstractItemView::SingleSelection);
   sourceList->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
-  sourceList->setDefaultDropAction(Qt::MoveAction);
-  sourceList->setDragDropMode(QAbstractItemView::InternalMove);
+  sourceList->setDragDropMode(QAbstractItemView::NoDragDrop); // sections make reorder ambiguous
   sourceList->setMinimumWidth(PAINT_LIST_MINIMUM_HEIGHT);
   sourceList->setIconSize(QSize(MainWindow::PAINT_LIST_ICON_SIZE, MainWindow::PAINT_LIST_ICON_SIZE));
+
+  // Section header helper — creates a non-selectable, non-editable label row.
+  auto makeSectionHeader = [](const QString& title) -> QListWidgetItem* {
+    QListWidgetItem* h = new QListWidgetItem(title);
+    h->setFlags(Qt::ItemIsEnabled); // not selectable, not draggable
+    QFont f = h->font();
+    f.setBold(true);
+    f.setPointSizeF(f.pointSizeF() * 0.85);
+    h->setFont(f);
+    h->setForeground(QColor(160, 160, 160));
+    h->setSizeHint(QSize(0, 22));
+    return h;
+  };
+  _sourceSectionImages = makeSectionHeader(tr("IMAGES"));
+  _sourceSectionVideos = makeSectionHeader(tr("VIDEOS"));
+  sourceList->addItem(_sourceSectionImages);
+  sourceList->addItem(_sourceSectionVideos);
 
   // Create source panel.
   sourcePropertyPanel = new QStackedWidget;
@@ -1831,6 +1883,16 @@ void MainWindow::createActions()
   importMediaAction->setShortcutContext(Qt::ApplicationShortcut);
   addAction(importMediaAction);
   connect(importMediaAction, SIGNAL(triggered()), this, SLOT(importMedia()));
+
+  // Import Folder.
+  importFolderAction = new QAction(tr("Import Media &Folder..."), this);
+  importFolderAction->setShortcut(Qt::CTRL | Qt::SHIFT | Qt::Key_I);
+  importFolderAction->setIcon(QIcon(":/add-video"));
+  importFolderAction->setToolTip(tr("Import all images and videos from a folder..."));
+  importFolderAction->setIconVisibleInMenu(false);
+  importFolderAction->setShortcutContext(Qt::ApplicationShortcut);
+  addAction(importFolderAction);
+  connect(importFolderAction, &QAction::triggered, this, &MainWindow::importFolder);
 
   // Open camera.
   AddCameraAction = new QAction(tr("Open &Camera Device..."), this);
@@ -2387,6 +2449,7 @@ void MainWindow::createMenus()
   fileMenu->addAction(saveAsAction);
   fileMenu->addSeparator();
   fileMenu->addAction(importMediaAction);
+  fileMenu->addAction(importFolderAction);
   fileMenu->addAction(AddCameraAction);
   fileMenu->addAction(addColorAction);
 #ifdef Q_OS_MAC
@@ -3142,8 +3205,14 @@ void MainWindow::addSourceItem(uid sourceId, const QIcon& icon, const QString& n
   // Switch to source tab.
   contentTab->setCurrentWidget(sourceSplitter);
 
-  // Add item to source list.
-  sourceList->addItem(item);
+  // Insert under the appropriate section header.
+  // Images go before the Videos header; videos (and cameras/colors) go at the end.
+  if (source->getSourceType() == SourceType::Image) {
+    int videosRow = sourceList->row(_sourceSectionVideos);
+    sourceList->insertItem(videosRow, item);
+  } else {
+    sourceList->addItem(item);
+  }
   sourceList->setCurrentItem(item);
 
   // Update mapping guis.

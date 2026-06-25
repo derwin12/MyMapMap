@@ -107,6 +107,7 @@ private slots:
   bool save();
   bool saveAs();
   void importMedia();
+  void importFolder();
   void openCameraDevice();
   void addColor();
   void addSyphon();
@@ -376,6 +377,7 @@ private:
   QAction *newAction;
   QAction *openAction;
   QAction *importMediaAction;
+  QAction *importFolderAction;
   QAction *AddCameraAction;
   QAction *addColorAction;
   QAction *addSyphonAction;
@@ -462,6 +464,8 @@ private:
 
   QSplitter* sourceSplitter;
   QListWidget* sourceList;
+  QListWidgetItem* _sourceSectionImages = nullptr; // non-selectable section header
+  QListWidgetItem* _sourceSectionVideos = nullptr; // non-selectable section header
   QStackedWidget* sourcePropertyPanel;
 
   QSplitter* layerSplitter;
