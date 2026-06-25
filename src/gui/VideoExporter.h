@@ -70,6 +70,8 @@ private:
   QMediaRecorder       _recorder;
   bool                 _recording = false;
   QString              _filePath;
+  qreal                _fps = 0.0;
+  qint64               _frameCount = 0;
 };
 
 } // namespace mmp

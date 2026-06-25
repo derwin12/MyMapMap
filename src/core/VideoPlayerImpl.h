@@ -46,6 +46,7 @@ public:
   bool seekTo(qint64 positionMs) override;
   void setRate(double rate) override;
   void setVolume(double volume) override;
+  void setPlayInLoop(bool loop) override;
 
   void update() override;
 

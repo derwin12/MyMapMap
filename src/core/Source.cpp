@@ -268,6 +268,22 @@ void Video::rewind()
   _impl->resetMovie();
 }
 
+qint64 Video::getDuration() const
+{
+  return _impl ? _impl->getDuration() : 0;
+}
+
+bool Video::getPlayInLoop() const
+{
+  return _impl ? _impl->getPlayInLoop() : false;
+}
+
+void Video::setPlayInLoop(bool loop)
+{
+  if (_impl)
+    _impl->setPlayInLoop(loop);
+}
+
 void Video::releaseResources()
 {
   // Release the capture device / media player but keep the impl object, so the

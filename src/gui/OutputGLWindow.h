@@ -53,7 +53,7 @@ signals:
   void closed();
 
 public:
-  MapperGLCanvas* getCanvas() const { return canvas; }
+  OutputGLCanvas* getCanvas() const { return canvas; }
   void setPointerHasMoved();
 
   int getPreferredScreen() const { return _preferredScreen; }

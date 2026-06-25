@@ -34,6 +34,9 @@ public:
   OutputGLCanvas(MainWindow* mainWindow, QWidget* parent = 0, QOpenGLWidget* shareWidget = 0, QGraphicsScene* scene = 0);
   virtual ~OutputGLCanvas() {}
 
+  // Enable/disable per-frame grab after each paintEvent (for video recording).
+  void setFrameGrabEnabled(bool enabled) { _frameGrabEnabled = enabled; }
+
   // Adjust viewable scene to correspond to absolute coordinates.
   void setSceneRectToViewportGeometry();
 
@@ -49,6 +52,12 @@ public:
     _displayTestSignal = displayTestSignal;
   }
 
+signals:
+  void framePainted(const QImage& frame);
+
+protected:
+  void paintEvent(QPaintEvent* event) override;
+
 private:
   void _drawClassicTestSignal(QPainter* painter);
   void _drawPALTestCard(QPainter *painter);
@@ -58,6 +67,7 @@ private:
 
   bool _displayCrosshair;
   bool _displayTestSignal;
+  bool _frameGrabEnabled = false;
   QImage _classicTestCard;
   QBrush _brush_test_signal;
   QImage _palTestCard;

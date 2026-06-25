@@ -73,8 +73,10 @@ bool VideoExporter::start(const QString& filePath, Format format,
     return false;
   }
 
-  _recording = true;
-  _filePath  = filePath;
+  _recording   = true;
+  _filePath    = filePath;
+  _fps         = fps;
+  _frameCount  = 0;
   emit recordingStarted();
   return true;
 }
@@ -97,6 +99,16 @@ bool VideoExporter::sendFrame(const QImage& frame)
   memcpy(videoFrame.bits(0), converted.constBits(),
          static_cast<size_t>(converted.sizeInBytes()));
   videoFrame.unmap();
+
+  // Stamp presentation time so Qt Multimedia sees a non-zero frame rate.
+  // Without timestamps QVideoFrameInput reports frameRate=0 and the encoder
+  // may drop frames or produce a zero-duration file.
+  if (_fps > 0.0) {
+    qint64 frameDurationUs = qRound64(1000000.0 / _fps);
+    videoFrame.setStartTime(_frameCount * frameDurationUs);
+    videoFrame.setEndTime((_frameCount + 1) * frameDurationUs);
+  }
+  ++_frameCount;
 
   return _frameInput.sendVideoFrame(videoFrame);
 }

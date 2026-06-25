@@ -31,6 +31,9 @@ namespace mmp {
 
 OutputGLWindow:: OutputGLWindow(QWidget* parent, const MapperGLCanvas* canvas_) : QDialog(parent)
 {
+  // Qt::Window makes this a proper top-level window (not constrained as a child dialog),
+  // which is required for reliable multi-monitor fullscreen on Windows.
+  setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
   resize(MainWindow::OUTPUT_WINDOW_MINIMUM_WIDTH, MainWindow::OUTPUT_WINDOW_MINIMUM_HEIGHT);
 
   canvas = new OutputGLCanvas(canvas_->getMainWindow(), this, qobject_cast<QOpenGLWidget*>(canvas_->viewport()), canvas_->scene());
@@ -106,12 +109,19 @@ void OutputGLWindow::setPreferredScreen(int screen)
 
 void OutputGLWindow::_updateToPreferredScreen()
 {
-  // Check if user is on multiple screen (always pre
   int screen = getPreferredScreen();
-  //Move window to second screen before fullscreening it.
   const QList<QScreen*> screens = QGuiApplication::screens();
-  if (screen < screens.size())
-    setGeometry(screens.at(screen)->geometry());
+  if (screen >= screens.size())
+    return;
+  QScreen* targetScreen = screens.at(screen);
+  // Position the window on the target screen.
+  setGeometry(targetScreen->geometry());
+  // Qt 6: QWindow::setScreen() is required for reliable multi-monitor fullscreen.
+  // WA_NativeWindow forces the native window handle to be created (windowHandle()
+  // returns null until the first show() or until the handle is explicitly created).
+  setAttribute(Qt::WA_NativeWindow);
+  if (QWindow* wh = windowHandle())
+    wh->setScreen(targetScreen);
 }
 
 void OutputGLWindow::_setFullScreen(bool fullscreen)
@@ -119,13 +129,6 @@ void OutputGLWindow::_setFullScreen(bool fullscreen)
   if (fullscreen)
   {
     _updateToPreferredScreen();
-#ifdef Q_OS_LINUX
-    // The problem related to the full screen on linux seems to be resolved with Qt 5.5 on Debian.
-    // However this still seems to be needed on Ubuntu 15.10.
-    // Fix source:
-    // http://stackoverflow.com/questions/12645880/fullscreen-for-qdialog-from-within-mainwindow-only-working-sometimes
-    setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
-#endif
     showFullScreen();
   }
   else

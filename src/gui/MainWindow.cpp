@@ -1659,6 +1659,7 @@ void MainWindow::createLayout()
   outputWindow = new OutputGLWindow(this, destinationCanvas);
   outputWindow->installEventFilter(destinationCanvas);
 
+
   // Source scene changed -> change destination.
   connect(sourceCanvas->scene(), SIGNAL(changed(const QList<QRectF>&)),
           destinationCanvas,     SLOT(update()));
@@ -3581,8 +3582,9 @@ void MainWindow::processFrame()
   // Update canvases.
   updateCanvases();
 
-  // Grab output framebuffer and feed to recorder if active.
+  // Capture output frame and feed to recorder.
   if (_videoExporter->isRecording()) {
+    outputWindow->getCanvas()->repaint();
     QOpenGLWidget* glw = qobject_cast<QOpenGLWidget*>(outputWindow->getCanvas()->viewport());
     if (glw) {
       QImage frame = glw->grabFramebuffer();
@@ -3590,11 +3592,21 @@ void MainWindow::processFrame()
         _videoExporter->sendFrame(frame);
     }
 
-    // Update recording timer label.
     qint64 ms = _videoExporter->duration();
-    recordingTimerLabel->setText(tr("● REC  %1:%2")
-      .arg(ms / 60000, 2, 10, QChar('0'))
-      .arg((ms % 60000) / 1000, 2, 10, QChar('0')));
+    if (_recordingTotalMs > 0 && ms >= _recordingTotalMs) {
+      recordAction->setChecked(false);
+      _videoExporter->stop();
+    } else {
+      auto fmtMs = [](qint64 t) {
+        return QString("%1:%2")
+          .arg(t / 60000, 2, 10, QChar('0'))
+          .arg((t % 60000) / 1000, 2, 10, QChar('0'));
+      };
+      QString label = _recordingTotalMs > 0
+        ? tr("● REC  %1 / %2").arg(fmtMs(ms)).arg(fmtMs(_recordingTotalMs))
+        : tr("● REC  %1").arg(fmtMs(ms));
+      recordingTimerLabel->setText(label);
+    }
   }
 
   // Update true FPS.
@@ -3602,7 +3614,7 @@ void MainWindow::processFrame()
   if (nFrames > framesPerSecond())
   {
     // This is the real time needed to process one second.
-    qreal trueFramesPerSecond = nFrames / systemTimer->restart() * 1000.0;
+    qreal trueFramesPerSecond = qreal(nFrames) / qreal(systemTimer->restart()) * 1000.0;
     trueFramesPerSecondsLabel->setText(
         "FPS: " + QString::number(trueFramesPerSecond, 'f', 2) + " / " +
         QString::number(framesPerSecond()  , 'f', 2));
@@ -3619,8 +3631,9 @@ void MainWindow::toggleRecording(bool on)
 
     QString filter = VideoExporter::formatFilter(format);
     QString ext    = VideoExporter::formatExtension(format);
+    QString lastDir = s.value("lastRecordingDir", QString()).toString();
     QString path   = QFileDialog::getSaveFileName(
-        this, tr("Save Recording As"), QString(), filter);
+        this, tr("Save Recording As"), lastDir, filter);
 
     if (path.isEmpty()) {
       recordAction->setChecked(false);
@@ -3631,12 +3644,58 @@ void MainWindow::toggleRecording(bool on)
     if (!path.endsWith("." + ext, Qt::CaseInsensitive))
       path += "." + ext;
 
+    s.setValue("lastRecordingDir", QFileInfo(path).absolutePath());
+
+    // Rewind all video sources, force loop, find longest duration.
+    _recordingTotalMs = 0;
+    _savedLoopStates.clear();
+    for (int i = 0; i < mappingManager->nSources(); i++) {
+      Source::ptr src = mappingManager->getSource(i);
+      if (src->getSourceType() == SourceType::Video) {
+        Video* vid = static_cast<Video*>(src.get());
+        _savedLoopStates[src->getId()] = vid->getPlayInLoop();
+        vid->setPlayInLoop(true);
+        vid->rewind();
+        qint64 dur = vid->getDuration();
+        if (dur > _recordingTotalMs)
+          _recordingTotalMs = dur;
+      }
+    }
+
+    // Ensure the output canvas has a live GL context for grabFramebuffer().
+    // Show the output window off-screen so Windows gives it a real device context
+    // without it appearing on any monitor. WA_DontShowOnScreen does NOT work on
+    // Windows for OpenGL — it creates a HWND but without a proper pixel format.
+    _recordingOpenedOutputWindow = !outputWindow->isVisible();
+    if (_recordingOpenedOutputWindow) {
+      QSize destSize = destinationCanvas->viewport()->size();
+      outputWindow->move(-10000, -10000);
+      outputWindow->resize(destSize);
+      outputWindow->show();
+      QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+    }
+
     QSize size = outputWindow->getCanvas()->viewport()->size();
     if (!_videoExporter->start(path, format, quality, size, framesPerSecond())) {
       recordAction->setChecked(false);
       statusBar()->showMessage(tr("Failed to start recording."), 4000);
+      // Restore loop states since recording failed to start.
+      for (int i = 0; i < mappingManager->nSources(); i++) {
+        Source::ptr src = mappingManager->getSource(i);
+        if (src->getSourceType() == SourceType::Video) {
+          Video* vid = static_cast<Video*>(src.get());
+          if (_savedLoopStates.contains(src->getId()))
+            vid->setPlayInLoop(_savedLoopStates.value(src->getId()));
+        }
+      }
+      _savedLoopStates.clear();
+      _recordingTotalMs = 0;
+      if (_recordingOpenedOutputWindow) {
+        outputWindow->hide();
+        _recordingOpenedOutputWindow = false;
+      }
     } else {
-      recordingTimerLabel->setText("● REC  00:00");
+      recordingTimerLabel->setText("● REC  00:00 / --:--");
       recordingTimerLabel->show();
     }
   } else {
@@ -3646,9 +3705,25 @@ void MainWindow::toggleRecording(bool on)
 
 void MainWindow::onRecordingStopped(const QString& filePath)
 {
+  if (_recordingOpenedOutputWindow) {
+    outputWindow->hide();
+    _recordingOpenedOutputWindow = false;
+  }
   recordAction->setChecked(false);
   recordingTimerLabel->hide();
   statusBar()->showMessage(tr("Recording saved: %1").arg(filePath), 6000);
+
+  // Restore each video's original loop setting.
+  for (int i = 0; i < mappingManager->nSources(); i++) {
+    Source::ptr src = mappingManager->getSource(i);
+    if (src->getSourceType() == SourceType::Video) {
+      Video* vid = static_cast<Video*>(src.get());
+      if (_savedLoopStates.contains(src->getId()))
+        vid->setPlayInLoop(_savedLoopStates.value(src->getId()));
+    }
+  }
+  _savedLoopStates.clear();
+  _recordingTotalMs = 0;
 }
 
 void MainWindow::updatePlayingState()

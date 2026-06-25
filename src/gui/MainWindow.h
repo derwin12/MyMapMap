@@ -557,6 +557,9 @@ private:
   QElapsedTimer *systemTimer;
   // Video recorder
   VideoExporter* _videoExporter;
+  qint64 _recordingTotalMs = 0;
+  QMap<uid, bool> _savedLoopStates;
+  bool _recordingOpenedOutputWindow = false;
 
   // Preference dialog
   PreferenceDialog* _preferenceDialog;

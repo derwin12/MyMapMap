@@ -41,6 +41,20 @@ OutputGLCanvas::OutputGLCanvas(MainWindow* mainWindow, QWidget* parent, QOpenGLW
   setSceneRectToViewportGeometry();
 }
 
+void OutputGLCanvas::paintEvent(QPaintEvent* event)
+{
+  MapperGLCanvas::paintEvent(event);
+
+  if (_frameGrabEnabled) {
+    QOpenGLWidget* glw = qobject_cast<QOpenGLWidget*>(viewport());
+    if (glw) {
+      QImage frame = glw->grabFramebuffer();
+      if (!frame.isNull())
+        emit framePainted(frame);
+    }
+  }
+}
+
 void OutputGLCanvas::setSceneRectToViewportGeometry()
 {
   setSceneRect(viewport()->geometry());

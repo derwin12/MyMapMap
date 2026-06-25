@@ -354,6 +354,15 @@ public:
   /// Re-opens the capture device / player released by releaseResources().
   virtual void reacquireResources();
 
+  /// Duration of the video in milliseconds (0 if not yet known).
+  qint64 getDuration() const;
+
+  /// Whether this video loops on end-of-stream.
+  bool getPlayInLoop() const;
+
+  /// Override loop-on-end setting (e.g. during recording).
+  void setPlayInLoop(bool loop);
+
   /// Locks mutex (default = no effect).
   virtual void lockMutex();
 
