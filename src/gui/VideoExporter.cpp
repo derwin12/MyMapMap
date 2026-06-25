@@ -6,13 +6,17 @@
 
 #include <QMediaCaptureSession>
 #include <QVideoFrameInput>
+#include <QAudioBufferInput>
 #include <QMediaRecorder>
-#include <QAudioInput>
-#include <QMediaDevices>
+#include <QAudioSource>
+#include <QAudioBuffer>
+#include <QAudioFormat>
 #include <QAudioDevice>
+#include <QMediaDevices>
 #include <QMediaFormat>
 #include <QVideoFrame>
 #include <QVideoFrameFormat>
+#include <QIODevice>
 #include <QUrl>
 #include <QDebug>
 
@@ -20,9 +24,6 @@ namespace mmp {
 
 VideoExporter::VideoExporter(QObject* parent) : QObject(parent)
 {
-  // _session / _frameInput / _recorder are constructed lazily inside start()
-  // so their constructors (which trigger WMF/FFmpeg backend init) don't run
-  // at app startup and don't freeze the main thread.
 }
 
 VideoExporter::~VideoExporter()
@@ -37,37 +38,55 @@ bool VideoExporter::start(const QString& filePath, Format format,
   if (_recording)
     return false;
 
-  // Lazy construction: allocate Qt Multimedia objects on first record call so
-  // the WMF/FFmpeg backend initialisation happens here, not at app startup.
   if (!_recorder) {
     _session.reset(new QMediaCaptureSession);
     _frameInput.reset(new QVideoFrameInput);
     _recorder.reset(new QMediaRecorder);
 
-    // Only record audio if a loopback / desktop-audio device is available.
+    _session->setVideoFrameInput(_frameInput.data());
+    _session->setRecorder(_recorder.data());
+
+    // Search for a loopback / desktop-audio device.
     // Do NOT fall back to the microphone — that records the wrong source.
-    // To enable audio: turn on Stereo Mix in Windows Sound settings, or install
-    // a virtual loopback driver (VB-Audio Cable, Voicemeeter, etc.).
-    QAudioDevice chosenDev;
-    const QStringList loopbackKw = {"mix", "stereo", "loopback", "what u hear", "wave out",
-                                    "cable", "virtual", "vb-audio", "voicemeeter"};
+    QAudioDevice loopbackDev;
+    const QStringList loopbackKw = {"mix", "stereo", "loopback", "what u hear",
+                                    "wave out", "cable", "virtual", "vb-audio", "voicemeeter"};
     for (const QAudioDevice& dev : QMediaDevices::audioInputs()) {
       QString name = dev.description().toLower();
       for (const QString& kw : loopbackKw)
-        if (name.contains(kw)) { chosenDev = dev; break; }
-      if (!chosenDev.isNull()) break;
+        if (name.contains(kw)) { loopbackDev = dev; break; }
+      if (!loopbackDev.isNull()) break;
     }
 
-    if (!chosenDev.isNull()) {
-      _audioDevice = chosenDev.description();
-      _audioInput.reset(new QAudioInput(chosenDev));
-      _session->setAudioInput(_audioInput.data());
-    } else {
-      _audioDevice = QString(); // signals "no audio" to callers
-    }
+    if (!loopbackDev.isNull()) {
+      // Use QAudioSource + QAudioBufferInput so we push audio the same way
+      // we push video — both streams share the same session clock and the
+      // FFmpeg muxer can interleave them correctly.
+      QAudioFormat fmt;
+      fmt.setSampleRate(44100);
+      fmt.setChannelCount(2);
+      fmt.setSampleFormat(QAudioFormat::Int16);
 
-    _session->setVideoFrameInput(_frameInput.data());
-    _session->setRecorder(_recorder.data());
+      _audioBufferInput.reset(new QAudioBufferInput(fmt));
+      _session->setAudioBufferInput(_audioBufferInput.data());
+
+      _audioSource.reset(new QAudioSource(loopbackDev, fmt));
+      QIODevice* iodev = _audioSource->start(); // pull-mode: returns QIODevice*
+      _audioDevice = iodev;
+
+      if (iodev) {
+        connect(iodev, &QIODevice::readyRead, this, [this, fmt]() {
+          if (!_audioDevice || !_audioBufferInput) return;
+          const QByteArray data = _audioDevice->readAll();
+          if (!data.isEmpty())
+            _audioBufferInput->sendAudioBuffer(QAudioBuffer(data, fmt));
+        });
+        _audioDeviceName = loopbackDev.description();
+      } else {
+        _audioBufferInput.reset();
+        _audioSource.reset();
+      }
+    }
 
     connect(_recorder.data(), &QMediaRecorder::durationChanged,
             this, &VideoExporter::durationChanged);
@@ -78,21 +97,22 @@ bool VideoExporter::start(const QString& filePath, Format format,
   }
 
   QMediaFormat mediaFormat;
+  const bool hasAudio = !_audioDeviceName.isEmpty();
   switch (format) {
   case H264_MP4:
     mediaFormat.setFileFormat(QMediaFormat::MPEG4);
     mediaFormat.setVideoCodec(QMediaFormat::VideoCodec::H264);
-    if (_audioInput) mediaFormat.setAudioCodec(QMediaFormat::AudioCodec::AAC);
+    if (hasAudio) mediaFormat.setAudioCodec(QMediaFormat::AudioCodec::AAC);
     break;
   case H265_MP4:
     mediaFormat.setFileFormat(QMediaFormat::MPEG4);
     mediaFormat.setVideoCodec(QMediaFormat::VideoCodec::H265);
-    if (_audioInput) mediaFormat.setAudioCodec(QMediaFormat::AudioCodec::AAC);
+    if (hasAudio) mediaFormat.setAudioCodec(QMediaFormat::AudioCodec::AAC);
     break;
   case MJPEG_AVI:
     mediaFormat.setFileFormat(QMediaFormat::AVI);
     mediaFormat.setVideoCodec(QMediaFormat::VideoCodec::MotionJPEG);
-    if (_audioInput) mediaFormat.setAudioCodec(QMediaFormat::AudioCodec::MP3);
+    if (hasAudio) mediaFormat.setAudioCodec(QMediaFormat::AudioCodec::MP3);
     break;
   }
 
@@ -129,19 +149,14 @@ bool VideoExporter::sendFrame(const QImage& frame)
   if (!_recording)
     return false;
 
-  // QVideoFrameInput expects RGBA8888 on Windows Media Foundation.
   QImage converted = frame.convertToFormat(QImage::Format_RGBA8888);
 
-  QVideoFrameFormat vff(converted.size(),
-                        QVideoFrameFormat::Format_RGBA8888);
+  QVideoFrameFormat vff(converted.size(), QVideoFrameFormat::Format_RGBA8888);
   QVideoFrame videoFrame(vff);
 
-  if (!videoFrame.map(QVideoFrame::WriteOnly)) {
+  if (!videoFrame.map(QVideoFrame::WriteOnly))
     return false;
-  }
 
-  // Copy row-by-row so mismatched strides (QImage padding vs QVideoFrame padding)
-  // don't cause each row to shift and produce the diagonal-skew artifact.
   const int rowBytes = converted.width() * 4;
   for (int y = 0; y < converted.height(); ++y) {
     memcpy(videoFrame.bits(0) + y * static_cast<size_t>(videoFrame.bytesPerLine(0)),
@@ -150,9 +165,6 @@ bool VideoExporter::sendFrame(const QImage& frame)
   }
   videoFrame.unmap();
 
-  // Stamp presentation time so Qt Multimedia sees a non-zero frame rate.
-  // Without timestamps QVideoFrameInput reports frameRate=0 and the encoder
-  // may drop frames or produce a zero-duration file.
   if (_fps > 0.0) {
     qint64 frameDurationUs = qRound64(1000000.0 / _fps);
     videoFrame.setStartTime(_frameCount * frameDurationUs);
@@ -160,14 +172,16 @@ bool VideoExporter::sendFrame(const QImage& frame)
   }
   ++_frameCount;
 
-  bool sent = _frameInput->sendVideoFrame(videoFrame);
-  return sent;
+  return _frameInput->sendVideoFrame(videoFrame);
 }
 
 void VideoExporter::stop()
 {
   if (!_recording)
     return;
+
+  if (_audioSource)
+    _audioSource->stop();
 
   _recorder->stop();
   _recording = false;

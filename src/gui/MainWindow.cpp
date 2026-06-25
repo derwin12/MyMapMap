@@ -3671,6 +3671,7 @@ void MainWindow::toggleRecording(bool on)
     // when recording starts so the compositor always has real content to grab.
     _recordingOpenedOutputWindow = !outputFullScreenAction->isChecked();
     if (_recordingOpenedOutputWindow) {
+      _recordingHadControls = displayControlsAction->isChecked();
       startFullScreen();
       // Allow the GL context and compositor to settle before the first frame grab.
       QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
@@ -3728,6 +3729,7 @@ void MainWindow::onRecordingStopped(const QString& filePath)
 
   if (_recordingOpenedOutputWindow) {
     outputWindow->hide();
+    displayControlsAction->setChecked(_recordingHadControls);
     _recordingOpenedOutputWindow = false;
   }
   recordAction->setChecked(false);

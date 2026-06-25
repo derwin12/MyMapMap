@@ -2,8 +2,8 @@
  * VideoExporter.h
  *
  * Encodes the output canvas to a video file using Qt Multimedia.
- * Uses QVideoFrameInput (Qt 6.8+) to push grabbed OpenGL frames
- * into a QMediaRecorder pipeline.
+ * Uses QVideoFrameInput + QAudioBufferInput (Qt 6.8+) to push grabbed
+ * frames and loopback audio into a QMediaRecorder pipeline.
  */
 
 #ifndef VIDEOEXPORTER_H
@@ -13,12 +13,12 @@
 #include <QImage>
 #include <QSize>
 #include <QScopedPointer>
-// Forward-declare Qt Multimedia types to avoid pulling in their headers
-// (and triggering any static initialisation) until start() actually needs them.
 class QMediaCaptureSession;
 class QVideoFrameInput;
+class QAudioBufferInput;
 class QMediaRecorder;
-class QAudioInput;
+class QAudioSource;
+class QIODevice;
 
 namespace mmp {
 
@@ -27,11 +27,10 @@ class VideoExporter : public QObject
   Q_OBJECT
 
 public:
-  // Matches SeqExportDialog-style labelling used in xLights for familiarity.
   enum Format {
-    H264_MP4  = 0,   // H.264  — best compatibility, .mp4
-    H265_MP4  = 1,   // H.265  — smaller files, Windows 10+, .mp4
-    MJPEG_AVI = 2    // Motion JPEG — near-lossless, large files, .avi
+    H264_MP4  = 0,
+    H265_MP4  = 1,
+    MJPEG_AVI = 2
   };
   Q_ENUM(Format)
 
@@ -53,14 +52,11 @@ public:
 
   bool      isRecording()       const { return _recording; }
   QString   currentFilePath()   const { return _filePath; }
-  QString   audioDeviceName()   const { return _audioDevice; }
+  QString   audioDeviceName()   const { return _audioDeviceName; }
   qint64    duration()          const;
 
-  // Human-readable label for each format (used in UI).
   static QString formatLabel(Format f);
-  // File-dialog filter string for the given format.
   static QString formatFilter(Format f);
-  // Default file extension for the given format.
   static QString formatExtension(Format f);
 
 signals:
@@ -70,16 +66,16 @@ signals:
   void errorOccurred(const QString& errorString);
 
 private:
-  // Qt Multimedia objects are heap-allocated lazily inside start() so their
-  // constructors (which trigger WMF/FFmpeg backend init) don't run at startup.
   QScopedPointer<QMediaCaptureSession> _session;
   QScopedPointer<QVideoFrameInput>     _frameInput;
+  QScopedPointer<QAudioBufferInput>    _audioBufferInput;
   QScopedPointer<QMediaRecorder>       _recorder;
-  QScopedPointer<QAudioInput>          _audioInput;
-  bool                                 _recording = false;
+  QScopedPointer<QAudioSource>         _audioSource;
+  QIODevice*                           _audioDevice = nullptr; // owned by _audioSource
+  bool                                 _recording   = false;
   QString                              _filePath;
-  QString                              _audioDevice;
-  qreal                                _fps = 0.0;
+  QString                              _audioDeviceName;
+  qreal                                _fps        = 0.0;
   qint64                               _frameCount = 0;
 };
 

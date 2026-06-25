@@ -559,6 +559,7 @@ private:
   qint64 _recordingTotalMs = 0;
   QMap<uid, bool> _savedLoopStates;
   bool _recordingOpenedOutputWindow = false;
+  bool _recordingHadControls        = false; // controls state before auto-fullscreen
 
   // Preference dialog
   PreferenceDialog* _preferenceDialog;
