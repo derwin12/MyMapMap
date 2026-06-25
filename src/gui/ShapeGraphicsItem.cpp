@@ -423,6 +423,25 @@ PolygonTextureGraphicsItem::PolygonTextureGraphicsItem(Layer::ptr mapping, bool 
   _controlPainter.reset(new PolygonControlPainter(this));
 }
 
+FreePolygonTextureGraphicsItem::FreePolygonTextureGraphicsItem(Layer::ptr mapping, bool output)
+  : PolygonTextureGraphicsItem(mapping, output) {}
+
+void FreePolygonTextureGraphicsItem::_doDrawOutput(QPainter* painter)
+{
+  Q_UNUSED(painter);
+  if (!isOutput()) return;
+  MShape::ptr inputShape = _inputShape.toStrongRef();
+  if (!inputShape) return;
+  int n = inputShape->nVertices();
+  if (n < 3) return;
+
+  // Triangle fan from vertex 0 — works correctly for convex polygons.
+  glBegin(GL_TRIANGLE_FAN);
+  for (int i = 0; i < n; i++)
+    Util::setGlTexPoint(*_getTexture(), inputShape->getVertex(i), mapFromScene(getShape()->getVertex(i)));
+  glEnd();
+}
+
 MeshTextureGraphicsItem::MeshTextureGraphicsItem(Layer::ptr mapping, bool output) : PolygonTextureGraphicsItem(mapping, output) {
   _controlPainter.reset(new MeshControlPainter(this));
   _nHorizontalQuads = _nVerticalQuads = -1;

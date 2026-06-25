@@ -130,6 +130,58 @@ QSharedPointer<ShapeGraphicsItem> MapperGLCanvas::getCurrentShapeGraphicsItem()
 void MapperGLCanvas::drawForeground(QPainter *painter , const QRectF &rect)
 {
   Q_UNUSED(rect);
+
+  // Polygon draw-mode ghost overlay (output canvas only).
+  if (isOutput() && _mainWindow->isPolygonDrawMode()) {
+    const QVector<QPointF>& pts = _mainWindow->polygonPoints();
+    QPointF cursor = _mainWindow->polygonCursorPos();
+
+    painter->save();
+    QPen edgePen(QColor(255, 200, 0, 220), 1.5, Qt::DashLine);
+    QPen closePen(QColor(80, 255, 80, 240), 2.0, Qt::SolidLine);
+    QPen vertexPen(QColor(255, 200, 0, 240), 1.5);
+    QBrush vertexBrush(QColor(255, 200, 0, 180));
+    QBrush firstBrush(QColor(80, 255, 80, 200));
+
+    // Check if cursor is snapping to first point.
+    bool snapping = false;
+    if (pts.size() >= 3 && !cursor.isNull()) {
+      QPointF d = mapFromScene(cursor) - mapFromScene(pts.first());
+      snapping = (d.x()*d.x() + d.y()*d.y()) <= sq(MM::VERTEX_SELECT_RADIUS * 2);
+    }
+
+    // Draw edges between placed points.
+    painter->setPen(edgePen);
+    for (int i = 1; i < pts.size(); i++)
+      painter->drawLine(mapFromScene(pts[i-1]), mapFromScene(pts[i]));
+
+    // Rubber-band from last point to cursor.
+    if (!pts.isEmpty() && !cursor.isNull()) {
+      painter->setPen(snapping ? closePen : edgePen);
+      painter->drawLine(mapFromScene(pts.last()), mapFromScene(cursor));
+      if (snapping) // closing preview edge
+        painter->drawLine(mapFromScene(cursor), mapFromScene(pts.first()));
+    }
+
+    // Draw vertex dots.
+    for (int i = 0; i < pts.size(); i++) {
+      QPointF p = mapFromScene(pts[i]);
+      painter->setPen(vertexPen);
+      painter->setBrush(i == 0 ? firstBrush : vertexBrush);
+      qreal r = (i == 0) ? MM::VERTEX_SELECT_RADIUS * 1.4 : MM::VERTEX_SELECT_RADIUS;
+      painter->drawEllipse(p, r, r);
+    }
+
+    // Vertex count hint.
+    if (!pts.isEmpty()) {
+      painter->setPen(QColor(255, 255, 255, 200));
+      painter->setFont(QFont("sans-serif", 9));
+      painter->drawText(10, 20, tr("%1 vertices — Enter or click first point to close, Esc to cancel").arg(pts.size()));
+    }
+
+    painter->restore();
+  }
+
   if (MainWindow::window()->displayControls())
   {
     uid mid = MainWindow::window()->getCurrentLayerId();
@@ -253,6 +305,15 @@ void MapperGLCanvas::dropEvent(QDropEvent *event)
 //
 void MapperGLCanvas::mousePressEvent(QMouseEvent* event)
 {
+  // Intercept all clicks when drawing a polygon on the output canvas.
+  if (isOutput() && _mainWindow->isPolygonDrawMode()) {
+    if (event->button() == Qt::LeftButton)
+      _mainWindow->polygonCanvasClick(mapToScene(event->pos()));
+    else if (event->button() == Qt::RightButton)
+      _mainWindow->cancelPolygonDrawMode();
+    return;
+  }
+
   bool mousePressedOnSomething = false;
 
   _mousePressedPosition = event->pos();
@@ -511,6 +572,10 @@ void MapperGLCanvas::mouseMoveEvent(QMouseEvent* event)
     view->translate(diff.x(), diff.y());
   }
 
+  // Update rubber-band in polygon draw mode.
+  if (isOutput() && _mainWindow->isPolygonDrawMode())
+    _mainWindow->polygonCursorMoved(mapToScene(event->pos()));
+
   // Reset last mouse position.
   lastMousePos = event->pos();
 }
@@ -520,6 +585,24 @@ void MapperGLCanvas::keyPressEvent(QKeyEvent* event)
 {
   // Checks if the key has been handled by this function or needs to be deferred to superclass.
   bool handledKey = false;
+
+  // Handle polygon draw mode keys.
+  if (isOutput() && _mainWindow->isPolygonDrawMode()) {
+    switch (event->key()) {
+      case Qt::Key_Return:
+      case Qt::Key_Enter:
+        _mainWindow->finishPolygon();
+        handledKey = true;
+        break;
+      case Qt::Key_Escape:
+        _mainWindow->cancelPolygonDrawMode();
+        handledKey = true;
+        break;
+      default:
+        break;
+    }
+    if (handledKey) return;
+  }
 
   // Active vertex selected.
   if (hasActiveVertex())

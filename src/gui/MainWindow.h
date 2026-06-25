@@ -190,6 +190,16 @@ public slots:
   void addMesh();
   void addTriangle();
   void addEllipse();
+  void addPolygon();
+
+  // Polygon draw-mode API (called by MapperGLCanvas).
+  bool isPolygonDrawMode() const { return _polygonDrawMode; }
+  const QVector<QPointF>& polygonPoints() const { return _polygonPoints; }
+  const QPointF& polygonCursorPos() const { return _polygonCursorPos; }
+  void polygonCanvasClick(const QPointF& scenePos);
+  void polygonCursorMoved(const QPointF& scenePos);
+  void finishPolygon();
+  void cancelPolygonDrawMode();
 
   // CRUD.
 
@@ -296,6 +306,9 @@ private:
 
   // OSC.
   void startOscReceiver();
+
+  // Polygon draw mode internals.
+  void startPolygonDrawMode();
 
 #ifdef HAVE_MCP
   // MCP server.
@@ -429,6 +442,12 @@ private:
   QAction *addMeshAction;
   QAction *addTriangleAction;
   QAction *addEllipseAction;
+  QAction *addPolygonAction = nullptr;
+
+  // Polygon draw-mode state.
+  bool _polygonDrawMode = false;
+  QVector<QPointF> _polygonPoints;
+  QPointF _polygonCursorPos;
 
   QAction *playAction; // checkable: unchecked=paused (play icon), checked=playing (pause icon)
   QAction *rewindAction;

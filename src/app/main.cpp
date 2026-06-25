@@ -63,6 +63,7 @@ void initRegistry()
   registry.add<Mesh>();
   registry.add<MM_PREPEND_NAMESPACE(Ellipse)>();
   registry.add<Triangle>();
+  registry.add<FreePolygon>();
 }
 
 // Intercept all logging message and display it in the console

@@ -443,6 +443,13 @@ TriangleTextureLayerGui::TriangleTextureLayerGui(QSharedPointer<TextureLayer> ma
   _graphicsItem.reset(new TriangleTextureGraphicsItem(_layer, true));
   _inputGraphicsItem.reset(new TriangleTextureGraphicsItem(_layer, false));
 }
+
+FreePolygonTextureLayerGui::FreePolygonTextureLayerGui(QSharedPointer<TextureLayer> mapping)
+  : PolygonTextureLayerGui(mapping)
+{
+  _graphicsItem.reset(new FreePolygonTextureGraphicsItem(_layer, true));
+  _inputGraphicsItem.reset(new FreePolygonTextureGraphicsItem(_layer, false));
+}
 //
 //void TriangleTextureLayerGui::_doDraw(QPainter* painter)
 //{

@@ -20,6 +20,7 @@
  */
 
 #include "MainWindow.h"
+#include "Maths.h"
 #include "PreferenceDialog.h"
 #include "AboutDialog.h"
 #include "ShortcutWindow.h"
@@ -298,6 +299,7 @@ void MainWindow::handleSourceItemSelectionChanged()
   addMeshAction->setEnabled(sourceItemSelected);
   addTriangleAction->setEnabled(sourceItemSelected);
   addEllipseAction->setEnabled(sourceItemSelected);
+  if (addPolygonAction) addPolygonAction->setEnabled(sourceItemSelected);
   deleteSourceAction->setEnabled(sourceItemSelected);
   renameSourceAction->setEnabled(sourceItemSelected);
 
@@ -1101,6 +1103,85 @@ void MainWindow::addEllipse()
 
   // Lets undo-stack handle Undo/Redo the adding of mapping item.
   undoStack->push(new AddLayerCommand(this, layerId));
+}
+
+void MainWindow::addPolygon()
+{
+  // A source must be selected to add a mapping.
+  if (getCurrentSourceId() == NULL_UID)
+    return;
+  startPolygonDrawMode();
+}
+
+void MainWindow::startPolygonDrawMode()
+{
+  _polygonDrawMode = true;
+  _polygonPoints.clear();
+  _polygonCursorPos = QPointF();
+  destinationCanvas->setCursor(Qt::CrossCursor);
+  statusBar()->showMessage(tr("Click to add polygon vertices. Click near first point or press Enter to close. Escape to cancel."));
+  destinationCanvas->update();
+}
+
+void MainWindow::cancelPolygonDrawMode()
+{
+  _polygonDrawMode = false;
+  _polygonPoints.clear();
+  destinationCanvas->unsetCursor();
+  statusBar()->clearMessage();
+  destinationCanvas->update();
+}
+
+void MainWindow::polygonCursorMoved(const QPointF& scenePos)
+{
+  _polygonCursorPos = scenePos;
+  destinationCanvas->update();
+}
+
+void MainWindow::polygonCanvasClick(const QPointF& scenePos)
+{
+  // Snap to first point if close enough and we have 3+ points.
+  if (_polygonPoints.size() >= 3) {
+    QPointF first = _polygonPoints.first();
+    QPointF delta = destinationCanvas->mapFromScene(scenePos) - destinationCanvas->mapFromScene(first);
+    if (delta.x()*delta.x() + delta.y()*delta.y() <= sq(MM::VERTEX_SELECT_RADIUS * 2)) {
+      finishPolygon();
+      return;
+    }
+  }
+  _polygonPoints << scenePos;
+  destinationCanvas->update();
+}
+
+void MainWindow::finishPolygon()
+{
+  if (_polygonPoints.size() < 3) {
+    cancelPolygonDrawMode();
+    return;
+  }
+
+  uid sourceId = getCurrentSourceId();
+  if (sourceId == NULL_UID) { cancelPolygonDrawMode(); return; }
+  Source::ptr source = getMappingManager().getSourceById(sourceId);
+  if (!source) { cancelPolygonDrawMode(); return; }
+
+  Layer* layerPtr;
+  if (source->getSourceType() == SourceType::Color) {
+    MShape::ptr outPoly(Util::createFreePolygonForColor(_polygonPoints));
+    layerPtr = new ColorLayer(source, outPoly);
+  } else {
+    QSharedPointer<Texture> texture = qSharedPointerCast<Texture>(source);
+    Q_CHECK_PTR(texture);
+    MShape::ptr outPoly(Util::createFreePolygonForColor(_polygonPoints));
+    MShape::ptr inPoly(Util::createFreePolygonInputForTexture(_polygonPoints, texture.data()));
+    layerPtr = new TextureLayer(source, outPoly, inPoly);
+  }
+
+  Layer::ptr layer(layerPtr);
+  uid layerId = mappingManager->addLayer(layer);
+  undoStack->push(new AddLayerCommand(this, layerId));
+
+  cancelPolygonDrawMode();
 }
 
 void MainWindow::checkForUpdates(bool autoCheck)
@@ -2335,6 +2416,17 @@ void MainWindow::createActions()
   connect(addEllipseAction, SIGNAL(triggered()), this, SLOT(addEllipse()));
   addEllipseAction->setEnabled(false);
 
+  // Add polygon (free-form, click-to-place vertices).
+  addPolygonAction = new QAction(tr("Add &Polygon Layer"), this);
+  addPolygonAction->setShortcut(Qt::CTRL | Qt::Key_P);
+  addPolygonAction->setIcon(QIcon(":/add-polygon"));
+  addPolygonAction->setToolTip(tr("Draw a free-form polygon layer (click to add vertices, click near first point or press Enter to close)"));
+  addPolygonAction->setIconVisibleInMenu(false);
+  addPolygonAction->setShortcutContext(Qt::ApplicationShortcut);
+  addAction(addPolygonAction);
+  connect(addPolygonAction, &QAction::triggered, this, &MainWindow::addPolygon);
+  addPolygonAction->setEnabled(false);
+
   // Play/Pause — single checkable action so no double-trigger on button swap.
   // Unchecked = paused (shows play ▶ icon); checked = playing (shows pause ∥ icon).
   const QKeySequence PLAY_PAUSE_KEY_SEQUENCE = Qt::CTRL | Qt::SHIFT | Qt::Key_P;
@@ -2817,6 +2909,7 @@ void MainWindow::createToolBars()
   mainToolBar->addAction(addMeshAction);
   mainToolBar->addAction(addTriangleAction);
   mainToolBar->addAction(addEllipseAction);
+  mainToolBar->addAction(addPolygonAction);
   mainToolBar->addSeparator();
 
   mainToolBar->addAction(outputFullScreenAction);
@@ -3523,6 +3616,15 @@ void MainWindow::addLayerItem(uid layerId)
       mapper = LayerGui::ptr(new EllipseColorLayerGui(layer));
     else
       mapper = LayerGui::ptr(new EllipseTextureLayerGui(textureLayer));
+  }
+  else if (shapeType == ShapeType::Polygon)
+  {
+    defaultName = QString("Polygon %1").arg(layerId);
+    icon = MM::themedIcon(":/shape-polygon");
+    if (sourceType == SourceType::Color)
+      mapper = LayerGui::ptr(new PolygonColorLayerGui(layer));
+    else
+      mapper = LayerGui::ptr(new FreePolygonTextureLayerGui(textureLayer));
   }
   else
   {
@@ -4651,6 +4753,7 @@ void MainWindow::refreshIcons()
     { addMeshAction,              ":/add-mesh"          },
     { addTriangleAction,          ":/add-triangle"      },
     { addEllipseAction,           ":/add-ellipse"       },
+    { addPolygonAction,           ":/add-polygon"       },
     { rewindAction,               ":/rewind"            },
     { outputFullScreenAction,     ":/fullscreen"        },
     { displayControlsAction,      ":/control-points"    },

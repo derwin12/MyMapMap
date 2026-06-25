@@ -267,6 +267,16 @@ private:
   bool _wasGrabbing;
 };
 
+/// Graphics item for free-form polygon texture mapping (triangle-fan rendering).
+class FreePolygonTextureGraphicsItem : public PolygonTextureGraphicsItem
+{
+public:
+  FreePolygonTextureGraphicsItem(Layer::ptr mapping, bool output=true);
+  virtual ~FreePolygonTextureGraphicsItem() {}
+
+  virtual void _doDrawOutput(QPainter* painter);
+};
+
 /// Graphics item for textured mesh.
 class EllipseTextureGraphicsItem : public TextureGraphicsItem
 {

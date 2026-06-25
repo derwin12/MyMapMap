@@ -2,6 +2,7 @@
 include(../src.pri)
 
 HEADERS += $$PWD/Ellipse.h \
+    $$PWD/FreePolygon.h \
     $$PWD/Mesh.h \
     $$PWD/Polygon.h \
     $$PWD/Quad.h \

@@ -14,6 +14,7 @@
         <file alias="add-mesh">images/icons/svg/add-mesh.svg</file>
         <file alias="add-triangle">images/icons/svg/add-triangle.svg</file>
         <file alias="add-ellipse">images/icons/svg/add-ellipse.svg</file>
+        <file alias="add-polygon">images/icons/svg/add-polygon.svg</file>
         <file alias="play">images/icons/svg/play.svg</file>
         <file alias="pause">images/icons/svg/pause.svg</file>
         <file alias="rewind">images/icons/svg/rewind.svg</file>
@@ -21,7 +22,7 @@
         <file alias="shape-mesh">images/icons/svg/add-mesh.svg</file>
         <file alias="shape-triangle">images/icons/svg/add-triangle.svg</file>
         <file alias="shape-ellipse">images/icons/svg/add-ellipse.svg</file>
-        <file alias="shape-polygon">images/icons/svg/add-ellipse.svg</file>
+        <file alias="shape-polygon">images/icons/svg/add-polygon.svg</file>
         <file alias="mapmap-title">images/logo/logomapmap.png</file>
         <file alias="mapmap-title-light">images/logo/logomapmap-light.png</file>
         <file alias="mapmap-logo">images/logo/mapmap-logo.png</file>
