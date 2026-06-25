@@ -117,7 +117,7 @@ MainWindow::MainWindow()
       screenActions.at(savedScreen)->setChecked(true);
 
     // Action toggle states
-    outputFullScreenAction->setChecked(s.value("displayOutputWindow", MM::DISPLAY_OUTPUT_WINDOW).toBool());
+    outputFullScreenAction->setChecked(false); // always start windowed
     displayTestSignalAction->setChecked(s.value("displayTestSignal", MM::DISPLAY_TEST_SIGNAL).toBool());
     displayControlsAction->setChecked(s.value("displayControls", MM::DISPLAY_CONTROLS).toBool());
     outputWindow->setCanvasDisplayCrosshair(s.value("displayControls", MM::DISPLAY_CONTROLS).toBool());
@@ -3705,6 +3705,12 @@ void MainWindow::toggleRecording(bool on)
 
       recordingTimerLabel->setText("● REC  00:00 / --:--");
       recordingTimerLabel->show();
+
+      QString audioMsg = _videoExporter->audioDeviceName().isEmpty()
+          ? tr("No loopback audio device — recording video only. "
+               "Enable Stereo Mix in Windows Sound settings to capture audio.")
+          : tr("Recording audio from: %1").arg(_videoExporter->audioDeviceName());
+      statusBar()->showMessage(audioMsg, 8000);
     }
   } else {
     if (_videoExporter)

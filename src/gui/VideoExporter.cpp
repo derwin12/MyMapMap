@@ -44,8 +44,10 @@ bool VideoExporter::start(const QString& filePath, Format format,
     _frameInput.reset(new QVideoFrameInput);
     _recorder.reset(new QMediaRecorder);
 
-    // Prefer a loopback / desktop-audio device (Stereo Mix, What U Hear …).
-    // Fall back to the system default input so there is always an audio track.
+    // Only record audio if a loopback / desktop-audio device is available.
+    // Do NOT fall back to the microphone — that records the wrong source.
+    // To enable audio: turn on Stereo Mix in Windows Sound settings, or install
+    // a virtual loopback driver (VB-Audio Cable, Voicemeeter, etc.).
     QAudioDevice chosenDev;
     const QStringList loopbackKw = {"mix", "stereo", "loopback", "what u hear", "wave out",
                                     "cable", "virtual", "vb-audio", "voicemeeter"};
@@ -55,14 +57,13 @@ bool VideoExporter::start(const QString& filePath, Format format,
         if (name.contains(kw)) { chosenDev = dev; break; }
       if (!chosenDev.isNull()) break;
     }
-    // Use default input if no loopback device was found.
-    if (chosenDev.isNull())
-      chosenDev = QMediaDevices::defaultAudioInput();
 
     if (!chosenDev.isNull()) {
       _audioDevice = chosenDev.description();
       _audioInput.reset(new QAudioInput(chosenDev));
       _session->setAudioInput(_audioInput.data());
+    } else {
+      _audioDevice = QString(); // signals "no audio" to callers
     }
 
     _session->setVideoFrameInput(_frameInput.data());
