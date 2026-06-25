@@ -51,9 +51,10 @@ public:
   bool sendFrame(const QImage& frame);
   void stop();
 
-  bool      isRecording()     const { return _recording; }
-  QString   currentFilePath() const { return _filePath; }
-  qint64    duration()        const;
+  bool      isRecording()       const { return _recording; }
+  QString   currentFilePath()   const { return _filePath; }
+  QString   audioDeviceName()   const { return _audioDevice; }
+  qint64    duration()          const;
 
   // Human-readable label for each format (used in UI).
   static QString formatLabel(Format f);
@@ -77,6 +78,7 @@ private:
   QScopedPointer<QAudioInput>          _audioInput;
   bool                                 _recording = false;
   QString                              _filePath;
+  QString                              _audioDevice;
   qreal                                _fps = 0.0;
   qint64                               _frameCount = 0;
 };

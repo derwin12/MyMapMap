@@ -663,7 +663,7 @@ bool MainWindow::saveAs()
 void MainWindow::importMedia()
 {
   // Stop video playback, if it is playing, to avoid lags. XXX Hack
-  pause(!pauseAction->isVisible());
+  pause(!_isPlaying);
 
   // Pop-up file-choosing dialog to choose media file.
   // TODO: restrict the type of files that can be imported
@@ -684,7 +684,7 @@ void MainWindow::importMedia()
                                                   .arg(MM::IMAGE_FILES_FILTER));
 #endif
   // Restart video playback if it was previously playing. XXX Hack
-  play(!pauseAction->isVisible());
+  play(!_isPlaying);
 
   // Check if file is image or not
   // according to file extension
@@ -700,7 +700,7 @@ void MainWindow::openCameraDevice()
 {
 #if QT_VERSION >= 0x050300
   // Stop video playback, if it is playing, to avoid lags. XXX Hack
-  pause(!pauseAction->isVisible());
+  pause(!_isPlaying);
 
   QString device;
   QList<QCameraDevice> cameras = QMediaDevices::videoInputs();
@@ -742,7 +742,7 @@ void MainWindow::openCameraDevice()
   }
 
   // Restart video playback if it was previously playing. XXX Hack
-  play(!pauseAction->isVisible());
+  play(!_isPlaying);
 
   if (!device.isEmpty())
     importMediaFile(device, false, true);
@@ -753,13 +753,9 @@ void MainWindow::openCameraDevice()
 
 void MainWindow::addColor()
 {
-  // Stop video playback, if it is playing, to avoid lags. XXX Hack
-  if (pauseAction->isVisible())
-    pause(false);
+  bool wasPlaying = _isPlaying;
+  if (wasPlaying) pause(false);
 
-  // Pop-up color-choosing dialog to choose color source.
-  // FIXME: we use a static variable to store the last chosen color
-  // it should rather be a member of this class, or so.
   static QColor color = QColor(0, 255, 0, 255);
 #ifdef Q_OS_LINUX
   color = QColorDialog::getColor(color, this, tr("Select Color"),
@@ -767,25 +763,19 @@ void MainWindow::addColor()
                                  QColorDialog::ShowAlphaChannel);
 #else
   color = QColorDialog::getColor(color, this, tr("Select Color"),
-                                 // QColorDialog::DontUseNativeDialog |
                                  QColorDialog::ShowAlphaChannel);
 #endif
   if (color.isValid())
-  {
     addColorSource(color);
-  }
 
-  // Restart video playback if it was previously playing. XXX Hack
-  if (pauseAction->isVisible())
-    play(false);
+  if (wasPlaying) play(false);
 }
 
 void MainWindow::addSyphon()
 {
 #ifdef Q_OS_MAC
-  // Stop video playback, if it is playing, to avoid lags. XXX Hack
-  if (pauseAction->isVisible())
-    pause(false);
+  bool wasPlaying = _isPlaying;
+  if (wasPlaying) pause(false);
 
   SyphonServerDialog dialog(this);
   if (dialog.exec() == QDialog::Accepted)
@@ -803,9 +793,7 @@ void MainWindow::addSyphon()
     statusBar()->showMessage(tr("Syphon source added"), 2000);
   }
 
-  // Restart video playback if it was previously playing. XXX Hack
-  if (pauseAction->isVisible())
-    play(false);
+  if (wasPlaying) play(false);
 #endif
 }
 
@@ -2121,28 +2109,27 @@ void MainWindow::createActions()
   connect(addEllipseAction, SIGNAL(triggered()), this, SLOT(addEllipse()));
   addEllipseAction->setEnabled(false);
 
-  // Play.
+  // Play/Pause — single checkable action so no double-trigger on button swap.
+  // Unchecked = paused (shows play ▶ icon); checked = playing (shows pause ∥ icon).
   const QKeySequence PLAY_PAUSE_KEY_SEQUENCE = Qt::CTRL | Qt::SHIFT | Qt::Key_P;
   playAction = new QAction(tr("Play"), this);
-  playAction->setShortcut(PLAY_PAUSE_KEY_SEQUENCE);
-  playAction->setIcon(QIcon(":/play"));
-  playAction->setToolTip(tr("Play"));
+  playAction->setCheckable(true);
+  playAction->setChecked(false);
+  {
+    QIcon icon;
+    icon.addFile(":/play",  QSize(), QIcon::Normal, QIcon::Off);
+    icon.addFile(":/pause", QSize(), QIcon::Normal, QIcon::On);
+    playAction->setIcon(icon);
+  }
+  playAction->setToolTip(tr("Play / Pause"));
   playAction->setIconVisibleInMenu(false);
+  playAction->setShortcut(PLAY_PAUSE_KEY_SEQUENCE);
   playAction->setShortcutContext(Qt::ApplicationShortcut);
   addAction(playAction);
-  connect(playAction, &QAction::triggered, this, [this](bool) { play(); });
-  playAction->setVisible(true);
-
-  // Pause.
-  pauseAction = new QAction(tr("Pause"), this);
-  pauseAction->setShortcut(PLAY_PAUSE_KEY_SEQUENCE);
-  pauseAction->setIcon(QIcon(":/pause"));
-  pauseAction->setToolTip(tr("Pause"));
-  pauseAction->setIconVisibleInMenu(false);
-  pauseAction->setShortcutContext(Qt::ApplicationShortcut);
-  addAction(pauseAction);
-  connect(pauseAction, &QAction::triggered, this, [this](bool) { pause(); });
-  pauseAction->setVisible(false);
+  connect(playAction, &QAction::triggered, this, [this](bool checked) {
+    if (checked) play(false);
+    else         pause(false);
+  });
 
   // Rewind.
   rewindAction = new QAction(tr("Restart"), this);
@@ -2481,7 +2468,6 @@ void MainWindow::createMenus()
   viewMenu->addSeparator();
   // Playback.
   viewMenu->addAction(playAction);
-  viewMenu->addAction(pauseAction);
   viewMenu->addAction(rewindAction);
   viewMenu->addAction(muteAllAction);
 
@@ -2615,7 +2601,6 @@ void MainWindow::createToolBars()
   spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   mainToolBar->addWidget(spacer);
   mainToolBar->addAction(playAction);
-  mainToolBar->addAction(pauseAction);
   mainToolBar->addAction(rewindAction);
   mainToolBar->addAction(muteAllAction);
   mainToolBar->addSeparator();
@@ -3640,8 +3625,19 @@ void MainWindow::toggleRecording(bool on)
     QString filter = VideoExporter::formatFilter(format);
     QString ext    = VideoExporter::formatExtension(format);
     QString lastDir = s.value("lastRecordingDir", QString()).toString();
-    QString path   = QFileDialog::getSaveFileName(
-        this, tr("Save Recording As"), lastDir, filter);
+
+    // Default filename: project name (without extension), or "recording" if unsaved.
+    QString defaultName;
+    if (!curFile.isEmpty())
+      defaultName = QFileInfo(curFile).completeBaseName();
+    else
+      defaultName = tr("recording");
+    QString defaultPath = lastDir.isEmpty()
+        ? defaultName + "." + ext
+        : QDir(lastDir).filePath(defaultName + "." + ext);
+
+    QString path = QFileDialog::getSaveFileName(
+        this, tr("Save Recording As"), defaultPath, filter);
 
     if (path.isEmpty()) {
       recordAction->setChecked(false);
@@ -3863,30 +3859,17 @@ void MainWindow::showSourceContextMenu(const QPoint &point)
 
 void MainWindow::play(bool updatePlayPauseActions)
 {
-  qDebug() << "MainWindow::play() updatePlayPauseActions=" << updatePlayPauseActions;
-  // Update buttons.
   if (updatePlayPauseActions)
-  {
-    playAction->setVisible(false);
-    pauseAction->setVisible(true);
-  }
-
+    playAction->setChecked(true);
   _isPlaying = true;
-
   updatePlayingState();
 }
 
 void MainWindow::pause(bool updatePlayPauseActions)
 {
-  qDebug() << "MainWindow::pause() updatePlayPauseActions=" << updatePlayPauseActions;
-  // Update buttons.
   if (updatePlayPauseActions)
-  {
-    playAction->setVisible(true);
-    pauseAction->setVisible(false);
-  }
+    playAction->setChecked(false);
   _isPlaying = false;
-
   updatePlayingState();
 }
 
@@ -4291,7 +4274,6 @@ void MainWindow::refreshIcons()
     { addTriangleAction,          ":/add-triangle"      },
     { addEllipseAction,           ":/add-ellipse"       },
     { playAction,                 ":/play"              },
-    { pauseAction,                ":/pause"             },
     { rewindAction,               ":/rewind"            },
     { outputFullScreenAction,     ":/fullscreen"        },
     { displayControlsAction,      ":/control-points"    },

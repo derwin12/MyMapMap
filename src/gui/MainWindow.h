@@ -416,8 +416,7 @@ private:
   QAction *addTriangleAction;
   QAction *addEllipseAction;
 
-  QAction *playAction;
-  QAction *pauseAction;
+  QAction *playAction; // checkable: unchecked=paused (play icon), checked=playing (pause icon)
   QAction *rewindAction;
   QAction *muteAllAction;
   QAction *recordAction;

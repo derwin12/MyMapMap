@@ -44,26 +44,25 @@ bool VideoExporter::start(const QString& filePath, Format format,
     _frameInput.reset(new QVideoFrameInput);
     _recorder.reset(new QMediaRecorder);
 
-    // Look for a loopback / desktop-audio capture device (e.g. "Stereo Mix",
-    // "What U Hear").  Only attach audio if one is found; recording mic audio
-    // by default would capture the wrong source.
-    QAudioDevice loopbackDev;
-    const QStringList keywords = {"mix", "stereo", "loopback", "what u hear", "wave out", "output"};
-    qDebug() << "Available audio input devices:";
+    // Prefer a loopback / desktop-audio device (Stereo Mix, What U Hear …).
+    // Fall back to the system default input so there is always an audio track.
+    QAudioDevice chosenDev;
+    const QStringList loopbackKw = {"mix", "stereo", "loopback", "what u hear", "wave out",
+                                    "cable", "virtual", "vb-audio", "voicemeeter"};
     for (const QAudioDevice& dev : QMediaDevices::audioInputs()) {
-      qDebug() << " " << dev.description();
       QString name = dev.description().toLower();
-      if (loopbackDev.isNull()) {
-        for (const QString& kw : keywords)
-          if (name.contains(kw)) { loopbackDev = dev; break; }
-      }
+      for (const QString& kw : loopbackKw)
+        if (name.contains(kw)) { chosenDev = dev; break; }
+      if (!chosenDev.isNull()) break;
     }
-    if (!loopbackDev.isNull()) {
-      qDebug() << "Recording audio from:" << loopbackDev.description();
-      _audioInput.reset(new QAudioInput(loopbackDev));
+    // Use default input if no loopback device was found.
+    if (chosenDev.isNull())
+      chosenDev = QMediaDevices::defaultAudioInput();
+
+    if (!chosenDev.isNull()) {
+      _audioDevice = chosenDev.description();
+      _audioInput.reset(new QAudioInput(chosenDev));
       _session->setAudioInput(_audioInput.data());
-    } else {
-      qDebug() << "No loopback device found — recording video only.";
     }
 
     _session->setVideoFrameInput(_frameInput.data());
