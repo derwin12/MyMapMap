@@ -116,6 +116,14 @@ void ProjectReader::parseProject(const QJsonObject& project)
         if (!QFileInfo(uri).isAbsolute() || !_window->fileExists(uri))
           image->setUri(_window->locateMediaFile(uri, true));
       }
+      if (source->getSourceType() == Source::SourceType::Folder)
+      {
+        QSharedPointer<FolderSource> folder = qSharedPointerCast<FolderSource>(source);
+        Q_CHECK_PTR(folder);
+        QString uri = folder->getUri();
+        if (!QFileInfo(uri).isAbsolute())
+          folder->setUri(QFileInfo(uri).absoluteFilePath());
+      }
     }
   }
 

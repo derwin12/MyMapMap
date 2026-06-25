@@ -19,11 +19,13 @@
  */
 
 #include "Source.h"
+#include "MM.h"
 #include "VideoImpl.h"
 #include "VideoPlayerImpl.h"
 #include "CameraImpl.h"
 #include <iostream>
 #include <QFileIconProvider>
+#include <QDir>
 #include <QFileInfo>
 #include <QImageReader>
 #include <QSettings>
@@ -203,6 +205,60 @@ void Image::_doPlay()
   _prevTime = _elapsedTime();
 }
 
+/* Implementation of the FolderSource class */
+
+FolderSource::FolderSource(int id)
+  : Image(id)
+{
+}
+
+FolderSource::FolderSource(const QString& dirPath, uid id)
+  : Image(id)
+{
+  setUri(dirPath);
+  setRate(1.0);
+}
+
+void FolderSource::build()
+{
+  _images.clear();
+  if (_uri.isEmpty())
+    return;
+
+  QDir dir(_uri);
+  if (!dir.exists())
+    return;
+
+  QStringList nameFilters = MM::IMAGE_FILES_FILTER.split(' ', Qt::SkipEmptyParts);
+  QStringList files = dir.entryList(nameFilters, QDir::Files, QDir::Name);
+
+  for (const QString& file : files) {
+    QImageReader reader(dir.absoluteFilePath(file));
+    if (reader.canRead()) {
+      QImage raw = reader.read().convertToFormat(QImage::Format_RGBA8888);
+      if (!raw.isNull()) {
+        QT_WARNING_PUSH
+        QT_WARNING_DISABLE_DEPRECATED
+        _images.push_back(raw.mirrored(true, false).transformed(QTransform().rotate(180)));
+        QT_WARNING_POP
+      }
+    }
+  }
+
+  rewind();
+}
+
+QIcon FolderSource::getIcon() const
+{
+  if (!_images.isEmpty())
+    return QIcon(QPixmap::fromImage(_images[0]).scaled(
+      MM::SOURCE_THUMBNAIL_SIZE, MM::SOURCE_THUMBNAIL_SIZE,
+      Qt::KeepAspectRatio, Qt::SmoothTransformation));
+
+  static QFileIconProvider provider;
+  return provider.icon(QFileIconProvider::Folder);
+}
+
 /* Implementation of the Video class */
 Video::Video(int id) : Texture(id),
     _uri(""),
@@ -266,6 +322,22 @@ void Video::update() {
 void Video::rewind()
 {
   _impl->resetMovie();
+}
+
+qint64 Video::getDuration() const
+{
+  return _impl ? _impl->getDuration() : 0;
+}
+
+bool Video::getPlayInLoop() const
+{
+  return _impl ? _impl->getPlayInLoop() : false;
+}
+
+void Video::setPlayInLoop(bool loop)
+{
+  if (_impl)
+    _impl->setPlayInLoop(loop);
 }
 
 void Video::releaseResources()

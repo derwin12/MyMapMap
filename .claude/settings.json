@@ -20,7 +20,8 @@
       "PowerShell(wmic process *)",
       "PowerShell(Get-Process *)",
       "PowerShell(Get-Item *)",
-      "PowerShell(Get-ChildItem *)"
+      "PowerShell(Get-ChildItem *)",
+      "Bash(wmic process *)"
     ]
   }
 }

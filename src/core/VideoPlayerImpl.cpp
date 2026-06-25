@@ -162,6 +162,13 @@ void VideoPlayerImpl::setVolume(double volume)
     _audioOutput->setVolume(_muted ? 0.0 : volume);
 }
 
+void VideoPlayerImpl::setPlayInLoop(bool loop)
+{
+  _playInLoop = loop;
+  if (_player)
+    _player->setLoops(loop ? QMediaPlayer::Infinite : 1);
+}
+
 void VideoPlayerImpl::update()
 {
   if (_eos) {

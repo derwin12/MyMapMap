@@ -107,6 +107,8 @@ private slots:
   bool save();
   bool saveAs();
   void importMedia();
+  void importFolder();
+  void importFolderAsSource();
   void openCameraDevice();
   void addColor();
   void addSyphon();
@@ -193,6 +195,9 @@ public slots:
 
   /// Create or replace a color source.
   uid createColorSource(uid sourceId, QColor color);
+
+  /// Create a folder source from a directory path.
+  uid createFolderSource(uid sourceId, const QString& dirPath);
 
   /// Create a Syphon source pointing at the given server (macOS only).
   uid createSyphonSource(uid sourceId, const QString& serverUUID,
@@ -304,6 +309,7 @@ public:
   void addLayerItem(uid mappingId);
   void removeLayerItem(uid mappingId);
   void moveLayerItem(uid mappingId, int steps);
+  void initSourceListSections(); // (re)create Images / Videos header items
   void addSourceItem(uid sourceId, const QIcon& icon, const QString& name);
   void updateSourceItem(uid sourceId, const QIcon& icon, const QString& name);
   void removeSourceItem(uid sourceId);
@@ -376,6 +382,7 @@ private:
   QAction *newAction;
   QAction *openAction;
   QAction *importMediaAction;
+  QAction *importFolderAction;
   QAction *AddCameraAction;
   QAction *addColorAction;
   QAction *addSyphonAction;
@@ -416,8 +423,7 @@ private:
   QAction *addTriangleAction;
   QAction *addEllipseAction;
 
-  QAction *playAction;
-  QAction *pauseAction;
+  QAction *playAction; // checkable: unchecked=paused (play icon), checked=playing (pause icon)
   QAction *rewindAction;
   QAction *muteAllAction;
   QAction *recordAction;
@@ -463,6 +469,9 @@ private:
 
   QSplitter* sourceSplitter;
   QListWidget* sourceList;
+  QListWidgetItem* _sourceSectionImages  = nullptr; // non-selectable section header
+  QListWidgetItem* _sourceSectionVideos  = nullptr; // non-selectable section header
+  QListWidgetItem* _sourceSectionFolders = nullptr; // non-selectable section header
   QStackedWidget* sourcePropertyPanel;
 
   QSplitter* layerSplitter;
@@ -557,6 +566,10 @@ private:
   QElapsedTimer *systemTimer;
   // Video recorder
   VideoExporter* _videoExporter;
+  qint64 _recordingTotalMs = 0;
+  QMap<uid, bool> _savedLoopStates;
+  bool _recordingOpenedOutputWindow = false;
+  bool _recordingHadControls        = false; // controls state before auto-fullscreen
 
   // Preference dialog
   PreferenceDialog* _preferenceDialog;

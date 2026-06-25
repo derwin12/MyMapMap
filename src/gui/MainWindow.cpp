@@ -41,6 +41,8 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QDesktopServices>
+#include <QDir>
+#include <QDirIterator>
 
 namespace mmp {
 
@@ -56,7 +58,6 @@ MainWindow::MainWindow()
 #endif
 
   mappingManager = new MappingManager;
-
 
   // Initialize internal variables.
   currentSourceId = NULL_UID;
@@ -82,12 +83,8 @@ MainWindow::MainWindow()
 
   // UndoStack
   undoStack = new QUndoStack(this);
-  // Any undo-stack change (including shape vertex/move/rotate/scale
-  // transforms, which have no other windowModified() call site) is a
-  // real project edit.
   connect(undoStack, &QUndoStack::indexChanged, this, &MainWindow::windowModified);
 
-  // Create everything.
   createLayout();
   createActions();
   createMenus();
@@ -98,8 +95,58 @@ MainWindow::MainWindow()
   updateRecentFileActions();
   updateRecentVideoActions();
 
-  // Load settings.
   readSettings();
+
+  // Defer all UI state restoration to after the singleton is assigned and
+  // the event loop starts. Any restoreGeometry/restoreState/setChecked called
+  // during construction triggers a resize → canvas repaint → MainWindow::window()
+  // re-entry, causing infinite recursive construction.
+  QTimer::singleShot(0, this, [this]() {
+    QSettings s;
+
+    // Window / pane geometry
+    restoreGeometry(s.value("geometry").toByteArray());
+    restoreState(s.value("windowState").toByteArray());
+    mainSplitter->restoreState(s.value("mainSplitter").toByteArray());
+    sourceSplitter->restoreState(s.value("sourceSplitter").toByteArray());
+    layerSplitter->restoreState(s.value("layerSplitter").toByteArray());
+    canvasSplitter->restoreState(s.value("canvasSplitter").toByteArray());
+    outputWindow->restoreGeometry(s.value("outputWindow").toByteArray());
+    int savedScreen = s.value("outputScreen", QApplication::screens().size() - 1).toInt();
+    outputWindow->setPreferredScreen(savedScreen);
+    // Sync the "Output screen" menu checkmarks to the restored value.
+    if (savedScreen >= 0 && savedScreen < screenActions.size())
+      screenActions.at(savedScreen)->setChecked(true);
+
+    // Action toggle states
+    outputFullScreenAction->setChecked(false); // always start windowed
+    displayTestSignalAction->setChecked(s.value("displayTestSignal", MM::DISPLAY_TEST_SIGNAL).toBool());
+    // Always start with controls ON — persisting this setting lets a stale
+    // "false" (e.g. from a crashed recording session) permanently hide handles.
+    displayControlsAction->setChecked(true);
+    outputWindow->setCanvasDisplayCrosshair(true);
+    displayUndoHistoryAction->setChecked(s.value("displayUndoStack", MM::DISPLAY_UNDO_HISTORY).toBool());
+    displayZoomToolAction->setChecked(s.value("zoomToolBar", MM::DISPLAY_ZOOM_TOOLBAR).toBool());
+    showMenuBarAction->setChecked(s.value("showMenuBar", MM::DISPLAY_MENU_BAR).toBool());
+    displaySourceControlsAction->setChecked(s.value("displayAllControls", MM::DISPLAY_ALL_CONTROLS).toBool());
+    stickyVerticesAction->setChecked(s.value("stickyVertices", MM::STICKY_VERTICES).toBool());
+    muteAllAction->setChecked(s.value("audioMuted", false).toBool());
+    int toolBarIconSize = s.value("toolbarIconSize", MM::TOOLBAR_ICON_SIZE).toInt();
+    mainToolBar->setIconSize(QSize(toolBarIconSize, toolBarIconSize));
+
+    // Recent file/video menus
+    updateRecentFileActions();
+    updateRecentVideoActions();
+
+    // VideoExporter (Qt Multimedia backend init also deferred)
+    _videoExporter = new VideoExporter(this);
+    connect(_videoExporter, &VideoExporter::recordingStopped,
+            this, &MainWindow::onRecordingStopped);
+    connect(_videoExporter, &VideoExporter::errorOccurred, this, [this](const QString& msg) {
+      statusBar()->showMessage(tr("Recording error: %1").arg(msg), 5000);
+      recordAction->setChecked(false);
+    });
+  });
 
   // Start osc.
   startOscReceiver();
@@ -142,6 +189,13 @@ void MainWindow::handleSourceItemSelectionChanged()
 {
   // Set current source.
   QListWidgetItem* item = sourceList->currentItem();
+
+  // Ignore clicks on section-header items (they are not selectable sources).
+  if (item == _sourceSectionImages || item == _sourceSectionVideos || item == _sourceSectionFolders) {
+    sourceList->clearSelection();
+    return;
+  }
+
   currentSelectedItem = item;
 
   // Is a source item selected?
@@ -620,7 +674,7 @@ bool MainWindow::saveAs()
 void MainWindow::importMedia()
 {
   // Stop video playback, if it is playing, to avoid lags. XXX Hack
-  pause(!pauseAction->isVisible());
+  pause(!_isPlaying);
 
   // Pop-up file-choosing dialog to choose media file.
   // TODO: restrict the type of files that can be imported
@@ -641,7 +695,7 @@ void MainWindow::importMedia()
                                                   .arg(MM::IMAGE_FILES_FILTER));
 #endif
   // Restart video playback if it was previously playing. XXX Hack
-  play(!pauseAction->isVisible());
+  play(!_isPlaying);
 
   // Check if file is image or not
   // according to file extension
@@ -653,11 +707,60 @@ void MainWindow::importMedia()
   }
 }
 
+void MainWindow::importFolder()
+{
+  QString dirPath = QFileDialog::getExistingDirectory(
+      this, tr("Import Media Folder"),
+      settings.value("defaultVideoDir").toString());
+  if (dirPath.isEmpty())
+    return;
+
+  const QStringList allExts = (MM::IMAGE_FILES_FILTER + " " + MM::VIDEO_FILES_FILTER)
+                                .split(' ', Qt::SkipEmptyParts);
+
+  QDirIterator it(dirPath, allExts, QDir::Files, QDirIterator::Subdirectories);
+  int imported = 0;
+  while (it.hasNext()) {
+    QString filePath = it.next();
+    QString ext = QFileInfo(filePath).suffix();
+    bool isImage = MM::IMAGE_FILES_FILTER.contains(ext, Qt::CaseInsensitive);
+    if (importMediaFile(filePath, isImage))
+      ++imported;
+  }
+
+  if (imported > 0)
+    statusBar()->showMessage(tr("Imported %1 file(s) from folder").arg(imported), 4000);
+  else
+    statusBar()->showMessage(tr("No supported media files found in folder"), 4000);
+}
+
+void MainWindow::importFolderAsSource()
+{
+  QString dirPath = QFileDialog::getExistingDirectory(
+    this, tr("Add Image Folder"),
+    settings.value("defaultImageDir").toString());
+
+  if (dirPath.isEmpty())
+    return;
+
+  QApplication::setOverrideCursor(Qt::WaitCursor);
+  uid id = createFolderSource(NULL_UID, dirPath);
+  QApplication::restoreOverrideCursor();
+
+  if (id != NULL_UID) {
+    settings.setValue("defaultImageDir", dirPath);
+    statusBar()->showMessage(tr("Folder added: %1").arg(QDir(dirPath).dirName()), 3000);
+  } else {
+    QMessageBox::warning(this, tr("Empty Folder"),
+      tr("No image files found in the selected folder."));
+  }
+}
+
 void MainWindow::openCameraDevice()
 {
 #if QT_VERSION >= 0x050300
   // Stop video playback, if it is playing, to avoid lags. XXX Hack
-  pause(!pauseAction->isVisible());
+  pause(!_isPlaying);
 
   QString device;
   QList<QCameraDevice> cameras = QMediaDevices::videoInputs();
@@ -699,7 +802,7 @@ void MainWindow::openCameraDevice()
   }
 
   // Restart video playback if it was previously playing. XXX Hack
-  play(!pauseAction->isVisible());
+  play(!_isPlaying);
 
   if (!device.isEmpty())
     importMediaFile(device, false, true);
@@ -710,13 +813,9 @@ void MainWindow::openCameraDevice()
 
 void MainWindow::addColor()
 {
-  // Stop video playback, if it is playing, to avoid lags. XXX Hack
-  if (pauseAction->isVisible())
-    pause(false);
+  bool wasPlaying = _isPlaying;
+  if (wasPlaying) pause(false);
 
-  // Pop-up color-choosing dialog to choose color source.
-  // FIXME: we use a static variable to store the last chosen color
-  // it should rather be a member of this class, or so.
   static QColor color = QColor(0, 255, 0, 255);
 #ifdef Q_OS_LINUX
   color = QColorDialog::getColor(color, this, tr("Select Color"),
@@ -724,25 +823,19 @@ void MainWindow::addColor()
                                  QColorDialog::ShowAlphaChannel);
 #else
   color = QColorDialog::getColor(color, this, tr("Select Color"),
-                                 // QColorDialog::DontUseNativeDialog |
                                  QColorDialog::ShowAlphaChannel);
 #endif
   if (color.isValid())
-  {
     addColorSource(color);
-  }
 
-  // Restart video playback if it was previously playing. XXX Hack
-  if (pauseAction->isVisible())
-    play(false);
+  if (wasPlaying) play(false);
 }
 
 void MainWindow::addSyphon()
 {
 #ifdef Q_OS_MAC
-  // Stop video playback, if it is playing, to avoid lags. XXX Hack
-  if (pauseAction->isVisible())
-    pause(false);
+  bool wasPlaying = _isPlaying;
+  if (wasPlaying) pause(false);
 
   SyphonServerDialog dialog(this);
   if (dialog.exec() == QDialog::Accepted)
@@ -760,9 +853,7 @@ void MainWindow::addSyphon()
     statusBar()->showMessage(tr("Syphon source added"), 2000);
   }
 
-  // Restart video playback if it was previously playing. XXX Hack
-  if (pauseAction->isVisible())
-    play(false);
+  if (wasPlaying) play(false);
 #endif
 }
 
@@ -1330,6 +1421,12 @@ bool MainWindow::clearProject()
   // Empty list widgets.
   layerListModel->clear();
   sourceList->clear();
+  // clear() deletes all QListWidgetItems including the section headers.
+  // Re-create them so addSourceItem() can find them again.
+  _sourceSectionImages  = nullptr;
+  _sourceSectionVideos  = nullptr;
+  _sourceSectionFolders = nullptr;
+  initSourceListSections();
 
   // Clear property panel.
   for (int i=layerPropertyPanel->count()-1; i>=0; i--)
@@ -1419,6 +1516,26 @@ uid MainWindow::createColorSource(uid sourceId, QColor color)
 
     return id;
   }
+}
+
+uid MainWindow::createFolderSource(uid sourceId, const QString& dirPath)
+{
+  if (Source::getUidAllocator().exists(sourceId))
+    return NULL_UID;
+
+  FolderSource* fs = new FolderSource(dirPath, sourceId);
+  if (fs->imageCount() == 0) {
+    delete fs;
+    return NULL_UID;
+  }
+
+  Source::ptr source(fs);
+  source->setName(QDir(dirPath).dirName());
+  source->play();
+
+  uid id = mappingManager->addSource(source);
+  undoStack->push(new AddSourceCommand(this, id, source->getIcon(), source->getName()));
+  return id;
 }
 
 uid MainWindow::createSyphonSource(uid sourceId, const QString& serverUUID,
@@ -1570,10 +1687,11 @@ void MainWindow::createLayout()
   sourceList = new QListWidget;
   sourceList->setSelectionMode(QAbstractItemView::SingleSelection);
   sourceList->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
-  sourceList->setDefaultDropAction(Qt::MoveAction);
-  sourceList->setDragDropMode(QAbstractItemView::InternalMove);
+  sourceList->setDragDropMode(QAbstractItemView::NoDragDrop); // sections make reorder ambiguous
   sourceList->setMinimumWidth(PAINT_LIST_MINIMUM_HEIGHT);
   sourceList->setIconSize(QSize(MainWindow::PAINT_LIST_ICON_SIZE, MainWindow::PAINT_LIST_ICON_SIZE));
+
+  initSourceListSections();
 
   // Create source panel.
   sourcePropertyPanel = new QStackedWidget;
@@ -1647,17 +1765,13 @@ void MainWindow::createLayout()
   // Preferences dialog
   _preferenceDialog = new PreferenceDialog(this);
 
-  // Video exporter
-  _videoExporter = new VideoExporter(this);
-  connect(_videoExporter, &VideoExporter::recordingStopped,
-          this, &MainWindow::onRecordingStopped);
-  connect(_videoExporter, &VideoExporter::errorOccurred, this, [this](const QString& msg) {
-    statusBar()->showMessage(tr("Recording error: %1").arg(msg), 5000);
-    recordAction->setChecked(false);
-  });
+  // Video exporter — created lazily after the window is shown so that
+  // Qt Multimedia / WMF initialization doesn't block the main thread during startup.
+  _videoExporter = nullptr;
 
   outputWindow = new OutputGLWindow(this, destinationCanvas);
   outputWindow->installEventFilter(destinationCanvas);
+
 
   // Source scene changed -> change destination.
   connect(sourceCanvas->scene(), SIGNAL(changed(const QList<QRectF>&)),
@@ -1804,6 +1918,16 @@ void MainWindow::createActions()
   importMediaAction->setShortcutContext(Qt::ApplicationShortcut);
   addAction(importMediaAction);
   connect(importMediaAction, SIGNAL(triggered()), this, SLOT(importMedia()));
+
+  // Import Folder.
+  importFolderAction = new QAction(tr("Import Media &Folder..."), this);
+  importFolderAction->setShortcut(Qt::CTRL | Qt::SHIFT | Qt::Key_I);
+  importFolderAction->setIcon(QIcon(":/add-video"));
+  importFolderAction->setToolTip(tr("Import all images and videos from a folder..."));
+  importFolderAction->setIconVisibleInMenu(false);
+  importFolderAction->setShortcutContext(Qt::ApplicationShortcut);
+  addAction(importFolderAction);
+  connect(importFolderAction, &QAction::triggered, this, &MainWindow::importFolder);
 
   // Open camera.
   AddCameraAction = new QAction(tr("Open &Camera Device..."), this);
@@ -2082,28 +2206,27 @@ void MainWindow::createActions()
   connect(addEllipseAction, SIGNAL(triggered()), this, SLOT(addEllipse()));
   addEllipseAction->setEnabled(false);
 
-  // Play.
+  // Play/Pause — single checkable action so no double-trigger on button swap.
+  // Unchecked = paused (shows play ▶ icon); checked = playing (shows pause ∥ icon).
   const QKeySequence PLAY_PAUSE_KEY_SEQUENCE = Qt::CTRL | Qt::SHIFT | Qt::Key_P;
   playAction = new QAction(tr("Play"), this);
-  playAction->setShortcut(PLAY_PAUSE_KEY_SEQUENCE);
-  playAction->setIcon(QIcon(":/play"));
-  playAction->setToolTip(tr("Play"));
+  playAction->setCheckable(true);
+  playAction->setChecked(false);
+  {
+    QIcon icon;
+    icon.addFile(":/play",  QSize(), QIcon::Normal, QIcon::Off);
+    icon.addFile(":/pause", QSize(), QIcon::Normal, QIcon::On);
+    playAction->setIcon(icon);
+  }
+  playAction->setToolTip(tr("Play / Pause"));
   playAction->setIconVisibleInMenu(false);
+  playAction->setShortcut(PLAY_PAUSE_KEY_SEQUENCE);
   playAction->setShortcutContext(Qt::ApplicationShortcut);
   addAction(playAction);
-  connect(playAction, SIGNAL(triggered()), this, SLOT(play()));
-  playAction->setVisible(true);
-
-  // Pause.
-  pauseAction = new QAction(tr("Pause"), this);
-  pauseAction->setShortcut(PLAY_PAUSE_KEY_SEQUENCE);
-  pauseAction->setIcon(QIcon(":/pause"));
-  pauseAction->setToolTip(tr("Pause"));
-  pauseAction->setIconVisibleInMenu(false);
-  pauseAction->setShortcutContext(Qt::ApplicationShortcut);
-  addAction(pauseAction);
-  connect(pauseAction, SIGNAL(triggered()), this, SLOT(pause()));
-  pauseAction->setVisible(false);
+  connect(playAction, &QAction::triggered, this, [this](bool checked) {
+    if (checked) play(false);
+    else         pause(false);
+  });
 
   // Rewind.
   rewindAction = new QAction(tr("Restart"), this);
@@ -2361,6 +2484,7 @@ void MainWindow::createMenus()
   fileMenu->addAction(saveAsAction);
   fileMenu->addSeparator();
   fileMenu->addAction(importMediaAction);
+  fileMenu->addAction(importFolderAction);
   fileMenu->addAction(AddCameraAction);
   fileMenu->addAction(addColorAction);
 #ifdef Q_OS_MAC
@@ -2442,7 +2566,6 @@ void MainWindow::createMenus()
   viewMenu->addSeparator();
   // Playback.
   viewMenu->addAction(playAction);
-  viewMenu->addAction(pauseAction);
   viewMenu->addAction(rewindAction);
   viewMenu->addAction(muteAllAction);
 
@@ -2576,7 +2699,6 @@ void MainWindow::createToolBars()
   spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   mainToolBar->addWidget(spacer);
   mainToolBar->addAction(playAction);
-  mainToolBar->addAction(pauseAction);
   mainToolBar->addAction(rewindAction);
   mainToolBar->addAction(muteAllAction);
   mainToolBar->addSeparator();
@@ -2644,46 +2766,15 @@ void MainWindow::createStatusBar()
 
 void MainWindow::readSettings()
 {
-  // FIXME: for each setting that is new since the first release in the major version number branch,
-  // make sure it exists before reading its value.
+  // All UI state restoration is done in the deferred singleShot in the constructor.
+  // Any restoreGeometry/restoreState/setChecked call here triggers a resize or repaint
+  // which calls MainWindow::window() before the singleton is fully initialized,
+  // causing infinite recursive construction. Only read non-UI values here.
   QSettings settings;
-
-  // settings present since 0.1.0:
-  restoreGeometry(settings.value("geometry").toByteArray());
-  restoreState(settings.value("windowState").toByteArray());
-
-  mainSplitter->restoreState(settings.value("mainSplitter").toByteArray());
-  sourceSplitter->restoreState(settings.value("sourceSplitter").toByteArray());
-  layerSplitter->restoreState(settings.value("layerSplitter").toByteArray());
-  canvasSplitter->restoreState(settings.value("canvasSplitter").toByteArray());
-  outputWindow->restoreGeometry(settings.value("outputWindow").toByteArray());
-
-  // new in 0.1.2:
-  outputFullScreenAction->setChecked(settings.value("displayOutputWindow", MM::DISPLAY_OUTPUT_WINDOW).toBool());
-  displayTestSignalAction->setChecked(settings.value("displayTestSignal", MM::DISPLAY_TEST_SIGNAL).toBool());
-  displayControlsAction->setChecked(settings.value("displayControls", MM::DISPLAY_CONTROLS).toBool());
-  outputWindow->setCanvasDisplayCrosshair(settings.value("displayControls", MM::DISPLAY_CONTROLS).toBool());
   oscListeningPort = settings.value("oscListeningPort", MM::DEFAULT_OSC_PORT).toInt();
 #ifdef HAVE_MCP
   mcpListeningPort = settings.value("mcpListeningPort", MM::DEFAULT_MCP_PORT).toInt();
 #endif
-
-  // Update Recent files and video
-  updateRecentFileActions();
-  updateRecentVideoActions();
-
-  // new in 0.3.2
-  displayUndoHistoryAction->setChecked(settings.value("displayUndoStack", MM::DISPLAY_UNDO_HISTORY).toBool());
-  displayZoomToolAction->setChecked(settings.value("zoomToolBar", MM::DISPLAY_ZOOM_TOOLBAR).toBool());
-  showMenuBarAction->setChecked(settings.value("showMenuBar", MM::DISPLAY_MENU_BAR).toBool());
-
-  // New in 0.4.1
-   displaySourceControlsAction->setChecked(settings.value("displayAllControls", MM::DISPLAY_ALL_CONTROLS).toBool());
-   stickyVerticesAction->setChecked(settings.value("stickyVertices", MM::STICKY_VERTICES).toBool());
-   muteAllAction->setChecked(settings.value("audioMuted", false).toBool());
-   // Set toolbar icon size
-   int toolBarIconSize = settings.value("toolbarIconSize", MM::TOOLBAR_ICON_SIZE).toInt();
-   mainToolBar->setIconSize(QSize(toolBarIconSize, toolBarIconSize));
 }
 
 void MainWindow::writeSettings()
@@ -2696,9 +2787,9 @@ void MainWindow::writeSettings()
   settings.setValue("layerSplitter", layerSplitter->saveState());
   settings.setValue("canvasSplitter", canvasSplitter->saveState());
   settings.setValue("outputWindow", outputWindow->saveGeometry());
+  settings.setValue("outputScreen", outputWindow->getPreferredScreen());
   settings.setValue("displayOutputWindow", outputFullScreenAction->isChecked());
   settings.setValue("displayTestSignal", displayTestSignalAction->isChecked());
-  settings.setValue("displayControls", displayControlsAction->isChecked());
   settings.setValue("displayAllControls", displaySourceControlsAction->isChecked());
   settings.setValue("oscListeningPort", oscListeningPort);
 #ifdef HAVE_MCP
@@ -2770,6 +2861,7 @@ bool MainWindow::loadFile(const QString &fileName)
     // whatever zoom/pan was left over from the previous project.
     sourceCanvas->fitShapeToView();
     destinationCanvas->fitShapeToView();
+    outputWindow->getCanvas()->fitToContent();
   }
 
   return true;
@@ -3074,6 +3166,52 @@ bool MainWindow::addColorSource(const QColor& color)
   return true;
 }
 
+void MainWindow::initSourceListSections()
+{
+  auto makeHeader = [this](const QString& title, const char* addSlot) -> QListWidgetItem* {
+    QListWidgetItem* h = new QListWidgetItem();
+    h->setFlags(Qt::ItemIsEnabled);
+    h->setSizeHint(QSize(0, 26));
+    sourceList->addItem(h);
+
+    QWidget* container = new QWidget;
+    container->setAutoFillBackground(false);
+
+    QHBoxLayout* layout = new QHBoxLayout(container);
+    layout->setContentsMargins(6, 2, 4, 2);
+    layout->setSpacing(4);
+
+    QLabel* label = new QLabel(title);
+    QFont f = label->font();
+    f.setBold(true);
+    f.setPointSizeF(f.pointSizeF() * 0.85);
+    label->setFont(f);
+    label->setStyleSheet("color: rgb(160,160,160);");
+
+    QToolButton* btn = new QToolButton;
+    btn->setText("+");
+    btn->setFixedSize(18, 18);
+    btn->setAutoRaise(true);
+    btn->setCursor(Qt::ArrowCursor);
+    btn->setStyleSheet(
+      "QToolButton { color: rgb(160,160,160); font-weight: bold; "
+      "border: 1px solid rgb(100,100,100); border-radius: 3px; }"
+      "QToolButton:hover { background: rgb(80,80,80); }");
+    connect(btn, SIGNAL(clicked()), this, addSlot);
+
+    layout->addWidget(label);
+    layout->addStretch();
+    layout->addWidget(btn);
+
+    sourceList->setItemWidget(h, container);
+    return h;
+  };
+
+  _sourceSectionImages  = makeHeader(tr("Images"),        SLOT(importMedia()));
+  _sourceSectionVideos  = makeHeader(tr("Movies"),        SLOT(importMedia()));
+  _sourceSectionFolders = makeHeader(tr("Image Folders"), SLOT(importFolderAsSource()));
+}
+
 void MainWindow::addSourceItem(uid sourceId, const QIcon& icon, const QString& name)
 {
   Source::ptr source = mappingManager->getSourceById(sourceId);
@@ -3091,6 +3229,8 @@ void MainWindow::addSourceItem(uid sourceId, const QIcon& icon, const QString& n
     sourceGui = SourceGui::ptr(new ImageGui(source));
   else if (sourceType == SourceType::Color)
     sourceGui = SourceGui::ptr(new ColorGui(source));
+  else if (sourceType == SourceType::Folder)
+    sourceGui = SourceGui::ptr(new FolderGui(source));
 #ifdef Q_OS_MAC
   else if (sourceType == SourceType::Syphon)
     sourceGui = SourceGui::ptr(new SyphonGui(source));
@@ -3147,8 +3287,19 @@ void MainWindow::addSourceItem(uid sourceId, const QIcon& icon, const QString& n
   // Switch to source tab.
   contentTab->setCurrentWidget(sourceSplitter);
 
-  // Add item to source list.
-  sourceList->addItem(item);
+  // Insert under the appropriate section header.
+  if (source->getSourceType() == SourceType::Image) {
+    // Images go before the Movies header.
+    int videosRow = sourceList->row(_sourceSectionVideos);
+    sourceList->insertItem(videosRow, item);
+  } else if (source->getSourceType() == SourceType::Folder) {
+    // Folders go at the end, after the Image Folders header.
+    sourceList->addItem(item);
+  } else {
+    // Videos and other types go before the Image Folders header.
+    int foldersRow = sourceList->row(_sourceSectionFolders);
+    sourceList->insertItem(foldersRow, item);
+  }
   sourceList->setCurrentItem(item);
 
   // Update mapping guis.
@@ -3200,6 +3351,7 @@ void MainWindow::addLayerItem(uid layerId)
   // XXX hardcoded for textures
   QSharedPointer<TextureLayer> textureLayer;
   if (sourceType == SourceType::Video || sourceType == SourceType::Image
+      || sourceType == SourceType::Folder
 #ifdef Q_OS_MAC
       || sourceType == SourceType::Syphon
 #endif
@@ -3581,20 +3733,25 @@ void MainWindow::processFrame()
   // Update canvases.
   updateCanvases();
 
-  // Grab output framebuffer and feed to recorder if active.
-  if (_videoExporter->isRecording()) {
-    QOpenGLWidget* glw = qobject_cast<QOpenGLWidget*>(outputWindow->getCanvas()->viewport());
-    if (glw) {
-      QImage frame = glw->grabFramebuffer();
-      if (!frame.isNull())
-        _videoExporter->sendFrame(frame);
-    }
+  // Update recording: drive output canvas repaint so framePainted fires each tick.
+  if (_videoExporter && _videoExporter->isRecording()) {
+    outputWindow->getCanvas()->update();
 
-    // Update recording timer label.
     qint64 ms = _videoExporter->duration();
-    recordingTimerLabel->setText(tr("● REC  %1:%2")
-      .arg(ms / 60000, 2, 10, QChar('0'))
-      .arg((ms % 60000) / 1000, 2, 10, QChar('0')));
+    if (_recordingTotalMs > 0 && ms >= _recordingTotalMs) {
+      recordAction->setChecked(false);
+      _videoExporter->stop();
+    } else {
+      auto fmtMs = [](qint64 t) {
+        return QString("%1:%2")
+          .arg(t / 60000, 2, 10, QChar('0'))
+          .arg((t % 60000) / 1000, 2, 10, QChar('0'));
+      };
+      QString label = _recordingTotalMs > 0
+        ? tr("● REC  %1 / %2").arg(fmtMs(ms)).arg(fmtMs(_recordingTotalMs))
+        : tr("● REC  %1").arg(fmtMs(ms));
+      recordingTimerLabel->setText(label);
+    }
   }
 
   // Update true FPS.
@@ -3602,7 +3759,7 @@ void MainWindow::processFrame()
   if (nFrames > framesPerSecond())
   {
     // This is the real time needed to process one second.
-    qreal trueFramesPerSecond = nFrames / systemTimer->restart() * 1000.0;
+    qreal trueFramesPerSecond = qreal(nFrames) / qreal(systemTimer->restart()) * 1000.0;
     trueFramesPerSecondsLabel->setText(
         "FPS: " + QString::number(trueFramesPerSecond, 'f', 2) + " / " +
         QString::number(framesPerSecond()  , 'f', 2));
@@ -3612,6 +3769,11 @@ void MainWindow::processFrame()
 
 void MainWindow::toggleRecording(bool on)
 {
+  if (!_videoExporter) {
+    statusBar()->showMessage(tr("Video recorder still initializing, try again."), 3000);
+    recordAction->setChecked(false);
+    return;
+  }
   if (on) {
     QSettings s;
     auto format  = (VideoExporter::Format)  s.value("videoFormat",  (int)VideoExporter::H264_MP4).toInt();
@@ -3619,8 +3781,20 @@ void MainWindow::toggleRecording(bool on)
 
     QString filter = VideoExporter::formatFilter(format);
     QString ext    = VideoExporter::formatExtension(format);
-    QString path   = QFileDialog::getSaveFileName(
-        this, tr("Save Recording As"), QString(), filter);
+    QString lastDir = s.value("lastRecordingDir", QString()).toString();
+
+    // Default filename: project name (without extension), or "recording" if unsaved.
+    QString defaultName;
+    if (!curFile.isEmpty())
+      defaultName = QFileInfo(curFile).completeBaseName();
+    else
+      defaultName = tr("recording");
+    QString defaultPath = lastDir.isEmpty()
+        ? defaultName + "." + ext
+        : QDir(lastDir).filePath(defaultName + "." + ext);
+
+    QString path = QFileDialog::getSaveFileName(
+        this, tr("Save Recording As"), defaultPath, filter);
 
     if (path.isEmpty()) {
       recordAction->setChecked(false);
@@ -3631,24 +3805,105 @@ void MainWindow::toggleRecording(bool on)
     if (!path.endsWith("." + ext, Qt::CaseInsensitive))
       path += "." + ext;
 
+    s.setValue("lastRecordingDir", QFileInfo(path).absolutePath());
+
+    // Rewind all video sources, force loop, find longest duration.
+    _recordingTotalMs = 0;
+    _savedLoopStates.clear();
+    for (int i = 0; i < mappingManager->nSources(); i++) {
+      Source::ptr src = mappingManager->getSource(i);
+      if (src->getSourceType() == SourceType::Video) {
+        Video* vid = static_cast<Video*>(src.get());
+        _savedLoopStates[src->getId()] = vid->getPlayInLoop();
+        vid->setPlayInLoop(true);
+        vid->rewind();
+        qint64 dur = vid->getDuration();
+        if (dur > _recordingTotalMs)
+          _recordingTotalMs = dur;
+      }
+    }
+
+    // QScreen::grabWindow only captures pixels that are composited to the display.
+    // A windowed output that is hidden or occluded returns black frames. Go fullscreen
+    // when recording starts so the compositor always has real content to grab.
+    _recordingOpenedOutputWindow = !outputFullScreenAction->isChecked();
+    if (_recordingOpenedOutputWindow) {
+      _recordingHadControls = displayControlsAction->isChecked();
+      startFullScreen();
+      // Allow the GL context and compositor to settle before the first frame grab.
+      QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+    }
+
     QSize size = outputWindow->getCanvas()->viewport()->size();
     if (!_videoExporter->start(path, format, quality, size, framesPerSecond())) {
       recordAction->setChecked(false);
       statusBar()->showMessage(tr("Failed to start recording."), 4000);
+      // Restore loop states since recording failed to start.
+      for (int i = 0; i < mappingManager->nSources(); i++) {
+        Source::ptr src = mappingManager->getSource(i);
+        if (src->getSourceType() == SourceType::Video) {
+          Video* vid = static_cast<Video*>(src.get());
+          if (_savedLoopStates.contains(src->getId()))
+            vid->setPlayInLoop(_savedLoopStates.value(src->getId()));
+        }
+      }
+      _savedLoopStates.clear();
+      _recordingTotalMs = 0;
+      if (_recordingOpenedOutputWindow) {
+        exitFullScreen();
+        _recordingOpenedOutputWindow = false;
+      }
     } else {
-      recordingTimerLabel->setText("● REC  00:00");
+      // Enable frame grab: main update loop drives canvas->update() each tick,
+      // paintEvent captures the frame and emits framePainted → sendFrame.
+      OutputGLCanvas* canvas = outputWindow->getCanvas();
+      canvas->setFrameGrabEnabled(true);
+      connect(canvas, &OutputGLCanvas::framePainted,
+              _videoExporter, &VideoExporter::sendFrame);
+
+      recordingTimerLabel->setText("● REC  00:00 / --:--");
       recordingTimerLabel->show();
+
+      QString audioMsg = _videoExporter->audioDeviceName().isEmpty()
+          ? tr("No loopback audio device — recording video only. "
+               "Enable Stereo Mix in Windows Sound settings to capture audio.")
+          : tr("Recording audio from: %1").arg(_videoExporter->audioDeviceName());
+      statusBar()->showMessage(audioMsg, 8000);
     }
   } else {
-    _videoExporter->stop();
+    if (_videoExporter)
+      _videoExporter->stop();
   }
 }
 
 void MainWindow::onRecordingStopped(const QString& filePath)
 {
+  // Disconnect frame capture signals before hiding the window.
+  OutputGLCanvas* canvas = outputWindow->getCanvas();
+  canvas->setFrameGrabEnabled(false);
+  disconnect(canvas, &OutputGLCanvas::framePainted,
+             _videoExporter, &VideoExporter::sendFrame);
+
+  if (_recordingOpenedOutputWindow) {
+    outputWindow->hide();
+    displayControlsAction->setChecked(_recordingHadControls);
+    _recordingOpenedOutputWindow = false;
+  }
   recordAction->setChecked(false);
   recordingTimerLabel->hide();
   statusBar()->showMessage(tr("Recording saved: %1").arg(filePath), 6000);
+
+  // Restore each video's original loop setting.
+  for (int i = 0; i < mappingManager->nSources(); i++) {
+    Source::ptr src = mappingManager->getSource(i);
+    if (src->getSourceType() == SourceType::Video) {
+      Video* vid = static_cast<Video*>(src.get());
+      if (_savedLoopStates.contains(src->getId()))
+        vid->setPlayInLoop(_savedLoopStates.value(src->getId()));
+    }
+  }
+  _savedLoopStates.clear();
+  _recordingTotalMs = 0;
 }
 
 void MainWindow::updatePlayingState()
@@ -3769,28 +4024,17 @@ void MainWindow::showSourceContextMenu(const QPoint &point)
 
 void MainWindow::play(bool updatePlayPauseActions)
 {
-  // Update buttons.
   if (updatePlayPauseActions)
-  {
-    playAction->setVisible(false);
-    pauseAction->setVisible(true);
-  }
-
+    playAction->setChecked(true);
   _isPlaying = true;
-
   updatePlayingState();
 }
 
 void MainWindow::pause(bool updatePlayPauseActions)
 {
-  // Update buttons.
   if (updatePlayPauseActions)
-  {
-    playAction->setVisible(true);
-    pauseAction->setVisible(false);
-  }
+    playAction->setChecked(false);
   _isPlaying = false;
-
   updatePlayingState();
 }
 
@@ -4194,8 +4438,6 @@ void MainWindow::refreshIcons()
     { addMeshAction,              ":/add-mesh"          },
     { addTriangleAction,          ":/add-triangle"      },
     { addEllipseAction,           ":/add-ellipse"       },
-    { playAction,                 ":/play"              },
-    { pauseAction,                ":/pause"             },
     { rewindAction,               ":/rewind"            },
     { outputFullScreenAction,     ":/fullscreen"        },
     { displayControlsAction,      ":/control-points"    },
@@ -4211,6 +4453,14 @@ void MainWindow::refreshIcons()
   for (auto& e : entries) {
     if (e.action)
       e.action->setIcon(themedIcon(e.resource));
+  }
+  // playAction is a dual-state checkable action — rebuild its compound icon
+  // so theme changes don't flatten it back to a single play-only icon.
+  {
+    QIcon icon;
+    icon.addPixmap(themedIcon(":/play").pixmap(64),  QIcon::Normal, QIcon::Off);
+    icon.addPixmap(themedIcon(":/pause").pixmap(64), QIcon::Normal, QIcon::On);
+    playAction->setIcon(icon);
   }
   if (contentTab) {
     int sourceIdx = contentTab->indexOf(sourceSplitter);

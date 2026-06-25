@@ -86,6 +86,15 @@ public:
 
   bool seekIsEnabled() const { return _seekEnabled; }
 
+  /// Duration in milliseconds (0 if not yet known).
+  qint64 getDuration() const { return _duration; }
+
+  /// Whether the video loops on end-of-stream.
+  bool getPlayInLoop() const { return _playInLoop; }
+
+  /// Set loop-on-end behaviour. Subclasses may override to update the live player.
+  virtual void setPlayInLoop(bool loop) { _playInLoop = loop; }
+
   /// Seek to a fractional position in [0, 1].
   bool seekTo(double position);
   /// Seek to an absolute position in milliseconds.

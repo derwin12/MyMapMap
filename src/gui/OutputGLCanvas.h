@@ -34,8 +34,14 @@ public:
   OutputGLCanvas(MainWindow* mainWindow, QWidget* parent = 0, QOpenGLWidget* shareWidget = 0, QGraphicsScene* scene = 0);
   virtual ~OutputGLCanvas() {}
 
+  // Enable/disable per-frame grab after each paintEvent (for video recording).
+  void setFrameGrabEnabled(bool enabled) { _frameGrabEnabled = enabled; }
+
   // Adjust viewable scene to correspond to absolute coordinates.
   void setSceneRectToViewportGeometry();
+
+  // Fit all scene items into the viewport (call after loading a project).
+  void fitToContent();
 
   // Draws foreground (displays crosshair if needed).
   void drawForeground(QPainter *painter , const QRectF &rect);
@@ -49,6 +55,15 @@ public:
     _displayTestSignal = displayTestSignal;
   }
 
+signals:
+  void framePainted(const QImage& frame);
+
+protected:
+  void paintEvent(QPaintEvent* event) override;
+
+private slots:
+  void _doGrabFrame();
+
 private:
   void _drawClassicTestSignal(QPainter* painter);
   void _drawPALTestCard(QPainter *painter);
@@ -58,6 +73,8 @@ private:
 
   bool _displayCrosshair;
   bool _displayTestSignal;
+  bool _frameGrabEnabled = false;
+  bool _grabPending = false;
   QImage _classicTestCard;
   QBrush _brush_test_signal;
   QImage _palTestCard;
