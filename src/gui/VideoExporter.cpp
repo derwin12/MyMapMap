@@ -8,6 +8,8 @@
 #include <QVideoFrameInput>
 #include <QMediaRecorder>
 #include <QAudioInput>
+#include <QMediaDevices>
+#include <QAudioDevice>
 #include <QMediaFormat>
 #include <QVideoFrame>
 #include <QVideoFrameFormat>
@@ -41,10 +43,25 @@ bool VideoExporter::start(const QString& filePath, Format format,
     _session.reset(new QMediaCaptureSession);
     _frameInput.reset(new QVideoFrameInput);
     _recorder.reset(new QMediaRecorder);
-    _audioInput.reset(new QAudioInput);   // default system audio input
+
+    // Look for a loopback / desktop-audio capture device (e.g. "Stereo Mix",
+    // "What U Hear").  Only attach audio if one is found; recording mic audio
+    // by default would capture the wrong source.
+    QAudioDevice loopbackDev;
+    const QStringList keywords = {"mix", "stereo", "loopback", "what u hear", "wave out"};
+    for (const QAudioDevice& dev : QMediaDevices::audioInputs()) {
+      QString name = dev.description().toLower();
+      for (const QString& kw : keywords) {
+        if (name.contains(kw)) { loopbackDev = dev; break; }
+      }
+      if (!loopbackDev.isNull()) break;
+    }
+    if (!loopbackDev.isNull()) {
+      _audioInput.reset(new QAudioInput(loopbackDev));
+      _session->setAudioInput(_audioInput.data());
+    }
 
     _session->setVideoFrameInput(_frameInput.data());
-    _session->setAudioInput(_audioInput.data());
     _session->setRecorder(_recorder.data());
 
     connect(_recorder.data(), &QMediaRecorder::durationChanged,
@@ -60,17 +77,17 @@ bool VideoExporter::start(const QString& filePath, Format format,
   case H264_MP4:
     mediaFormat.setFileFormat(QMediaFormat::MPEG4);
     mediaFormat.setVideoCodec(QMediaFormat::VideoCodec::H264);
-    mediaFormat.setAudioCodec(QMediaFormat::AudioCodec::AAC);
+    if (_audioInput) mediaFormat.setAudioCodec(QMediaFormat::AudioCodec::AAC);
     break;
   case H265_MP4:
     mediaFormat.setFileFormat(QMediaFormat::MPEG4);
     mediaFormat.setVideoCodec(QMediaFormat::VideoCodec::H265);
-    mediaFormat.setAudioCodec(QMediaFormat::AudioCodec::AAC);
+    if (_audioInput) mediaFormat.setAudioCodec(QMediaFormat::AudioCodec::AAC);
     break;
   case MJPEG_AVI:
     mediaFormat.setFileFormat(QMediaFormat::AVI);
     mediaFormat.setVideoCodec(QMediaFormat::VideoCodec::MotionJPEG);
-    mediaFormat.setAudioCodec(QMediaFormat::AudioCodec::MP3);
+    if (_audioInput) mediaFormat.setAudioCodec(QMediaFormat::AudioCodec::MP3);
     break;
   }
 

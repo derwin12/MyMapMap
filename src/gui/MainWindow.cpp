@@ -110,6 +110,8 @@ MainWindow::MainWindow()
     layerSplitter->restoreState(s.value("layerSplitter").toByteArray());
     canvasSplitter->restoreState(s.value("canvasSplitter").toByteArray());
     outputWindow->restoreGeometry(s.value("outputWindow").toByteArray());
+    int savedScreen = s.value("outputScreen", QApplication::screens().size() - 1).toInt();
+    outputWindow->setPreferredScreen(savedScreen);
 
     // Action toggle states
     outputFullScreenAction->setChecked(s.value("displayOutputWindow", MM::DISPLAY_OUTPUT_WINDOW).toBool());
@@ -2699,6 +2701,7 @@ void MainWindow::writeSettings()
   settings.setValue("layerSplitter", layerSplitter->saveState());
   settings.setValue("canvasSplitter", canvasSplitter->saveState());
   settings.setValue("outputWindow", outputWindow->saveGeometry());
+  settings.setValue("outputScreen", outputWindow->getPreferredScreen());
   settings.setValue("displayOutputWindow", outputFullScreenAction->isChecked());
   settings.setValue("displayTestSignal", displayTestSignalAction->isChecked());
   settings.setValue("displayControls", displayControlsAction->isChecked());

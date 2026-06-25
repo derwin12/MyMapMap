@@ -94,11 +94,9 @@ void OutputGLCanvas::setSceneRectToViewportGeometry()
 
 void OutputGLCanvas::fitToContent()
 {
-  if (!scene() || scene()->items().isEmpty())
-    return;
-  QRectF bounds = scene()->itemsBoundingRect();
-  setSceneRect(bounds);
-  fitInView(bounds, Qt::KeepAspectRatio);
+  // Reset to 100% / "normal size": no zoom transform, scene rect matches viewport.
+  resetTransform();
+  setSceneRectToViewportGeometry();
 }
 
 void OutputGLCanvas::drawForeground(QPainter *painter , const QRectF &rect)
@@ -307,10 +305,7 @@ void OutputGLCanvas::resizeGL(int width, int height)
 {
   Q_UNUSED(width);
   Q_UNUSED(height);
-  if (scene() && !scene()->items().isEmpty())
-    fitToContent();
-  else
-    setSceneRectToViewportGeometry();
+  setSceneRectToViewportGeometry();
 }
 
 void OutputGLCanvas::wheelEvent(QWheelEvent *event)
