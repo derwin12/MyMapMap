@@ -108,6 +108,7 @@ private slots:
   bool saveAs();
   void importMedia();
   void importFolder();
+  void importFolderAsSource();
   void openCameraDevice();
   void addColor();
   void addSyphon();
@@ -194,6 +195,9 @@ public slots:
 
   /// Create or replace a color source.
   uid createColorSource(uid sourceId, QColor color);
+
+  /// Create a folder source from a directory path.
+  uid createFolderSource(uid sourceId, const QString& dirPath);
 
   /// Create a Syphon source pointing at the given server (macOS only).
   uid createSyphonSource(uid sourceId, const QString& serverUUID,
@@ -465,8 +469,9 @@ private:
 
   QSplitter* sourceSplitter;
   QListWidget* sourceList;
-  QListWidgetItem* _sourceSectionImages = nullptr; // non-selectable section header
-  QListWidgetItem* _sourceSectionVideos = nullptr; // non-selectable section header
+  QListWidgetItem* _sourceSectionImages  = nullptr; // non-selectable section header
+  QListWidgetItem* _sourceSectionVideos  = nullptr; // non-selectable section header
+  QListWidgetItem* _sourceSectionFolders = nullptr; // non-selectable section header
   QStackedWidget* sourcePropertyPanel;
 
   QSplitter* layerSplitter;

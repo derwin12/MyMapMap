@@ -132,6 +132,24 @@ protected:
   QtVariantProperty* _imageRateItem;
 };
 
+class FolderGui : public TextureGui {
+  Q_OBJECT
+
+public:
+  FolderGui(Source::ptr source);
+  virtual ~FolderGui() {}
+
+public slots:
+  virtual void setValue(QtProperty* property, const QVariant& value);
+  virtual void setValue(QString propertyName, QVariant value);
+
+protected:
+  QSharedPointer<FolderSource> folder;
+  QtVariantProperty* _folderPathItem;
+  QtVariantProperty* _fileCountItem;
+  QtVariantProperty* _rateItem;
+};
+
 class VideoGui : public TextureGui {
   Q_OBJECT
 

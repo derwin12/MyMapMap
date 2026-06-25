@@ -172,6 +172,51 @@ void ImageGui::setValue(QString propertyName, QVariant value)
     TextureGui::setValue(propertyName, value);
 }
 
+FolderGui::FolderGui(Source::ptr source)
+  : TextureGui(source)
+{
+  folder = qSharedPointerCast<FolderSource>(source);
+  Q_CHECK_PTR(folder);
+
+  _folderPathItem = _variantManager->addProperty(QMetaType::QString, tr("Folder"));
+  _folderPathItem->setEnabled(false);
+  _folderPathItem->setValue(folder->getUri());
+  _propertyBrowser->addProperty(_folderPathItem);
+
+  _fileCountItem = _variantManager->addProperty(QMetaType::Int, tr("Images"));
+  _fileCountItem->setEnabled(false);
+  _fileCountItem->setValue(folder->imageCount());
+  _propertyBrowser->addProperty(_fileCountItem);
+
+  _rateItem = _variantManager->addProperty(QMetaType::Double, tr("Speed (%)"));
+  _rateItem->setAttribute("decimals", 1);
+  _rateItem->setValue(folder->getRate() * 100.0);
+  _propertyBrowser->addProperty(_rateItem);
+}
+
+void FolderGui::setValue(QtProperty* property, const QVariant& value)
+{
+  if (property == _rateItem) {
+    double newRate = value.toDouble() / 100.0;
+    if (newRate != folder->getRate()) {
+      folder->setRate(newRate);
+      emit valueChanged(_source);
+    }
+  } else {
+    TextureGui::setValue(property, value);
+  }
+}
+
+void FolderGui::setValue(QString propertyName, QVariant value)
+{
+  if (propertyName == "uri")
+    _folderPathItem->setValue(value);
+  else if (propertyName == "rate")
+    _rateItem->setValue(value.toDouble() * 100.0);
+  else
+    TextureGui::setValue(propertyName, value);
+}
+
 VideoGui::VideoGui(Source::ptr source)
 : TextureGui(source)
 {

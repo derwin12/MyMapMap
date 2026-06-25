@@ -6,7 +6,7 @@
             "blendRight": "0",
             "blendTop": "0",
             "className": "TextureLayer",
-            "depth": "1",
+            "depth": "2",
             "destination": {
                 "className": "Mesh",
                 "locked": "false",
@@ -14,20 +14,83 @@
                 "nRows": "2",
                 "vertices": [
                     [
-                        -50.545093401346094,
-                        -292.09385404032327
+                        -457.05754000817575,
+                        -385.8560440581991
                     ],
                     [
-                        633.7875486710243,
-                        -302.7449457457298
+                        287.46675952701776,
+                        -369.9020802737361
                     ],
                     [
-                        -316.82238603650967,
-                        181.8797268502679
+                        -720.9427540159577,
+                        682.9318936849913
                     ],
                     [
-                        616,
-                        190
+                        1.5677305148180665,
+                        393.08130246333536
+                    ]
+                ]
+            },
+            "id": 2,
+            "locked": "false",
+            "name": "Mesh 2",
+            "opacity": "1",
+            "solo": "false",
+            "source": {
+                "className": "Mesh",
+                "locked": "false",
+                "nColumns": "2",
+                "nRows": "2",
+                "vertices": [
+                    [
+                        322.3992352288992,
+                        -13.57470464121681
+                    ],
+                    [
+                        726.3099367020573,
+                        25.629256328213472
+                    ],
+                    [
+                        339.36761603042027,
+                        274.8877689846404
+                    ],
+                    [
+                        702.49096518297,
+                        302.037178267074
+                    ]
+                ]
+            },
+            "sourceId": 1,
+            "visible": "true"
+        },
+        {
+            "blendBottom": "0",
+            "blendLeft": "0",
+            "blendRight": "0",
+            "blendTop": "0",
+            "className": "TextureLayer",
+            "depth": "0",
+            "destination": {
+                "className": "Mesh",
+                "locked": "false",
+                "nColumns": "2",
+                "nRows": "2",
+                "vertices": [
+                    [
+                        607.4822196541123,
+                        91.55311260565156
+                    ],
+                    [
+                        1291.8148617264828,
+                        80.90202090024502
+                    ],
+                    [
+                        341.20492701894875,
+                        565.5266934962428
+                    ],
+                    [
+                        1274.0273130554588,
+                        573.646966645975
                     ]
                 ]
             },
@@ -62,69 +125,6 @@
             },
             "sourceId": 2,
             "visible": "true"
-        },
-        {
-            "blendBottom": "0",
-            "blendLeft": "0",
-            "blendRight": "0",
-            "blendTop": "0",
-            "className": "TextureLayer",
-            "depth": "0",
-            "destination": {
-                "className": "Mesh",
-                "locked": "false",
-                "nColumns": "2",
-                "nRows": "2",
-                "vertices": [
-                    [
-                        -601,
-                        -217
-                    ],
-                    [
-                        -432,
-                        -316
-                    ],
-                    [
-                        -621,
-                        31
-                    ],
-                    [
-                        -456,
-                        -61
-                    ]
-                ]
-            },
-            "id": 3,
-            "locked": "false",
-            "name": "Picture",
-            "opacity": "1",
-            "solo": "false",
-            "source": {
-                "className": "Mesh",
-                "locked": "false",
-                "nColumns": "2",
-                "nRows": "2",
-                "vertices": [
-                    [
-                        357.26877566299504,
-                        23.049598429870645
-                    ],
-                    [
-                        711.8527782798774,
-                        21.24641857986387
-                    ],
-                    [
-                        361.1103754013068,
-                        265.0703819435124
-                    ],
-                    [
-                        717.0415670272836,
-                        269.2272086357113
-                    ]
-                ]
-            },
-            "sourceId": 1,
-            "visible": "true"
         }
     ],
     "sources": [
@@ -132,7 +132,7 @@
             "className": "Image",
             "id": 1,
             "locked": "false",
-            "name": "test.png",
+            "name": "Just a test.png",
             "opacity": "1",
             "rate": "1",
             "uri": "test.png",

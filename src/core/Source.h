@@ -74,7 +74,7 @@ protected:
 public:
 
   enum SourceType {
-    Video, Image, Color, Syphon
+    Video, Image, Color, Syphon, Folder
   };
 
   typedef QSharedPointer<Source> ptr;
@@ -315,6 +315,26 @@ protected:
 
   /// Current elapsed time in seconds.
   qreal _elapsedTime() const { return _timer.elapsed() / 1000.0; }
+};
+
+/**
+ * Source that represents a folder of images, played as a slideshow.
+ * Inherits multi-frame animation from Image.
+ */
+class FolderSource : public Image
+{
+  Q_OBJECT
+
+public:
+  Q_INVOKABLE FolderSource(int id=NULL_UID);
+  FolderSource(const QString& dirPath, uid id=NULL_UID);
+  virtual ~FolderSource() {}
+
+  virtual void build() override;
+  virtual SourceType getSourceType() const override { return SourceType::Folder; }
+  virtual QIcon getIcon() const override;
+
+  int imageCount() const { return _images.size(); }
 };
 
 class VideoImpl; // forward declaration
