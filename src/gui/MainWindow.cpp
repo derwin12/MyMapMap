@@ -112,6 +112,9 @@ MainWindow::MainWindow()
     outputWindow->restoreGeometry(s.value("outputWindow").toByteArray());
     int savedScreen = s.value("outputScreen", QApplication::screens().size() - 1).toInt();
     outputWindow->setPreferredScreen(savedScreen);
+    // Sync the "Output screen" menu checkmarks to the restored value.
+    if (savedScreen >= 0 && savedScreen < screenActions.size())
+      screenActions.at(savedScreen)->setChecked(true);
 
     // Action toggle states
     outputFullScreenAction->setChecked(s.value("displayOutputWindow", MM::DISPLAY_OUTPUT_WINDOW).toBool());
@@ -3860,6 +3863,7 @@ void MainWindow::showSourceContextMenu(const QPoint &point)
 
 void MainWindow::play(bool updatePlayPauseActions)
 {
+  qDebug() << "MainWindow::play() updatePlayPauseActions=" << updatePlayPauseActions;
   // Update buttons.
   if (updatePlayPauseActions)
   {
@@ -3874,6 +3878,7 @@ void MainWindow::play(bool updatePlayPauseActions)
 
 void MainWindow::pause(bool updatePlayPauseActions)
 {
+  qDebug() << "MainWindow::pause() updatePlayPauseActions=" << updatePlayPauseActions;
   // Update buttons.
   if (updatePlayPauseActions)
   {
