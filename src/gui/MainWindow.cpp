@@ -2773,6 +2773,7 @@ bool MainWindow::loadFile(const QString &fileName)
     // whatever zoom/pan was left over from the previous project.
     sourceCanvas->fitShapeToView();
     destinationCanvas->fitShapeToView();
+    outputWindow->getCanvas()->fitToContent();
   }
 
   return true;

@@ -92,6 +92,15 @@ void OutputGLCanvas::setSceneRectToViewportGeometry()
   setSceneRect(viewport()->geometry());
 }
 
+void OutputGLCanvas::fitToContent()
+{
+  if (!scene() || scene()->items().isEmpty())
+    return;
+  QRectF bounds = scene()->itemsBoundingRect();
+  setSceneRect(bounds);
+  fitInView(bounds, Qt::KeepAspectRatio);
+}
+
 void OutputGLCanvas::drawForeground(QPainter *painter , const QRectF &rect)
 {
   QSettings settings;
@@ -298,7 +307,10 @@ void OutputGLCanvas::resizeGL(int width, int height)
 {
   Q_UNUSED(width);
   Q_UNUSED(height);
-  setSceneRectToViewportGeometry();
+  if (scene() && !scene()->items().isEmpty())
+    fitToContent();
+  else
+    setSceneRectToViewportGeometry();
 }
 
 void OutputGLCanvas::wheelEvent(QWheelEvent *event)

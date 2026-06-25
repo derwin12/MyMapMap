@@ -18,6 +18,7 @@
 class QMediaCaptureSession;
 class QVideoFrameInput;
 class QMediaRecorder;
+class QAudioInput;
 
 namespace mmp {
 
@@ -73,6 +74,7 @@ private:
   QScopedPointer<QMediaCaptureSession> _session;
   QScopedPointer<QVideoFrameInput>     _frameInput;
   QScopedPointer<QMediaRecorder>       _recorder;
+  QScopedPointer<QAudioInput>          _audioInput;
   bool                                 _recording = false;
   QString                              _filePath;
   qreal                                _fps = 0.0;

@@ -40,6 +40,9 @@ public:
   // Adjust viewable scene to correspond to absolute coordinates.
   void setSceneRectToViewportGeometry();
 
+  // Fit all scene items into the viewport (call after loading a project).
+  void fitToContent();
+
   // Draws foreground (displays crosshair if needed).
   void drawForeground(QPainter *painter , const QRectF &rect);
 
