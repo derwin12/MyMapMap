@@ -4281,7 +4281,6 @@ void MainWindow::refreshIcons()
     { addMeshAction,              ":/add-mesh"          },
     { addTriangleAction,          ":/add-triangle"      },
     { addEllipseAction,           ":/add-ellipse"       },
-    { playAction,                 ":/play"              },
     { rewindAction,               ":/rewind"            },
     { outputFullScreenAction,     ":/fullscreen"        },
     { displayControlsAction,      ":/control-points"    },
@@ -4297,6 +4296,14 @@ void MainWindow::refreshIcons()
   for (auto& e : entries) {
     if (e.action)
       e.action->setIcon(themedIcon(e.resource));
+  }
+  // playAction is a dual-state checkable action — rebuild its compound icon
+  // so theme changes don't flatten it back to a single play-only icon.
+  {
+    QIcon icon;
+    icon.addPixmap(themedIcon(":/play").pixmap(64),  QIcon::Normal, QIcon::Off);
+    icon.addPixmap(themedIcon(":/pause").pixmap(64), QIcon::Normal, QIcon::On);
+    playAction->setIcon(icon);
   }
   if (contentTab) {
     int sourceIdx = contentTab->indexOf(sourceSplitter);
