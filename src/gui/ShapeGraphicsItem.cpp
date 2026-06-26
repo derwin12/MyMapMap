@@ -426,6 +426,73 @@ PolygonTextureGraphicsItem::PolygonTextureGraphicsItem(Layer::ptr mapping, bool 
 FreePolygonTextureGraphicsItem::FreePolygonTextureGraphicsItem(Layer::ptr mapping, bool output)
   : PolygonTextureGraphicsItem(mapping, output) {}
 
+// Ear-clipping triangulation for a simple (non-self-intersecting) polygon.
+// Returns index triples (a, b, c) ready for GL_TRIANGLES.
+static QVector<std::array<int,3>> triangulatePoly(const QVector<QPointF>& pts)
+{
+  QVector<std::array<int,3>> tris;
+  int n = pts.size();
+  if (n < 3) return tris;
+  if (n == 3) { tris.append({0, 1, 2}); return tris; }
+
+  // Build index list; ensure CCW winding so convexity test is consistent.
+  QVector<int> idx;
+  idx.reserve(n);
+  for (int i = 0; i < n; i++) idx.append(i);
+
+  double area = 0;
+  for (int i = 0; i < n; i++) {
+    int j = (i + 1) % n;
+    area += pts[i].x() * pts[j].y() - pts[j].x() * pts[i].y();
+  }
+  if (area < 0) std::reverse(idx.begin(), idx.end());
+
+  // Helper: signed area of triangle pqr (positive = CCW).
+  auto cross2d = [](QPointF p, QPointF q, QPointF r) {
+    return (q.x()-p.x())*(r.y()-p.y()) - (q.y()-p.y())*(r.x()-p.x());
+  };
+  // Helper: is point P strictly inside triangle ABC?
+  auto inTriangle = [&](QPointF p, QPointF a, QPointF b, QPointF c) {
+    return cross2d(a,b,p) > 0 && cross2d(b,c,p) > 0 && cross2d(c,a,p) > 0;
+  };
+
+  while (idx.size() > 3) {
+    int m = idx.size();
+    bool earFound = false;
+    for (int i = 0; i < m; i++) {
+      int ia = idx[(i - 1 + m) % m];
+      int ib = idx[i];
+      int ic = idx[(i + 1) % m];
+      QPointF pa = pts[ia], pb = pts[ib], pc = pts[ic];
+
+      // Vertex ib must be convex (left turn).
+      if (cross2d(pa, pb, pc) <= 0) continue;
+
+      // No other polygon vertex may lie inside triangle (ia, ib, ic).
+      bool blocked = false;
+      for (int j = 0; j < m && !blocked; j++) {
+        int v = idx[j];
+        if (v == ia || v == ib || v == ic) continue;
+        if (inTriangle(pts[v], pa, pb, pc)) blocked = true;
+      }
+      if (blocked) continue;
+
+      tris.append({ia, ib, ic});
+      idx.remove(i);
+      earFound = true;
+      break;
+    }
+    if (!earFound) {
+      // Degenerate polygon — fall back to fan from idx[0].
+      for (int i = 1; i < idx.size() - 1; i++)
+        tris.append({idx[0], idx[i], idx[i+1]});
+      return tris;
+    }
+  }
+  tris.append({idx[0], idx[1], idx[2]});
+  return tris;
+}
+
 void FreePolygonTextureGraphicsItem::_doDrawOutput(QPainter* painter)
 {
   Q_UNUSED(painter);
@@ -435,10 +502,18 @@ void FreePolygonTextureGraphicsItem::_doDrawOutput(QPainter* painter)
   int n = inputShape->nVertices();
   if (n < 3) return;
 
-  // Triangle fan from vertex 0 — works correctly for convex polygons.
-  glBegin(GL_TRIANGLE_FAN);
+  // Collect output vertices in item coords for triangulation.
+  QVector<QPointF> outPts(n);
   for (int i = 0; i < n; i++)
-    Util::setGlTexPoint(*_getTexture(), inputShape->getVertex(i), mapFromScene(getShape()->getVertex(i)));
+    outPts[i] = mapFromScene(getShape()->getVertex(i));
+
+  const auto tris = triangulatePoly(outPts);
+
+  glBegin(GL_TRIANGLES);
+  for (const auto& tri : tris) {
+    for (int k = 0; k < 3; k++)
+      Util::setGlTexPoint(*_getTexture(), inputShape->getVertex(tri[k]), outPts[tri[k]]);
+  }
   glEnd();
 }
 

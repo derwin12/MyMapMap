@@ -189,11 +189,14 @@ public slots:
   // Layer creation.
   void addMesh();
   void addTriangle();
+  void addPolygonVertex();
+  void deletePolygonVertex();
   void addEllipse();
   void addPolygon();
 
   // Polygon draw-mode API (called by MapperGLCanvas).
   bool isPolygonDrawMode() const { return _polygonDrawMode; }
+  bool isPolygonDrawOnSource() const { return _polygonDrawOnSource; }
   const QVector<QPointF>& polygonPoints() const { return _polygonPoints; }
   const QPointF& polygonCursorPos() const { return _polygonCursorPos; }
   void polygonCanvasClick(const QPointF& scenePos);
@@ -443,11 +446,20 @@ private:
   QAction *addTriangleAction;
   QAction *addEllipseAction;
   QAction *addPolygonAction = nullptr;
+  QAction *addPolygonVertexAction = nullptr;
+  QAction *deletePolygonVertexAction = nullptr;
 
   // Polygon draw-mode state.
   bool _polygonDrawMode = false;
+  bool _polygonDrawOnSource = false; // true when drawing on source/input canvas
   QVector<QPointF> _polygonPoints;
   QPointF _polygonCursorPos;
+
+  // Polygon vertex-edit state (set by MapperGLCanvas before context menu).
+  int  _polyEditType     = 0;  // 0=none, 1=add, 2=delete (PolyEditType, kept as int to avoid private enum access)
+  int  _polyEditIndex    = -1;
+  qreal _polyEditT       = 0.0;
+  bool  _polyEditOnSource = false;
 
   QAction *playAction; // checkable: unchecked=paused (play icon), checked=playing (pause icon)
   QAction *rewindAction;
@@ -694,6 +706,16 @@ public:
   static const int CANVAS_MINIMUM_HEIGHT = 270;
   static const int OUTPUT_WINDOW_MINIMUM_WIDTH = 480;
   static const int OUTPUT_WINDOW_MINIMUM_HEIGHT = 270;
+
+  // Polygon vertex-edit API (called by MapperGLCanvas before showing context menu).
+  static const int PolyEditNone   = 0;
+  static const int PolyEditAdd    = 1;
+  static const int PolyEditDelete = 2;
+  void setPendingPolygonEdit(int type, int index, qreal t, bool onSource) {
+    _polyEditType = type; _polyEditIndex = index; _polyEditT = t; _polyEditOnSource = onSource;
+  }
+  void clearPendingPolygonEdit() { _polyEditType = PolyEditNone; }
+  bool hasPendingPolygonEdit() const { return _polyEditType != PolyEditNone; }
 };
 
 }

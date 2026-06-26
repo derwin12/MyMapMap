@@ -1118,39 +1118,49 @@ void MainWindow::startPolygonDrawMode()
   _polygonDrawMode = true;
   _polygonPoints.clear();
   _polygonCursorPos = QPointF();
-  destinationCanvas->setCursor(Qt::CrossCursor);
+
+  // For texture sources, draw on the source/input canvas so the user selects
+  // which region of the source image to use.
+  Source::ptr src = getMappingManager().getSourceById(getCurrentSourceId());
+  _polygonDrawOnSource = (src && src->getSourceType() != SourceType::Color);
+
+  MapperGLCanvas* canvas = _polygonDrawOnSource ? sourceCanvas : destinationCanvas;
+  canvas->setCursor(Qt::CrossCursor);
+  canvas->setFocus();   // ensure keyboard focus so Esc/Enter reach this canvas
   statusBar()->showMessage(tr("Click to add polygon vertices. Click near first point or press Enter to close. Escape to cancel."));
-  destinationCanvas->update();
+  canvas->update();
 }
 
 void MainWindow::cancelPolygonDrawMode()
 {
+  MapperGLCanvas* canvas = _polygonDrawOnSource ? sourceCanvas : destinationCanvas;
   _polygonDrawMode = false;
   _polygonPoints.clear();
-  destinationCanvas->unsetCursor();
+  canvas->unsetCursor();
   statusBar()->clearMessage();
-  destinationCanvas->update();
+  canvas->update();
 }
 
 void MainWindow::polygonCursorMoved(const QPointF& scenePos)
 {
   _polygonCursorPos = scenePos;
-  destinationCanvas->update();
+  (_polygonDrawOnSource ? sourceCanvas : destinationCanvas)->update();
 }
 
 void MainWindow::polygonCanvasClick(const QPointF& scenePos)
 {
+  MapperGLCanvas* canvas = _polygonDrawOnSource ? sourceCanvas : destinationCanvas;
   // Snap to first point if close enough and we have 3+ points.
   if (_polygonPoints.size() >= 3) {
     QPointF first = _polygonPoints.first();
-    QPointF delta = destinationCanvas->mapFromScene(scenePos) - destinationCanvas->mapFromScene(first);
+    QPointF delta = canvas->mapFromScene(scenePos) - canvas->mapFromScene(first);
     if (delta.x()*delta.x() + delta.y()*delta.y() <= sq(MM::VERTEX_SELECT_RADIUS * 2)) {
       finishPolygon();
       return;
     }
   }
   _polygonPoints << scenePos;
-  destinationCanvas->update();
+  canvas->update();
 }
 
 void MainWindow::finishPolygon()
@@ -1172,9 +1182,17 @@ void MainWindow::finishPolygon()
   } else {
     QSharedPointer<Texture> texture = qSharedPointerCast<Texture>(source);
     Q_CHECK_PTR(texture);
-    MShape::ptr outPoly(Util::createFreePolygonForColor(_polygonPoints));
-    MShape::ptr inPoly(Util::createFreePolygonInputForTexture(_polygonPoints, texture.data()));
-    layerPtr = new TextureLayer(source, outPoly, inPoly);
+    if (_polygonDrawOnSource) {
+      // Points were placed on the source/input canvas → become the input polygon.
+      // Output starts at the same coordinates (user can reposition independently).
+      MShape::ptr inPoly(Util::createFreePolygonForColor(_polygonPoints));
+      MShape::ptr outPoly(Util::createFreePolygonForColor(_polygonPoints));
+      layerPtr = new TextureLayer(source, outPoly, inPoly);
+    } else {
+      MShape::ptr outPoly(Util::createFreePolygonForColor(_polygonPoints));
+      MShape::ptr inPoly(Util::createFreePolygonInputForTexture(_polygonPoints, texture.data()));
+      layerPtr = new TextureLayer(source, outPoly, inPoly);
+    }
   }
 
   Layer::ptr layer(layerPtr);
@@ -1182,6 +1200,73 @@ void MainWindow::finishPolygon()
   undoStack->push(new AddLayerCommand(this, layerId));
 
   cancelPolygonDrawMode();
+}
+
+void MainWindow::addPolygonVertex()
+{
+  if (_polyEditType != PolyEditAdd) return;
+  Layer::ptr layer = getCurrentLayer();
+  if (!layer) return;
+
+  // Choose which shape the user clicked on and which is the "other" shape.
+  MShape::ptr editedShape = _polyEditOnSource
+    ? qSharedPointerCast<TextureLayer>(layer)->getInputShape()
+    : layer->getShape();
+  MShape::ptr otherShape;
+  TextureLayer::ptr texLayer = qSharedPointerCast<TextureLayer>(layer);
+  if (texLayer)
+    otherShape = _polyEditOnSource ? layer->getShape()
+                                   : texLayer->getInputShape();
+
+  int  edgeIdx = _polyEditIndex;
+  qreal t      = _polyEditT;
+  int  n       = editedShape->nVertices();
+
+  // Build new vertex list for edited shape: insert interpolated point.
+  QVector<QPointF> newEditVerts = editedShape->getVertices();
+  QPointF newPt = newEditVerts[edgeIdx] * (1.0 - t)
+                + newEditVerts[(edgeIdx + 1) % n] * t;
+  newEditVerts.insert(edgeIdx + 1, newPt);
+
+  // Mirror the insertion into the other shape at the same parametric position.
+  QVector<QPointF> newOtherVerts;
+  if (otherShape) {
+    newOtherVerts = otherShape->getVertices();
+    QPointF otherPt = newOtherVerts[edgeIdx] * (1.0 - t)
+                    + newOtherVerts[(edgeIdx + 1) % n] * t;
+    newOtherVerts.insert(edgeIdx + 1, otherPt);
+  }
+
+  QVector<QPointF> newOutVerts = _polyEditOnSource ? newOtherVerts : newEditVerts;
+  QVector<QPointF> newInVerts  = _polyEditOnSource ? newEditVerts  : newOtherVerts;
+
+  undoStack->push(new SetPolygonVerticesCommand(this, layer->getId(),
+                                                 newOutVerts, newInVerts, tr("Add Vertex")));
+}
+
+void MainWindow::deletePolygonVertex()
+{
+  if (_polyEditType != PolyEditDelete) return;
+  Layer::ptr layer = getCurrentLayer();
+  if (!layer) return;
+
+  MShape::ptr outputShape = layer->getShape();
+  if (outputShape->nVertices() <= 3) return; // keep minimum triangle
+
+  int vertIdx = _polyEditIndex;
+
+  QVector<QPointF> newOutVerts = outputShape->getVertices();
+  newOutVerts.remove(vertIdx);
+
+  QVector<QPointF> newInVerts;
+  TextureLayer::ptr texLayer = qSharedPointerCast<TextureLayer>(layer);
+  if (texLayer) {
+    newInVerts = texLayer->getInputShape()->getVertices();
+    newInVerts.remove(vertIdx);
+  }
+
+  undoStack->push(new SetPolygonVerticesCommand(this, layer->getId(),
+                                                 newOutVerts, newInVerts, tr("Delete Vertex")));
 }
 
 void MainWindow::checkForUpdates(bool autoCheck)
@@ -2427,6 +2512,12 @@ void MainWindow::createActions()
   connect(addPolygonAction, &QAction::triggered, this, &MainWindow::addPolygon);
   addPolygonAction->setEnabled(false);
 
+  addPolygonVertexAction = new QAction(tr("Add Vertex Here"), this);
+  connect(addPolygonVertexAction, &QAction::triggered, this, &MainWindow::addPolygonVertex);
+
+  deletePolygonVertexAction = new QAction(tr("Delete Vertex"), this);
+  connect(deletePolygonVertexAction, &QAction::triggered, this, &MainWindow::deletePolygonVertex);
+
   // Play/Pause — single checkable action so no double-trigger on button swap.
   // Unchecked = paused (shows play ▶ icon); checked = playing (shows pause ∥ icon).
   const QKeySequence PLAY_PAUSE_KEY_SEQUENCE = Qt::CTRL | Qt::SHIFT | Qt::Key_P;
@@ -2833,6 +2924,11 @@ void MainWindow::createLayerContextMenu()
   layerContextMenu = new QMenu(this);
   layerContextMenu->installEventFilter(this);
 
+  // Polygon vertex editing (shown/hidden dynamically in showLayerContextMenu).
+  layerContextMenu->addAction(addPolygonVertexAction);
+  layerContextMenu->addAction(deletePolygonVertexAction);
+  layerContextMenu->addSeparator();
+
   // Add different Action
   layerContextMenu->addAction(duplicateLayerAction);
   layerContextMenu->addAction(deleteLayerAction);
@@ -2906,10 +3002,10 @@ void MainWindow::createToolBars()
 
   mainToolBar->addSeparator();
 
+  mainToolBar->addAction(addPolygonAction);
   mainToolBar->addAction(addMeshAction);
   mainToolBar->addAction(addTriangleAction);
   mainToolBar->addAction(addEllipseAction);
-  mainToolBar->addAction(addPolygonAction);
   mainToolBar->addSeparator();
 
   mainToolBar->addAction(outputFullScreenAction);
@@ -4237,12 +4333,18 @@ void MainWindow::showLayerContextMenu(const QPoint &point)
   layerHideAction->setChecked(!layer->isVisible());
   layerSoloAction->setChecked(layer->isSolo());
 
+  // Show vertex-edit actions only when a polygon edge/vertex was right-clicked.
+  addPolygonVertexAction->setVisible(_polyEditType == PolyEditAdd);
+  deletePolygonVertexAction->setVisible(_polyEditType == PolyEditDelete);
+
   if (objectSender != nullptr) {
     if (sender() == layerItemDelegate) // XXX: The item delegate is not a widget
       layerContextMenu->exec(layerList->mapToGlobal(point));
     else
       layerContextMenu->exec(objectSender->mapToGlobal(point));
   }
+
+  clearPendingPolygonEdit();
 }
 
 void MainWindow::showSourceContextMenu(const QPoint &point)
