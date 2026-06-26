@@ -564,7 +564,7 @@ private:
 #ifdef HAVE_MCP
   // MCP server.
   QScopedPointer<McpServer> mcp_server;
-  int mcpListeningPort;
+  int mcpListeningPort = MM::DEFAULT_MCP_PORT;
 #endif
 
   // View.
