@@ -23,6 +23,8 @@
 #define COMMANDS_H_
 
 #include <QUndoCommand>
+#include <QPointF>
+#include <QVector>
 #include "MM.h"
 
 namespace mmp {
@@ -238,6 +240,44 @@ private:
   MM::MoveElement _moveType;
   int _fromIdx;
   int _toIdx;
+};
+
+// Resets a Mesh input shape's vertices to evenly fill the source's pixel dimensions (undo-able).
+class ResetMeshInputCommand : public TransformShapeCommand
+{
+public:
+  ResetMeshInputCommand(MapperGLCanvas* canvas, int sourceX, int sourceY, int sourceWidth, int sourceHeight, QUndoCommand* parent = nullptr);
+
+protected:
+  void _doTransform(MShape::ptr shape) override;
+
+private:
+  int _x;
+  int _y;
+  int _width;
+  int _height;
+};
+
+// Inserts or removes a vertex from a FreePolygon layer (undo-able).
+// Updates both output and input shapes atomically.
+class SetPolygonVerticesCommand : public QUndoCommand
+{
+public:
+  SetPolygonVerticesCommand(MainWindow* mainWindow, uid layerId,
+                             const QVector<QPointF>& newOutputVerts,
+                             const QVector<QPointF>& newInputVerts,
+                             const QString& actionText,
+                             QUndoCommand* parent = nullptr);
+  void undo() Q_DECL_OVERRIDE;
+  void redo() Q_DECL_OVERRIDE;
+
+private:
+  void _apply(const QVector<QPointF>& outVerts, const QVector<QPointF>& inVerts);
+
+  MainWindow* _mainWindow;
+  uid _layerId;
+  QVector<QPointF> _oldOutputVerts, _newOutputVerts;
+  QVector<QPointF> _oldInputVerts,  _newInputVerts;
 };
 
 }

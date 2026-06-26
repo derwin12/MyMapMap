@@ -19,6 +19,7 @@
  */
 
 #include "Util.h"
+#include "Shapes.h"
 #include <algorithm>
 #include <QFile>
 #include <QDir>
@@ -145,6 +146,40 @@ Triangle* createTriangleForColor(int frameWidth, int frameHeight)
     QPointF(frameWidth * 3 / 4, frameHeight * 3 / 4),
     QPointF(frameWidth / 2, frameHeight / 4)
   );
+}
+
+FreePolygon* createFreePolygonForColor(const QVector<QPointF>& vertices)
+{
+  return new FreePolygon(vertices);
+}
+
+FreePolygon* createFreePolygonInputForTexture(const QVector<QPointF>& outputVerts, Texture* texture)
+{
+  int tw = texture->getWidth();
+  int th = texture->getHeight();
+
+  if (tw <= 0 || th <= 0 || outputVerts.isEmpty())
+    return new FreePolygon(outputVerts);
+
+  // Find bounding box of output polygon.
+  qreal minX = outputVerts[0].x(), maxX = outputVerts[0].x();
+  qreal minY = outputVerts[0].y(), maxY = outputVerts[0].y();
+  for (const QPointF& p : outputVerts) {
+    minX = qMin(minX, p.x()); maxX = qMax(maxX, p.x());
+    minY = qMin(minY, p.y()); maxY = qMax(maxY, p.y());
+  }
+  qreal bbW = qMax(maxX - minX, 1.0);
+  qreal bbH = qMax(maxY - minY, 1.0);
+
+  // Map each output vertex proportionally into texture space.
+  QVector<QPointF> inputVerts;
+  inputVerts.reserve(outputVerts.size());
+  for (const QPointF& p : outputVerts) {
+    qreal u = (p.x() - minX) / bbW;
+    qreal v = (p.y() - minY) / bbH;
+    inputVerts << QPointF(texture->getX() + u * tw, texture->getY() + v * th);
+  }
+  return new FreePolygon(inputVerts);
 }
 
 Ellipse* createEllipseForColor(int frameWidth, int frameHeight)

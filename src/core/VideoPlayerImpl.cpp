@@ -12,6 +12,8 @@
 #include "VideoPlayerImpl.h"
 #include <QDebug>
 #include <QUrl>
+#include <QMediaMetaData>
+#include <QMediaFormat>
 
 namespace mmp {
 
@@ -113,10 +115,36 @@ void VideoPlayerImpl::onFrameConverted(QImage img)
 void VideoPlayerImpl::onMediaStatusChanged(QMediaPlayer::MediaStatus status)
 {
   switch (status) {
-  case QMediaPlayer::LoadedMedia:
+  case QMediaPlayer::LoadedMedia: {
     _duration = _player->duration();
     _setMovieReady(true);
+
+    QMediaMetaData md = _player->metaData();
+
+    QVariant fpsVar = md.value(QMediaMetaData::VideoFrameRate);
+    if (fpsVar.isValid())
+      _fps = fpsVar.toReal();
+
+    QVariant codecVar = md.value(QMediaMetaData::VideoCodec);
+    if (codecVar.isValid()) {
+      auto vc = codecVar.value<QMediaFormat::VideoCodec>();
+      switch (vc) {
+      case QMediaFormat::VideoCodec::H264:       _codec = "h264";  break;
+      case QMediaFormat::VideoCodec::H265:       _codec = "h265";  break;
+      case QMediaFormat::VideoCodec::MPEG4:      _codec = "mpeg4"; break;
+      case QMediaFormat::VideoCodec::MPEG2:      _codec = "mpeg2"; break;
+      case QMediaFormat::VideoCodec::MPEG1:      _codec = "mpeg1"; break;
+      case QMediaFormat::VideoCodec::VP8:        _codec = "vp8";   break;
+      case QMediaFormat::VideoCodec::VP9:        _codec = "vp9";   break;
+      case QMediaFormat::VideoCodec::AV1:        _codec = "av1";   break;
+      case QMediaFormat::VideoCodec::MotionJPEG: _codec = "mjpeg"; break;
+      case QMediaFormat::VideoCodec::WMV:        _codec = "wmv";   break;
+      case QMediaFormat::VideoCodec::Theora:     _codec = "theora";break;
+      default:                                   _codec = "video";  break;
+      }
+    }
     break;
+  }
   case QMediaPlayer::EndOfMedia:
     _eos = true;
     break;
@@ -167,6 +195,11 @@ void VideoPlayerImpl::setPlayInLoop(bool loop)
   _playInLoop = loop;
   if (_player)
     _player->setLoops(loop ? QMediaPlayer::Infinite : 1);
+}
+
+qint64 VideoPlayerImpl::getPosition() const
+{
+  return _player ? _player->position() : 0;
 }
 
 void VideoPlayerImpl::update()

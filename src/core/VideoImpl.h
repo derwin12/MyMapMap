@@ -89,6 +89,15 @@ public:
   /// Duration in milliseconds (0 if not yet known).
   qint64 getDuration() const { return _duration; }
 
+  /// Current playback position in milliseconds.
+  virtual qint64 getPosition() const { return 0; }
+
+  /// Frame rate in frames per second (0 if not yet known).
+  qreal getFrameRate() const { return _fps; }
+
+  /// Short codec name, e.g. "h264" (empty if not yet known).
+  QString getVideoCodec() const { return _codec; }
+
   /// Whether the video loops on end-of-stream.
   bool getPlayInLoop() const { return _playInLoop; }
 
@@ -143,6 +152,11 @@ protected:
 
   /// Duration in milliseconds (0 if unknown).
   qint64 _duration;
+
+  /// Frame rate in frames per second (0 if unknown).
+  qreal _fps;
+  /// Short codec name, e.g. "h264" (empty if unknown).
+  QString _codec;
 
   bool _videoIsConnected;
   bool _audioIsConnected;

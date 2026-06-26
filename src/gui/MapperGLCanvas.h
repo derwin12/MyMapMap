@@ -27,6 +27,7 @@
 #include <QKeyEvent>
 #include <QPaintEvent>
 #include <QUndoStack>
+#include <QPixmap>
 
 #include <QtMath>
 
@@ -69,6 +70,12 @@ public:
   // Draws foreground (displays crosshair if needed).
   void drawForeground(QPainter *painter , const QRectF &rect);
 
+  // Background reference photo (destination canvas only; ignored by source canvas and output window).
+  void setBackgroundPhoto(const QPixmap& pixmap, qreal opacity);
+  void clearBackgroundPhoto();
+  void setBackgroundPhotoOpacity(qreal opacity);
+  void setBackgroundPhotoVisible(bool visible);
+
   /**
    * Stick vertex p of Shape orig to another Shape's vertex, if the 2 vertices are
    * close enough. The distance per coordinate is currently set in dist_stick
@@ -110,6 +117,8 @@ protected:
 //  void mouseMoveEvent(QMouseEvent* event);
 //  void mouseReleaseEvent(QMouseEvent* event);
 //  void paintEvent(QPaintEvent* event);
+  void drawBackground(QPainter* painter, const QRectF& rect) override;
+
   void dragEnterEvent(QDragEnterEvent *event);
   void dragMoveEvent(QDragMoveEvent *event);
   void dragLeaveEvent(QDragLeaveEvent *event);
@@ -168,6 +177,11 @@ private:
 
   // True iff current shape is grabbed (first step).
   bool _shapeFirstGrab;
+
+  // Background reference photo.
+  QPixmap _backgroundPixmap;
+  qreal   _backgroundOpacity    = 0.5;
+  bool    _backgroundPhotoVisible = true;
 
   // The zoom level (in number of steps).
   int _zoomLevel;

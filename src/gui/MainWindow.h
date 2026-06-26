@@ -48,6 +48,7 @@
 #include "VideoExporter.h"
 
 #include "MappingManager.h"
+#include "ThumbnailCache.h"
 #include "LayerItemDelegate.h"
 #include "LayerListModel.h"
 
@@ -100,6 +101,11 @@ private slots:
   void toggleRecording(bool on);
   void onRecordingStopped(const QString& filePath);
 
+  // Source preview.
+  void updateSourcePreview(uid sourceId);
+  void onThumbnailReady(const QString& videoPath, const QStringList& frames);
+  void updatePreviewAnimSpeed();
+
   // Menus slots.
   // File menu.
   void newFile();
@@ -111,6 +117,7 @@ private slots:
   void importFolderAsSource();
   void openCameraDevice();
   void addColor();
+  void addText();
   void addSyphon();
   void about();
   void checkForUpdates(bool autoCheck = false);
@@ -136,6 +143,8 @@ private slots:
   void deleteSourceItem();
   void renameSourceItem();
   void sourceListEditEnd(QWidget* editor);
+  void setSectionCollapsed(QListWidgetItem* header, bool collapsed);
+  void setSourceListThumbnailMode(bool thumbnailMode);
   // Output menu
   void setupOutputScreen();
   void updateScreenCount();
@@ -176,6 +185,15 @@ private slots:
 
   void updateLayerListColumnWidth();
 
+  // Background reference photo slots.
+  void setBackgroundPhoto();
+  void clearBackgroundPhoto();
+
+  // Mesh input reset.
+  void resetMeshInputToSource();
+  void onBackgroundPhotoOpacityChanged(int value);
+  void onBackgroundPhotoToggled(bool visible);
+
 public slots:
 
   void refreshIcons();
@@ -183,7 +201,20 @@ public slots:
   // Layer creation.
   void addMesh();
   void addTriangle();
+  void addPolygonVertex();
+  void deletePolygonVertex();
   void addEllipse();
+  void addPolygon();
+
+  // Polygon draw-mode API (called by MapperGLCanvas).
+  bool isPolygonDrawMode() const { return _polygonDrawMode; }
+  bool isPolygonDrawOnSource() const { return _polygonDrawOnSource; }
+  const QVector<QPointF>& polygonPoints() const { return _polygonPoints; }
+  const QPointF& polygonCursorPos() const { return _polygonCursorPos; }
+  void polygonCanvasClick(const QPointF& scenePos);
+  void polygonCursorMoved(const QPointF& scenePos);
+  void finishPolygon();
+  void cancelPolygonDrawMode();
 
   // CRUD.
 
@@ -195,9 +226,13 @@ public slots:
 
   /// Create or replace a color source.
   uid createColorSource(uid sourceId, QColor color);
+  uid createTextSource(uid sourceId, const QString& text);
 
   /// Create a folder source from a directory path.
   uid createFolderSource(uid sourceId, const QString& dirPath);
+
+  /// Create a free-polygon layer for the given source with the given vertices.
+  uid addFreePolygonLayer(int sourceId, const QVector<QPointF>& vertices);
 
   /// Create a Syphon source pointing at the given server (macOS only).
   uid createSyphonSource(uid sourceId, const QString& serverUUID,
@@ -291,6 +326,9 @@ private:
   // OSC.
   void startOscReceiver();
 
+  // Polygon draw mode internals.
+  void startPolygonDrawMode();
+
 #ifdef HAVE_MCP
   // MCP server.
   void startMcpServer();
@@ -306,6 +344,7 @@ public:
   void setCurrentVideo(const QString &filename);
   bool importMediaFile(const QString &fileName, bool isImage = false, bool isCamera = false);
   bool addColorSource(const QColor& color);
+  bool addTextSource(const QString& text);
   void addLayerItem(uid mappingId);
   void removeLayerItem(uid mappingId);
   void moveLayerItem(uid mappingId, int steps);
@@ -320,6 +359,7 @@ public:
   void syncLayerManager();
   // Check if the file exists
   bool fileExists(const QString& file);
+  QString thumbnailCacheDir() const;
   // Check if the file is supported
   bool fileSupported(const QString& file, bool isImage);
   bool fileSupported(const QString &file, const QString &extension);
@@ -333,6 +373,9 @@ public:
 
   // Returns the source icon depending on play/pause state.
   static const QIcon getSourceIcon(Source::ptr source);
+
+  // Refreshes the usage-count badge on every source thumbnail.
+  void refreshSourceBadges();
 
 private:
   // Connects/disconnects project-specific widgets (sources and mappings).
@@ -385,6 +428,7 @@ private:
   QAction *importFolderAction;
   QAction *AddCameraAction;
   QAction *addColorAction;
+  QAction *addTextAction;
   QAction *addSyphonAction;
   QAction *saveAction;
   QAction *saveAsAction;
@@ -422,6 +466,25 @@ private:
   QAction *addMeshAction;
   QAction *addTriangleAction;
   QAction *addEllipseAction;
+  QAction *addPolygonAction = nullptr;
+  QAction *addPolygonVertexAction = nullptr;
+  QAction *deletePolygonVertexAction = nullptr;
+
+  // Background reference photo state.
+  QString _backgroundPhotoPath;
+  qreal   _backgroundPhotoOpacity = 0.5;
+
+  // Polygon draw-mode state.
+  bool _polygonDrawMode = false;
+  bool _polygonDrawOnSource = false; // true when drawing on source/input canvas
+  QVector<QPointF> _polygonPoints;
+  QPointF _polygonCursorPos;
+
+  // Polygon vertex-edit state (set by MapperGLCanvas before context menu).
+  int  _polyEditType     = 0;  // 0=none, 1=add, 2=delete (PolyEditType, kept as int to avoid private enum access)
+  int  _polyEditIndex    = -1;
+  qreal _polyEditT       = 0.0;
+  bool  _polyEditOnSource = false;
 
   QAction *playAction; // checkable: unchecked=paused (play icon), checked=playing (pause icon)
   QAction *rewindAction;
@@ -436,6 +499,10 @@ private:
   QAction *displayUndoHistoryAction;
   QAction *displayZoomToolAction;
   QAction *openConsoleAction;
+
+  QAction *_setBackgroundPhotoAction;
+  QAction *_clearBackgroundPhotoAction;
+  QAction *_resetMeshInputAction;
   QAction *showMenuBarAction;
   QAction *showToolBarAction;
 
@@ -469,10 +536,22 @@ private:
 
   QSplitter* sourceSplitter;
   QListWidget* sourceList;
-  QListWidgetItem* _sourceSectionImages  = nullptr; // non-selectable section header
-  QListWidgetItem* _sourceSectionVideos  = nullptr; // non-selectable section header
-  QListWidgetItem* _sourceSectionFolders = nullptr; // non-selectable section header
+  QListWidgetItem* _sourceSectionImages    = nullptr; // non-selectable section header
+  QListWidgetItem* _sourceSectionVideos    = nullptr; // non-selectable section header
+  QListWidgetItem* _sourceSectionGenerated = nullptr; // non-selectable section header (Color, Text)
+  QListWidgetItem* _sourceSectionFolders   = nullptr; // non-selectable section header
+  QMap<QListWidgetItem*, QToolButton*> _sectionArrows;
+  QMap<QListWidgetItem*, bool>         _sectionCollapsed;
+  bool _sourceListThumbnailMode = true; // false = list, true = thumbnail
+  int  _sourceListIconSize = PAINT_LIST_ICON_SIZE;
   QStackedWidget* sourcePropertyPanel;
+
+  QWidget*      _sourcePreviewContainer = nullptr;
+  QLabel*       _sourcePreviewLabel     = nullptr;
+  QCheckBox*    _previewToggleBtn       = nullptr;
+  QToolButton*  _thumbSizeBtns[3]      = {};
+  QToolButton*  _viewModeBtns[2]       = {}; // [0]=list, [1]=thumbnail
+  ThumbnailCache* _thumbnailCache       = nullptr;
 
   QSplitter* layerSplitter;
   QTableView* layerList;
@@ -521,7 +600,7 @@ private:
 #ifdef HAVE_MCP
   // MCP server.
   QScopedPointer<McpServer> mcp_server;
-  int mcpListeningPort;
+  int mcpListeningPort = MM::DEFAULT_MCP_PORT;
 #endif
 
   // View.
@@ -614,6 +693,7 @@ public:
   void removeCurrentLayer();
 
   OutputGLWindow* getOutputWindow() const { return outputWindow; }
+  QDir getProjectDir() const { return curFile.isEmpty() ? QDir() : QFileInfo(curFile).absoluteDir(); }
   MapperGLCanvas* getSourceCanvas() const { return sourceCanvas; }
   MapperGLCanvas* getDestinationCanvas() const { return destinationCanvas; }
   int getPreferredScreen() const { return outputWindow->getPreferredScreen(); }
@@ -652,8 +732,8 @@ public:
   // Constants. ///////////////////////////////////////////////////////////////////////////////////////
   static const int DEFAULT_WIDTH = 1360;
   static const int DEFAULT_HEIGHT = 768;
-  static const int PAINT_LIST_ITEM_HEIGHT = 40;
-  static const int PAINT_LIST_ICON_SIZE = 32;
+  static const int PAINT_LIST_ITEM_HEIGHT = 72;
+  static const int PAINT_LIST_ICON_SIZE = 64;
   static const int SHAPE_LIST_ITEM_HEIGHT = 40;
   static const int PAINT_LIST_MINIMUM_HEIGHT = 290;
   static const int MAPPING_LIST_MINIMUM_HEIGHT = 290;
@@ -663,6 +743,22 @@ public:
   static const int CANVAS_MINIMUM_HEIGHT = 270;
   static const int OUTPUT_WINDOW_MINIMUM_WIDTH = 480;
   static const int OUTPUT_WINDOW_MINIMUM_HEIGHT = 270;
+
+  // Polygon vertex-edit API (called by MapperGLCanvas before showing context menu).
+  static const int PolyEditNone   = 0;
+  static const int PolyEditAdd    = 1;
+  static const int PolyEditDelete = 2;
+  void setPendingPolygonEdit(int type, int index, qreal t, bool onSource) {
+    _polyEditType = type; _polyEditIndex = index; _polyEditT = t; _polyEditOnSource = onSource;
+  }
+  void clearPendingPolygonEdit() { _polyEditType = PolyEditNone; }
+  bool hasPendingPolygonEdit() const { return _polyEditType != PolyEditNone; }
+
+  // Background reference photo.
+  void applyBackgroundPhoto(const QString& path, qreal opacity);
+  void clearBackgroundPhotoState();
+  QString getBackgroundPhotoPath() const { return _backgroundPhotoPath; }
+  qreal getBackgroundPhotoOpacity() const { return _backgroundPhotoOpacity; }
 };
 
 }

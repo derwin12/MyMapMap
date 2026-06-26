@@ -32,6 +32,13 @@ Build and installation
 To build and install it, see the INSTALL file provided with the source code.
 
 
+MCP server (AI control)
+-----------------------
+MyMapMap embeds an MCP server so AI assistants like Claude Desktop can inspect and control
+the application over a local HTTP connection (`http://localhost:49452/mcp` by default).
+See [docs/informations/mcp.md](docs/informations/mcp.md) for setup, Claude Desktop config,
+and a full tool reference.
+
 More info
 ---------
 Get more info about MapMap from [mapmapteam.github.io](https://mapmapteam.github.io/)

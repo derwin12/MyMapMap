@@ -59,6 +59,16 @@ bool ProjectWriter::writeFile(QIODevice *device)
   }
   project[ProjectLabels::LAYERS] = layers;
 
+  // Background reference photo.
+  if (!_window->getBackgroundPhotoPath().isEmpty()) {
+    QString absPath = _window->getBackgroundPhotoPath();
+    QString storedPath = (!_projectDir.path().isEmpty() && QFileInfo(absPath).isAbsolute())
+                         ? _projectDir.relativeFilePath(absPath)
+                         : absPath;
+    project[ProjectLabels::BACKGROUND_PHOTO]   = storedPath;
+    project[ProjectLabels::BACKGROUND_OPACITY] = _window->getBackgroundPhotoOpacity();
+  }
+
   QJsonDocument doc(project);
   device->write(doc.toJson(QJsonDocument::Indented));
 

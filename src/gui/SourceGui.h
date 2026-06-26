@@ -22,6 +22,12 @@
 
 
 #include <QtGlobal>
+#include <QSlider>
+#include <QLabel>
+#include <QToolButton>
+#include <QPushButton>
+#include <QButtonGroup>
+#include <QTimer>
 
 #if __APPLE__
 #include <OpenGL/gl.h>
@@ -86,6 +92,7 @@ protected:
   QtAbstractPropertyBrowser* _propertyBrowser;
   QtVariantEditorFactory* _variantFactory;
   QtVariantPropertyManager* _variantManager;
+  QWidget* _compositeWidget = nullptr; // wraps slider rows + property browser when set
 
   QtVariantProperty* _idItem;
   QtVariantProperty* _opacityItem;
@@ -99,12 +106,40 @@ public:
   virtual ~ColorGui() {}
 
 public slots:
-  virtual void setValue(QtProperty* property, const QVariant& value);
   virtual void setValue(QString propertyName, QVariant value);
 
 protected:
   QSharedPointer<Color> color;
-  QtVariantProperty* _colorItem;
+  QPushButton* _colorButton = nullptr;
+
+  void updateColorButton();
+  void openColorDialog();
+};
+
+class TextGui : public SourceGui {
+  Q_OBJECT
+
+public:
+  TextGui(Source::ptr source);
+  virtual ~TextGui() {}
+
+public slots:
+  virtual void setValue(QtProperty* property, const QVariant& value);
+  virtual void setValue(QString propertyName, QVariant value);
+
+protected:
+  QSharedPointer<Text> textSource;
+  QtVariantProperty* _textItem;
+  QtVariantProperty* _fontFamilyItem;
+  QtVariantProperty* _fontSizeItem;
+  QtVariantProperty* _boldItem;
+  QtVariantProperty* _italicItem;
+  QtVariantProperty* _alignmentItem;
+
+  QPushButton* _textColorButton = nullptr;
+  QPushButton* _bgColorButton   = nullptr;
+
+  void updateColorButton(QPushButton* btn, const QColor& c);
 };
 
 class TextureGui : public SourceGui {
@@ -127,9 +162,14 @@ public slots:
   virtual void setValue(QString propertyName, QVariant value);
 
 protected:
+  void _refreshImageSize();
   QSharedPointer<Image> image;
   QtVariantProperty* _imageFileItem;
   QtVariantProperty* _imageRateItem;
+  QtVariantProperty* _imageWidthItem  = nullptr;
+  QtVariantProperty* _imageHeightItem = nullptr;
+  QSlider* _speedSlider    = nullptr;
+  QLabel*  _speedValueLbl  = nullptr;
 };
 
 class FolderGui : public TextureGui {
@@ -148,6 +188,8 @@ protected:
   QtVariantProperty* _folderPathItem;
   QtVariantProperty* _fileCountItem;
   QtVariantProperty* _rateItem;
+  QSlider* _speedSlider    = nullptr;
+  QLabel*  _speedValueLbl  = nullptr;
 };
 
 class VideoGui : public TextureGui {
@@ -161,12 +203,42 @@ public slots:
   virtual void setValue(QtProperty* property, const QVariant& value);
   virtual void setValue(QString propertyName, QVariant value);
 
+private slots:
+  void _refreshMetadata();
+
 protected:
   QSharedPointer<Video> media;
   QtVariantProperty* _mediaFileItem;
   QtVariantProperty* _mediaRateItem;
   QtVariantProperty* _mediaVolumeItem;
-//  QtVariantProperty* _mediaReverseItem;
+  QSlider* _speedSlider    = nullptr;
+  QLabel*  _speedValueLbl  = nullptr;
+  QSlider* _volumeSlider   = nullptr;
+  QLabel*  _volumeValueLbl = nullptr;
+
+  // Info display
+  QLabel* _infoNameLbl  = nullptr;
+  QLabel* _infoResLbl   = nullptr;
+  QLabel* _infoDurLbl   = nullptr;
+  QLabel* _infoFpsLbl   = nullptr;
+  QLabel* _infoCodecLbl = nullptr;
+
+  // Transport buttons (left group)
+  QToolButton* _btnStepBack = nullptr;
+  QToolButton* _btnPause    = nullptr;
+  QToolButton* _btnPlay     = nullptr;
+  // Transport buttons (right group)
+  QToolButton* _btnToStart  = nullptr;
+  QToolButton* _btnSeekBack = nullptr;
+  QToolButton* _btnSeekFwd  = nullptr;
+
+  // Mode buttons
+  QToolButton* _btnModeLoop    = nullptr;
+  QToolButton* _btnModeForward = nullptr;
+  QToolButton* _btnModeReverse = nullptr;
+  QToolButton* _btnModeRevLoop = nullptr;
+
+  QTimer* _metadataTimer = nullptr;
 };
 
 #ifdef HAVE_SYPHON

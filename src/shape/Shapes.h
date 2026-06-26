@@ -25,5 +25,6 @@
 #include "Ellipse.h"
 #include "Mesh.h"
 #include "Triangle.h"
+#include "FreePolygon.h"
 
 #endif /* SHAPES_H_ */

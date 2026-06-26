@@ -31,7 +31,8 @@ public:
   enum Format {
     H264_MP4  = 0,
     H265_MP4  = 1,
-    MJPEG_AVI = 2
+    MJPEG_AVI = 2,
+    H264_MOV  = 3
   };
   Q_ENUM(Format)
 

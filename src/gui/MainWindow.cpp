@@ -20,6 +20,8 @@
  */
 
 #include "MainWindow.h"
+#include "Mesh.h"
+#include "Maths.h"
 #include "PreferenceDialog.h"
 #include "AboutDialog.h"
 #include "ShortcutWindow.h"
@@ -43,8 +45,83 @@
 #include <QDesktopServices>
 #include <QDir>
 #include <QDirIterator>
+#include <QStandardPaths>
 
 namespace mmp {
+
+// Auto-scaling, optionally animated QLabel for the source preview panel.
+class SourcePreviewLabel : public QLabel {
+public:
+  explicit SourcePreviewLabel(QWidget* parent = nullptr) : QLabel(parent) {
+    setAlignment(Qt::AlignCenter);
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    setMinimumHeight(80);
+    connect(&_animTimer, &QTimer::timeout, this, [this]() {
+      if (_animFrames.isEmpty()) return;
+      _animIdx = (_animIdx + 1) % _animFrames.size();
+      _showFrame(_animIdx);
+    });
+  }
+
+  void setSourcePixmap(const QPixmap& px) {
+    _animTimer.stop();
+    _animFrames.clear();
+    _original = px;
+    _updateScaled();
+  }
+
+  void setAnimationFrames(const QVector<QPixmap>& frames, int fps = 4) {
+    _animTimer.stop();
+    _original = QPixmap();
+    _animFrames = frames;
+    _animIdx = 0;
+    _fps = fps;
+    if (frames.isEmpty()) { clear(); return; }
+    _showFrame(0);
+    if (frames.size() > 1) {
+      _animTimer.setInterval(1000 / qMax(1, _fps));
+      _animTimer.start();
+    }
+  }
+
+  void setAnimationFps(int fps) {
+    _fps = qMax(1, fps);
+    if (_animTimer.isActive())
+      _animTimer.setInterval(1000 / _fps);
+  }
+
+  void clearAll() {
+    _animTimer.stop();
+    _animFrames.clear();
+    _original = QPixmap();
+    clear();
+  }
+
+protected:
+  void resizeEvent(QResizeEvent* e) override {
+    QLabel::resizeEvent(e);
+    if (!_animFrames.isEmpty())
+      _showFrame(_animIdx);
+    else
+      _updateScaled();
+  }
+
+private:
+  QPixmap        _original;
+  QVector<QPixmap> _animFrames;
+  int            _animIdx = 0;
+  int            _fps = 4;
+  QTimer         _animTimer;
+
+  void _showFrame(int idx) {
+    if (idx < 0 || idx >= _animFrames.size()) return;
+    QLabel::setPixmap(_animFrames[idx].scaled(size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+  }
+  void _updateScaled() {
+    if (_original.isNull()) { clear(); return; }
+    QLabel::setPixmap(_original.scaled(size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+  }
+};
 
 MainWindow::MainWindow()
 {
@@ -133,6 +210,14 @@ MainWindow::MainWindow()
     muteAllAction->setChecked(s.value("audioMuted", false).toBool());
     int toolBarIconSize = s.value("toolbarIconSize", MM::TOOLBAR_ICON_SIZE).toInt();
     mainToolBar->setIconSize(QSize(toolBarIconSize, toolBarIconSize));
+    int srcIconSize = s.value("sourceListIconSize", MainWindow::PAINT_LIST_ICON_SIZE).toInt();
+    _sourceListIconSize = srcIconSize;
+    for (int i = 0; i < 3; ++i) {
+      static const int kSizes[3] = { 24, 32, 48 };
+      if (_thumbSizeBtns[i]) _thumbSizeBtns[i]->setChecked(kSizes[i] == srcIconSize);
+    }
+    bool thumbMode = s.value("sourceListThumbnailMode", true).toBool();
+    setSourceListThumbnailMode(thumbMode);
 
     // Recent file/video menus
     updateRecentFileActions();
@@ -147,6 +232,11 @@ MainWindow::MainWindow()
       recordAction->setChecked(false);
     });
   });
+
+  // Thumbnail cache (deferred start — needs event loop for async QMediaPlayer).
+  _thumbnailCache = new ThumbnailCache(this);
+  connect(_thumbnailCache, &ThumbnailCache::ready,
+          this, &MainWindow::onThumbnailReady);
 
   // Start osc.
   startOscReceiver();
@@ -191,7 +281,8 @@ void MainWindow::handleSourceItemSelectionChanged()
   QListWidgetItem* item = sourceList->currentItem();
 
   // Ignore clicks on section-header items (they are not selectable sources).
-  if (item == _sourceSectionImages || item == _sourceSectionVideos || item == _sourceSectionFolders) {
+  if (item == _sourceSectionImages || item == _sourceSectionVideos ||
+      item == _sourceSectionGenerated || item == _sourceSectionFolders) {
     sourceList->clearSelection();
     return;
   }
@@ -218,6 +309,7 @@ void MainWindow::handleSourceItemSelectionChanged()
   addMeshAction->setEnabled(sourceItemSelected);
   addTriangleAction->setEnabled(sourceItemSelected);
   addEllipseAction->setEnabled(sourceItemSelected);
+  if (addPolygonAction) addPolygonAction->setEnabled(sourceItemSelected);
   deleteSourceAction->setEnabled(sourceItemSelected);
   renameSourceAction->setEnabled(sourceItemSelected);
 
@@ -345,6 +437,8 @@ void MainWindow::handleSourceChanged(Source::ptr source)
     updateSourceItem(sourceId, getSourceIcon(source), source->getName());
   }
 #endif
+
+  setCurrentSource(sourceId);
 
   if (curLayerId != NULL_UID)
   {
@@ -709,16 +803,17 @@ void MainWindow::importMedia()
 
 void MainWindow::importFolder()
 {
+  QString startDir = QFileInfo(settings.value("defaultVideoDir").toString()).absolutePath();
   QString dirPath = QFileDialog::getExistingDirectory(
-      this, tr("Import Media Folder"),
-      settings.value("defaultVideoDir").toString());
+      this, tr("Import Files From Folder"),
+      startDir);
   if (dirPath.isEmpty())
     return;
 
   const QStringList allExts = (MM::IMAGE_FILES_FILTER + " " + MM::VIDEO_FILES_FILTER)
                                 .split(' ', Qt::SkipEmptyParts);
 
-  QDirIterator it(dirPath, allExts, QDir::Files, QDirIterator::Subdirectories);
+  QDirIterator it(dirPath, allExts, QDir::Files);
   int imported = 0;
   while (it.hasNext()) {
     QString filePath = it.next();
@@ -827,6 +922,21 @@ void MainWindow::addColor()
 #endif
   if (color.isValid())
     addColorSource(color);
+
+  if (wasPlaying) play(false);
+}
+
+void MainWindow::addText()
+{
+  bool wasPlaying = _isPlaying;
+  if (wasPlaying) pause(false);
+
+  bool ok = false;
+  QString text = QInputDialog::getText(this, tr("Add Text Source"),
+                                       tr("Text:"), QLineEdit::Normal,
+                                       tr("Text"), &ok);
+  if (ok && !text.isEmpty())
+    addTextSource(text);
 
   if (wasPlaying) play(false);
 }
@@ -1019,6 +1129,173 @@ void MainWindow::addEllipse()
 
   // Lets undo-stack handle Undo/Redo the adding of mapping item.
   undoStack->push(new AddLayerCommand(this, layerId));
+}
+
+void MainWindow::addPolygon()
+{
+  // A source must be selected to add a mapping.
+  if (getCurrentSourceId() == NULL_UID)
+    return;
+  startPolygonDrawMode();
+}
+
+void MainWindow::startPolygonDrawMode()
+{
+  _polygonDrawMode = true;
+  _polygonPoints.clear();
+  _polygonCursorPos = QPointF();
+
+  // For texture sources, draw on the source/input canvas so the user selects
+  // which region of the source image to use.
+  Source::ptr src = getMappingManager().getSourceById(getCurrentSourceId());
+  _polygonDrawOnSource = (src && src->getSourceType() != SourceType::Color);
+
+  MapperGLCanvas* canvas = _polygonDrawOnSource ? sourceCanvas : destinationCanvas;
+  canvas->setCursor(Qt::CrossCursor);
+  canvas->setFocus();   // ensure keyboard focus so Esc/Enter reach this canvas
+  statusBar()->showMessage(tr("Click to add polygon vertices. Click near first point or press Enter to close. Escape to cancel."));
+  canvas->update();
+}
+
+void MainWindow::cancelPolygonDrawMode()
+{
+  MapperGLCanvas* canvas = _polygonDrawOnSource ? sourceCanvas : destinationCanvas;
+  _polygonDrawMode = false;
+  _polygonPoints.clear();
+  canvas->unsetCursor();
+  statusBar()->clearMessage();
+  canvas->update();
+}
+
+void MainWindow::polygonCursorMoved(const QPointF& scenePos)
+{
+  _polygonCursorPos = scenePos;
+  (_polygonDrawOnSource ? sourceCanvas : destinationCanvas)->update();
+}
+
+void MainWindow::polygonCanvasClick(const QPointF& scenePos)
+{
+  MapperGLCanvas* canvas = _polygonDrawOnSource ? sourceCanvas : destinationCanvas;
+  // Snap to first point if close enough and we have 3+ points.
+  if (_polygonPoints.size() >= 3) {
+    QPointF first = _polygonPoints.first();
+    QPointF delta = canvas->mapFromScene(scenePos) - canvas->mapFromScene(first);
+    if (delta.x()*delta.x() + delta.y()*delta.y() <= sq(MM::VERTEX_SELECT_RADIUS * 2)) {
+      finishPolygon();
+      return;
+    }
+  }
+  _polygonPoints << scenePos;
+  canvas->update();
+}
+
+void MainWindow::finishPolygon()
+{
+  if (_polygonPoints.size() < 3) {
+    cancelPolygonDrawMode();
+    return;
+  }
+
+  uid sourceId = getCurrentSourceId();
+  if (sourceId == NULL_UID) { cancelPolygonDrawMode(); return; }
+  Source::ptr source = getMappingManager().getSourceById(sourceId);
+  if (!source) { cancelPolygonDrawMode(); return; }
+
+  Layer* layerPtr;
+  if (source->getSourceType() == SourceType::Color) {
+    MShape::ptr outPoly(Util::createFreePolygonForColor(_polygonPoints));
+    layerPtr = new ColorLayer(source, outPoly);
+  } else {
+    QSharedPointer<Texture> texture = qSharedPointerCast<Texture>(source);
+    Q_CHECK_PTR(texture);
+    if (_polygonDrawOnSource) {
+      // Points were placed on the source/input canvas → become the input polygon.
+      // Output starts at the same coordinates (user can reposition independently).
+      MShape::ptr inPoly(Util::createFreePolygonForColor(_polygonPoints));
+      MShape::ptr outPoly(Util::createFreePolygonForColor(_polygonPoints));
+      layerPtr = new TextureLayer(source, outPoly, inPoly);
+    } else {
+      MShape::ptr outPoly(Util::createFreePolygonForColor(_polygonPoints));
+      MShape::ptr inPoly(Util::createFreePolygonInputForTexture(_polygonPoints, texture.data()));
+      layerPtr = new TextureLayer(source, outPoly, inPoly);
+    }
+  }
+
+  Layer::ptr layer(layerPtr);
+  uid layerId = mappingManager->addLayer(layer);
+  undoStack->push(new AddLayerCommand(this, layerId));
+
+  cancelPolygonDrawMode();
+}
+
+void MainWindow::addPolygonVertex()
+{
+  if (_polyEditType != PolyEditAdd) return;
+  Layer::ptr layer = getCurrentLayer();
+  if (!layer) return;
+
+  if (_polyEditOnSource && qSharedPointerCast<TextureLayer>(layer).isNull())
+    return;
+
+  // Choose which shape the user clicked on and which is the "other" shape.
+  MShape::ptr editedShape = _polyEditOnSource
+    ? qSharedPointerCast<TextureLayer>(layer)->getInputShape()
+    : layer->getShape();
+  MShape::ptr otherShape;
+  TextureLayer::ptr texLayer = qSharedPointerCast<TextureLayer>(layer);
+  if (texLayer)
+    otherShape = _polyEditOnSource ? layer->getShape()
+                                   : texLayer->getInputShape();
+
+  int  edgeIdx = _polyEditIndex;
+  qreal t      = _polyEditT;
+  int  n       = editedShape->nVertices();
+
+  // Build new vertex list for edited shape: insert interpolated point.
+  QVector<QPointF> newEditVerts = editedShape->getVertices();
+  QPointF newPt = newEditVerts[edgeIdx] * (1.0 - t)
+                + newEditVerts[(edgeIdx + 1) % n] * t;
+  newEditVerts.insert(edgeIdx + 1, newPt);
+
+  // Mirror the insertion into the other shape at the same parametric position.
+  QVector<QPointF> newOtherVerts;
+  if (otherShape) {
+    newOtherVerts = otherShape->getVertices();
+    QPointF otherPt = newOtherVerts[edgeIdx] * (1.0 - t)
+                    + newOtherVerts[(edgeIdx + 1) % n] * t;
+    newOtherVerts.insert(edgeIdx + 1, otherPt);
+  }
+
+  QVector<QPointF> newOutVerts = _polyEditOnSource ? newOtherVerts : newEditVerts;
+  QVector<QPointF> newInVerts  = _polyEditOnSource ? newEditVerts  : newOtherVerts;
+
+  undoStack->push(new SetPolygonVerticesCommand(this, layer->getId(),
+                                                 newOutVerts, newInVerts, tr("Add Vertex")));
+}
+
+void MainWindow::deletePolygonVertex()
+{
+  if (_polyEditType != PolyEditDelete) return;
+  Layer::ptr layer = getCurrentLayer();
+  if (!layer) return;
+
+  MShape::ptr outputShape = layer->getShape();
+  if (outputShape->nVertices() <= 3) return; // keep minimum triangle
+
+  int vertIdx = _polyEditIndex;
+
+  QVector<QPointF> newOutVerts = outputShape->getVertices();
+  newOutVerts.remove(vertIdx);
+
+  QVector<QPointF> newInVerts;
+  TextureLayer::ptr texLayer = qSharedPointerCast<TextureLayer>(layer);
+  if (texLayer) {
+    newInVerts = texLayer->getInputShape()->getVertices();
+    newInVerts.remove(vertIdx);
+  }
+
+  undoStack->push(new SetPolygonVerticesCommand(this, layer->getId(),
+                                                 newOutVerts, newInVerts, tr("Delete Vertex")));
 }
 
 void MainWindow::checkForUpdates(bool autoCheck)
@@ -1444,6 +1721,9 @@ bool MainWindow::clearProject()
   // Clear model.
   mappingManager->clearAll();
 
+  // Clear background reference photo.
+  clearBackgroundPhotoState();
+
   // Refresh GL canvases to clear them out.
   sourceCanvas->repaint();
   destinationCanvas->repaint();
@@ -1488,6 +1768,10 @@ uid MainWindow::createMediaSource(uid sourceId, QString uri, float x, float y,
     // Add source to model and return its uid.
     uid id = mappingManager->addSource(source);
 
+    // Kick off async thumbnail generation for non-webcam videos.
+    if (!isImage && type != VIDEO_WEBCAM && _thumbnailCache)
+      _thumbnailCache->request(uri, thumbnailCacheDir());
+
     // Add source widget item.
     undoStack->push(new AddSourceCommand(this, id, source->getIcon(), source->getName()));
     return id;
@@ -1516,6 +1800,52 @@ uid MainWindow::createColorSource(uid sourceId, QColor color)
 
     return id;
   }
+}
+
+bool MainWindow::addTextSource(const QString& text)
+{
+  uid id = createTextSource(NULL_UID, text);
+  return id != NULL_UID;
+}
+
+uid MainWindow::createTextSource(uid sourceId, const QString& text)
+{
+  if (Source::getUidAllocator().exists(sourceId))
+    return NULL_UID;
+
+  Text* ts = new Text(text, sourceId);
+  Source::ptr source(ts);
+  source->setName(text.left(20));
+
+  uid id = mappingManager->addSource(source);
+  undoStack->push(new AddSourceCommand(this, id, source->getIcon(), source->getName()));
+  return id;
+}
+
+uid MainWindow::addFreePolygonLayer(int sourceId, const QVector<QPointF>& vertices)
+{
+  Source::ptr source = getMappingManager().getSourceById(sourceId);
+  if (!source) return NULL_UID;
+
+  Layer* layerPtr;
+  if (source->getSourceType() == SourceType::Color)
+  {
+    MShape::ptr outPoly(Util::createFreePolygonForColor(vertices));
+    layerPtr = new ColorLayer(source, outPoly);
+  }
+  else
+  {
+    QSharedPointer<Texture> texture = qSharedPointerCast<Texture>(source);
+    if (!texture) return NULL_UID;
+    MShape::ptr outPoly(Util::createFreePolygonForColor(vertices));
+    MShape::ptr inPoly(Util::createFreePolygonInputForTexture(vertices, texture.data()));
+    layerPtr = new TextureLayer(source, outPoly, inPoly);
+  }
+
+  Layer::ptr layer(layerPtr);
+  uid layerId = mappingManager->addLayer(layer);
+  undoStack->push(new AddLayerCommand(this, layerId));
+  return layerId;
 }
 
 uid MainWindow::createFolderSource(uid sourceId, const QString& dirPath)
@@ -1698,6 +2028,143 @@ void MainWindow::createLayout()
   sourcePropertyPanel->setDisabled(true);
   sourcePropertyPanel->setMinimumHeight(PAINT_PROPERTY_PANEL_MINIMUM_HEIGHT);
 
+  // Source preview widget — header pinned above the splitter, image inside the splitter.
+  {
+    _previewToggleBtn = new QCheckBox(tr("Preview"));
+    _previewToggleBtn->setChecked(true);
+
+    // Header row: always visible, lives OUTSIDE the splitter.
+    _sourcePreviewContainer = new QWidget;
+    auto* headerLayout = new QHBoxLayout(_sourcePreviewContainer);
+    headerLayout->setContentsMargins(4, 2, 4, 2);
+    headerLayout->setSpacing(2);
+
+    // List / Thumbnail view-mode toggle buttons.
+    {
+      // List-mode button: 4 horizontal lines.
+      auto* listBtn = new QToolButton;
+      listBtn->setCheckable(true);
+      listBtn->setAutoExclusive(true);
+      listBtn->setAutoRaise(true);
+      listBtn->setFixedSize(26, 26);
+      listBtn->setToolTip(tr("List view"));
+      {
+        QPixmap pm(20, 20);
+        pm.fill(Qt::transparent);
+        QPainter p(&pm);
+        p.setPen(QPen(palette().color(QPalette::ButtonText), 1.5));
+        for (int row = 0; row < 4; ++row) {
+          int y = 3 + row * 4;
+          p.drawLine(2, y, 18, y);
+        }
+      listBtn->setIcon(QIcon(pm));
+      }
+      _viewModeBtns[0] = listBtn;
+      headerLayout->addWidget(listBtn);
+
+      // Thumbnail-mode button: 2×2 grid of squares.
+      auto* thumbBtn = new QToolButton;
+      thumbBtn->setCheckable(true);
+      thumbBtn->setAutoExclusive(true);
+      thumbBtn->setAutoRaise(true);
+      thumbBtn->setFixedSize(26, 26);
+      thumbBtn->setToolTip(tr("Thumbnail view"));
+      {
+        QPixmap pm(20, 20);
+        pm.fill(Qt::transparent);
+        QPainter p(&pm);
+        p.fillRect(2,  2,  7, 7, palette().color(QPalette::ButtonText));
+        p.fillRect(11, 2,  7, 7, palette().color(QPalette::ButtonText));
+        p.fillRect(2,  11, 7, 7, palette().color(QPalette::ButtonText));
+        p.fillRect(11, 11, 7, 7, palette().color(QPalette::ButtonText));
+        thumbBtn->setIcon(QIcon(pm));
+      }
+      _viewModeBtns[1] = thumbBtn;
+      headerLayout->addWidget(thumbBtn);
+
+      connect(listBtn,  &QToolButton::clicked, this, [this]() { setSourceListThumbnailMode(false); });
+      connect(thumbBtn, &QToolButton::clicked, this, [this]() { setSourceListThumbnailMode(true);  });
+    }
+
+    headerLayout->addWidget(_previewToggleBtn);
+    headerLayout->addStretch();
+
+    // Thumbnail size picker: 3 buttons with small squares indicating small/medium/large icon size.
+    static const int kThumbSizes[3] = { 48, 64, 96 };
+    static const int kSquareSizes[3] = { 9, 13, 18 };
+    auto applyThumbSize = [this](int size) {
+      _sourceListIconSize = size;
+      if (_sourceListThumbnailMode) {
+        sourceList->setIconSize(QSize(size, size));
+        int rowH = size + 8;
+        for (int j = 0; j < sourceList->count(); ++j) {
+          QListWidgetItem* it = sourceList->item(j);
+          if (it) it->setSizeHint(QSize(it->sizeHint().width(), rowH));
+        }
+      }
+      for (int i = 0; i < 3; ++i) {
+        static const int kSizes[3] = { 48, 64, 96 };
+        _thumbSizeBtns[i]->setChecked(kSizes[i] == size);
+      }
+    };
+    for (int i = 0; i < 3; ++i) {
+      auto* btn = new QToolButton;
+      btn->setCheckable(true);
+      btn->setAutoExclusive(true);
+      btn->setAutoRaise(true);
+      btn->setFixedSize(26, 26);
+      // Draw a filled square that grows with i.
+      int sq = kSquareSizes[i];
+      QPixmap pm(20, 20);
+      pm.fill(Qt::transparent);
+      QPainter p(&pm);
+      p.fillRect((20 - sq) / 2, (20 - sq) / 2, sq, sq, palette().color(QPalette::ButtonText));
+      btn->setIcon(QIcon(pm));
+      int size = kThumbSizes[i];
+      connect(btn, &QToolButton::clicked, this, [this, size, applyThumbSize]() {
+        applyThumbSize(size);
+        QSettings().setValue("sourceListIconSize", size);
+      });
+      headerLayout->addWidget(btn);
+      _thumbSizeBtns[i] = btn;
+    }
+    // Select the button matching the restored icon size; fall back to medium.
+    bool anyChecked = false;
+    for (int i = 0; i < 3; ++i) {
+      bool match = (kThumbSizes[i] == _sourceListIconSize);
+      _thumbSizeBtns[i]->setChecked(match);
+      if (match) anyChecked = true;
+    }
+    if (!anyChecked) {
+      _sourceListIconSize = kThumbSizes[1]; // stale saved value — reset to medium
+      QSettings().setValue("sourceListIconSize", _sourceListIconSize);
+      _thumbSizeBtns[1]->setChecked(true);
+    }
+    _viewModeBtns[1]->setChecked(true);  // default: thumbnail mode
+
+    // Image area: lives INSIDE the splitter so it can be resized.
+    _sourcePreviewLabel = new SourcePreviewLabel;
+    _sourcePreviewLabel->setMinimumHeight(20);
+
+    // Toggling the checkbox shows/hides the image area and adjusts splitter space.
+    // Toggling shows/hides the thumbnail at the bottom (index 2 in splitter).
+    connect(_previewToggleBtn, &QCheckBox::toggled, this, [this](bool on) {
+      QList<int> sizes = sourceSplitter->sizes();
+      if (sizes.size() < 3) return;
+      if (on) {
+        // Restore: carve out space for thumbnail from the property panel.
+        int want = qMax((sizes[1] + sizes[2]) / 2, 80);
+        sourceSplitter->setSizes({sizes[0], sizes[1] + sizes[2] - want, want});
+        _sourcePreviewLabel->setVisible(true);
+      } else {
+        // Collapse: give the thumbnail's space to the property panel.
+        sourceSplitter->setSizes({sizes[0], sizes[1] + sizes[2], 0});
+        _sourcePreviewLabel->setVisible(false);
+      }
+    });
+
+  }
+
   // Create mapping list.
   layerList = new QTableView;
   layerList->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -1753,6 +2220,11 @@ void MainWindow::createLayout()
 
   destinationCanvasToolbar = new MapperGLCanvasToolbar(destinationCanvas);
   destinationCanvasToolbar->setToolbarTitle(tr("Output Editor"));
+  destinationCanvasToolbar->setupBackgroundPhotoControls();
+  connect(destinationCanvasToolbar, &MapperGLCanvasToolbar::backgroundPhotoToggled,
+          this, &MainWindow::onBackgroundPhotoToggled);
+  connect(destinationCanvasToolbar, &MapperGLCanvasToolbar::backgroundOpacityChanged,
+          this, &MainWindow::onBackgroundPhotoOpacityChanged);
   QVBoxLayout* destinationLayout = new QVBoxLayout;
   destinationLayout->setContentsMargins(0, 0, 0, 0);
   destinationLayout->setSpacing(0);
@@ -1793,11 +2265,20 @@ void MainWindow::createLayout()
   _shortcutWindow = new ShortcutWindow;
   _shortcutWindow->setVisible(false);
 
-  // Create layout.
+  // The preview image area goes inside the splitter; the header row is pinned above.
   sourceSplitter = new QSplitter(Qt::Vertical);
-  sourceSplitter->setChildrenCollapsible(false);
+  sourceSplitter->setChildrenCollapsible(true);
   sourceSplitter->addWidget(sourceList);
   sourceSplitter->addWidget(sourcePropertyPanel);
+  sourceSplitter->addWidget(_sourcePreviewLabel);   // thumbnail at bottom
+
+  // Source column: pinned header above the splitter.
+  auto* sourceColumn = new QWidget;
+  auto* sourceColumnLayout = new QVBoxLayout(sourceColumn);
+  sourceColumnLayout->setContentsMargins(0, 0, 0, 0);
+  sourceColumnLayout->setSpacing(0);
+  sourceColumnLayout->addWidget(_sourcePreviewContainer); // header, always visible
+  sourceColumnLayout->addWidget(sourceSplitter, 1);       // splitter fills rest
 
   layerSplitter = new QSplitter(Qt::Vertical);
   layerSplitter->setChildrenCollapsible(false);
@@ -1806,7 +2287,7 @@ void MainWindow::createLayout()
 
   // Content tab.
   contentTab = new QTabWidget;
-  contentTab->addTab(sourceSplitter, themedIcon(":/add-video"), tr("Library"));
+  contentTab->addTab(sourceColumn, themedIcon(":/add-video"), tr("Library"));
   contentTab->addTab(layerSplitter, themedIcon(":/add-mesh"), tr("Layers"));
 
   canvasSplitter = new QSplitter(Qt::Vertical);
@@ -1920,10 +2401,10 @@ void MainWindow::createActions()
   connect(importMediaAction, SIGNAL(triggered()), this, SLOT(importMedia()));
 
   // Import Folder.
-  importFolderAction = new QAction(tr("Import Media &Folder..."), this);
+  importFolderAction = new QAction(tr("Import Files From &Folder..."), this);
   importFolderAction->setShortcut(Qt::CTRL | Qt::SHIFT | Qt::Key_I);
   importFolderAction->setIcon(QIcon(":/add-video"));
-  importFolderAction->setToolTip(tr("Import all images and videos from a folder..."));
+  importFolderAction->setToolTip(tr("Import all images and videos from a folder as individual sources..."));
   importFolderAction->setIconVisibleInMenu(false);
   importFolderAction->setShortcutContext(Qt::ApplicationShortcut);
   addAction(importFolderAction);
@@ -1948,6 +2429,15 @@ void MainWindow::createActions()
   addColorAction->setShortcutContext(Qt::ApplicationShortcut);
   addAction(addColorAction);
   connect(addColorAction, SIGNAL(triggered()), this, SLOT(addColor()));
+
+  addTextAction = new QAction(tr("Add &Text Source..."), this);
+  addTextAction->setShortcut(Qt::CTRL | Qt::SHIFT | Qt::Key_T);
+  addTextAction->setIcon(themedIcon(":/add-text"));
+  addTextAction->setToolTip(tr("Add a text source..."));
+  addTextAction->setIconVisibleInMenu(false);
+  addTextAction->setShortcutContext(Qt::ApplicationShortcut);
+  addAction(addTextAction);
+  connect(addTextAction, &QAction::triggered, this, &MainWindow::addText);
 
 #ifdef Q_OS_MAC
   // Add Syphon source (macOS only).
@@ -2206,6 +2696,23 @@ void MainWindow::createActions()
   connect(addEllipseAction, SIGNAL(triggered()), this, SLOT(addEllipse()));
   addEllipseAction->setEnabled(false);
 
+  // Add polygon (free-form, click-to-place vertices).
+  addPolygonAction = new QAction(tr("Add &Polygon Layer"), this);
+  addPolygonAction->setShortcut(Qt::CTRL | Qt::Key_P);
+  addPolygonAction->setIcon(QIcon(":/add-polygon"));
+  addPolygonAction->setToolTip(tr("Draw a free-form polygon layer (click to add vertices, click near first point or press Enter to close)"));
+  addPolygonAction->setIconVisibleInMenu(false);
+  addPolygonAction->setShortcutContext(Qt::ApplicationShortcut);
+  addAction(addPolygonAction);
+  connect(addPolygonAction, &QAction::triggered, this, &MainWindow::addPolygon);
+  addPolygonAction->setEnabled(false);
+
+  addPolygonVertexAction = new QAction(tr("Add Vertex Here"), this);
+  connect(addPolygonVertexAction, &QAction::triggered, this, &MainWindow::addPolygonVertex);
+
+  deletePolygonVertexAction = new QAction(tr("Delete Vertex"), this);
+  connect(deletePolygonVertexAction, &QAction::triggered, this, &MainWindow::deletePolygonVertex);
+
   // Play/Pause — single checkable action so no double-trigger on button swap.
   // Unchecked = paused (shows play ▶ icon); checked = playing (shows pause ∥ icon).
   const QKeySequence PLAY_PAUSE_KEY_SEQUENCE = Qt::CTRL | Qt::SHIFT | Qt::Key_P;
@@ -2370,6 +2877,19 @@ void MainWindow::createActions()
   connect(displayZoomToolAction, SIGNAL(toggled(bool)), sourceCanvasToolbar, SLOT(showZoomToolBar(bool)));
   connect(displayZoomToolAction, SIGNAL(toggled(bool)), destinationCanvasToolbar, SLOT(showZoomToolBar(bool)));
 
+  // Background reference photo
+  _setBackgroundPhotoAction = new QAction(tr("Set Background &Reference Photo..."), this);
+  _setBackgroundPhotoAction->setToolTip(tr("Load a photo of your projection surface to use as a reference while mapping"));
+  connect(_setBackgroundPhotoAction, &QAction::triggered, this, &MainWindow::setBackgroundPhoto);
+
+  _clearBackgroundPhotoAction = new QAction(tr("Clear Background Photo"), this);
+  _clearBackgroundPhotoAction->setEnabled(false);
+  connect(_clearBackgroundPhotoAction, &QAction::triggered, this, &MainWindow::clearBackgroundPhoto);
+
+  _resetMeshInputAction = new QAction(tr("Reset Input Mesh to Source Dimensions"), this);
+  _resetMeshInputAction->setToolTip(tr("Redistribute the input mesh vertices to cover the full source width and height"));
+  connect(_resetMeshInputAction, &QAction::triggered, this, &MainWindow::resetMeshInputToSource);
+
   // Toggle show/hide menuBar
   showMenuBarAction = new QAction(tr("&Menu Bar"), this);
   showMenuBarAction->setCheckable(true);
@@ -2487,6 +3007,7 @@ void MainWindow::createMenus()
   fileMenu->addAction(importFolderAction);
   fileMenu->addAction(AddCameraAction);
   fileMenu->addAction(addColorAction);
+  fileMenu->addAction(addTextAction);
 #ifdef Q_OS_MAC
   fileMenu->addAction(addSyphonAction);
 #endif
@@ -2561,6 +3082,9 @@ void MainWindow::createMenus()
   viewMenu->addAction(displayTestSignalAction);
   viewMenu->addAction(displayControlsAction);
   viewMenu->addAction(displaySourceControlsAction);
+  viewMenu->addSeparator();
+  viewMenu->addAction(_setBackgroundPhotoAction);
+  viewMenu->addAction(_clearBackgroundPhotoAction);
   outputScreenMenu = viewMenu->addMenu(tr("&Output screen"));
   outputScreenMenu->addActions(screenActions);
   viewMenu->addSeparator();
@@ -2612,6 +3136,11 @@ void MainWindow::createLayerContextMenu()
   layerContextMenu = new QMenu(this);
   layerContextMenu->installEventFilter(this);
 
+  // Polygon vertex editing (shown/hidden dynamically in showLayerContextMenu).
+  layerContextMenu->addAction(addPolygonVertexAction);
+  layerContextMenu->addAction(deletePolygonVertexAction);
+  layerContextMenu->addSeparator();
+
   // Add different Action
   layerContextMenu->addAction(duplicateLayerAction);
   layerContextMenu->addAction(deleteLayerAction);
@@ -2621,6 +3150,9 @@ void MainWindow::createLayerContextMenu()
 
   // Create menu for source list
   _changeLayerMediaMenu = layerContextMenu->addMenu(tr("Change Layer Source"));
+
+  // Mesh input reset (visible only when right-clicking in the source canvas on a Mesh layer).
+  layerContextMenu->addAction(_resetMeshInputAction);
 
   // Add another separator
   layerContextMenu->addSeparator();
@@ -2669,7 +3201,7 @@ void MainWindow::createSourceContextMenu()
 
   // Connexions
   connect(sourceList, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showSourceContextMenu(const QPoint&)));
-  connect(sourceCanvas, SIGNAL(shapeContextMenuRequested(const QPoint&)), this, SLOT(showSourceContextMenu(const QPoint&)));
+  connect(sourceCanvas, SIGNAL(shapeContextMenuRequested(const QPoint&)), this, SLOT(showLayerContextMenu(const QPoint&)));
 }
 
 void MainWindow::createToolBars()
@@ -2679,12 +3211,14 @@ void MainWindow::createToolBars()
   mainToolBar->addAction(importMediaAction);
   mainToolBar->addAction(AddCameraAction);
   mainToolBar->addAction(addColorAction);
+  mainToolBar->addAction(addTextAction);
 #ifdef Q_OS_MAC
   mainToolBar->addAction(addSyphonAction);
 #endif
 
   mainToolBar->addSeparator();
 
+  mainToolBar->addAction(addPolygonAction);
   mainToolBar->addAction(addMeshAction);
   mainToolBar->addAction(addTriangleAction);
   mainToolBar->addAction(addEllipseAction);
@@ -2714,8 +3248,12 @@ void MainWindow::createToolBars()
   // Add toolbars.
   addToolBar(Qt::TopToolBarArea, mainToolBar);
 
-  // XXX: style hack
-  mainToolBar->setStyleSheet("border-bottom: solid 5px #272a36;");
+  // XXX: style hack — keep border-bottom separator; also style action buttons
+  mainToolBar->setStyleSheet(
+    "QToolBar { border-bottom: solid 5px #272a36; }"
+    "QToolButton { border: 1px solid palette(mid); margin: 2px; }"
+    "QToolButton:hover { border-color: palette(highlight); background: palette(highlight); }"
+    "QToolButton:pressed, QToolButton:checked { background: palette(dark); border-color: palette(highlight); }");
 }
 
 void MainWindow::createStatusBar()
@@ -2791,6 +3329,8 @@ void MainWindow::writeSettings()
   settings.setValue("displayOutputWindow", outputFullScreenAction->isChecked());
   settings.setValue("displayTestSignal", displayTestSignalAction->isChecked());
   settings.setValue("displayAllControls", displaySourceControlsAction->isChecked());
+  settings.setValue("sourceListIconSize", _sourceListIconSize);
+  settings.setValue("sourceListThumbnailMode", _sourceListThumbnailMode);
   settings.setValue("oscListeningPort", oscListeningPort);
 #ifdef HAVE_MCP
   settings.setValue("mcpListeningPort", mcpListeningPort);
@@ -2915,9 +3455,16 @@ void MainWindow::setCurrentFile(const QString &fileName)
   if (!curFile.isEmpty())
   {
     shownName = strippedName(curFile);
+    QString canonicalFile = QFileInfo(curFile).canonicalFilePath();
+    if (canonicalFile.isEmpty()) canonicalFile = curFile;
     recentFiles = settings.value("recentFiles").toStringList();
-    recentFiles.removeAll(curFile);
-    recentFiles.prepend(curFile);
+    // Normalize existing entries and remove any that resolve to the same file.
+    recentFiles.erase(std::remove_if(recentFiles.begin(), recentFiles.end(),
+      [&](const QString& f) {
+        QString c = QFileInfo(f).canonicalFilePath();
+        return c.isEmpty() ? f == canonicalFile : c == canonicalFile;
+      }), recentFiles.end());
+    recentFiles.prepend(canonicalFile);
     while (recentFiles.size() > MaxRecentFiles)
     {
       recentFiles.removeLast();
@@ -3032,8 +3579,8 @@ void MainWindow::updateMediaListActions()
   // Clear media list menu
   _changeLayerMediaMenu->clear();
 
-  if (sourceList->count() > 1) { // No need to load the same video
-    for (auto i = 0; i < sourceList->count(); i++) {
+  if (mappingManager->nSources() > 1) { // No need to load the same video
+    for (auto i = 0; i < mappingManager->nSources(); i++) {
       QAction *mediaAction = new QAction(this);
       mediaAction->setText(tr("&%1 %2").arg(i + 1).arg(mappingManager->getSource(i)->getName()));
       mediaAction->setData(mappingManager->getSource(i)->getId());
@@ -3120,7 +3667,7 @@ bool MainWindow::importMediaFile(const QString &fileName, bool isImage, bool isC
   uint mediaId = createMediaSource(NULL_UID, fileName, 0, 0, isImage, type);
 
   // Initialize position (center).
-  QSharedPointer<Video> media = qSharedPointerCast<Video>(mappingManager->getSourceById(mediaId));
+  QSharedPointer<Texture> media = qSharedPointerCast<Texture>(mappingManager->getSourceById(mediaId));
   Q_CHECK_PTR(media);
 
   media->setPosition((sourceCanvas->width()  - media->getWidth() ) / 2.0f,
@@ -3171,15 +3718,28 @@ void MainWindow::initSourceListSections()
   auto makeHeader = [this](const QString& title, const char* addSlot) -> QListWidgetItem* {
     QListWidgetItem* h = new QListWidgetItem();
     h->setFlags(Qt::ItemIsEnabled);
-    h->setSizeHint(QSize(0, 26));
+    h->setSizeHint(QSize(0, 20));
     sourceList->addItem(h);
 
     QWidget* container = new QWidget;
     container->setAutoFillBackground(false);
 
     QHBoxLayout* layout = new QHBoxLayout(container);
-    layout->setContentsMargins(6, 2, 4, 2);
-    layout->setSpacing(4);
+    layout->setContentsMargins(2, 2, 4, 2);
+    layout->setSpacing(2);
+
+    QToolButton* arrow = new QToolButton;
+    arrow->setText("▼");
+    arrow->setFixedSize(16, 16);
+    arrow->setAutoRaise(true);
+    arrow->setCursor(Qt::ArrowCursor);
+    arrow->setStyleSheet(
+      "QToolButton { color: rgb(140,140,140); border: none; font-size: 8px; }"
+      "QToolButton:hover { color: rgb(200,200,200); }");
+    _sectionArrows[h] = arrow;
+    connect(arrow, &QToolButton::clicked, this, [this, h]() {
+      setSectionCollapsed(h, !_sectionCollapsed.value(h, false));
+    });
 
     QLabel* label = new QLabel(title);
     QFont f = label->font();
@@ -3199,6 +3759,7 @@ void MainWindow::initSourceListSections()
       "QToolButton:hover { background: rgb(80,80,80); }");
     connect(btn, SIGNAL(clicked()), this, addSlot);
 
+    layout->addWidget(arrow);
     layout->addWidget(label);
     layout->addStretch();
     layout->addWidget(btn);
@@ -3207,9 +3768,57 @@ void MainWindow::initSourceListSections()
     return h;
   };
 
-  _sourceSectionImages  = makeHeader(tr("Images"),        SLOT(importMedia()));
-  _sourceSectionVideos  = makeHeader(tr("Movies"),        SLOT(importMedia()));
-  _sourceSectionFolders = makeHeader(tr("Image Folders"), SLOT(importFolderAsSource()));
+  _sourceSectionImages    = makeHeader(tr("Images"),        SLOT(importMedia()));
+  _sourceSectionVideos    = makeHeader(tr("Movies"),        SLOT(importMedia()));
+  _sourceSectionGenerated = makeHeader(tr("Generated"),     SLOT(addColor()));
+  _sourceSectionFolders   = makeHeader(tr("Image Folders"), SLOT(importFolderAsSource()));
+}
+
+void MainWindow::setSectionCollapsed(QListWidgetItem* header, bool collapsed)
+{
+  _sectionCollapsed[header] = collapsed;
+
+  if (_sectionArrows.contains(header))
+    _sectionArrows[header]->setText(collapsed ? "▶" : "▼");
+
+  QSet<QListWidgetItem*> headers = {
+    _sourceSectionImages, _sourceSectionVideos,
+    _sourceSectionGenerated, _sourceSectionFolders
+  };
+  int start = sourceList->row(header) + 1;
+  for (int i = start; i < sourceList->count(); ++i) {
+    QListWidgetItem* it = sourceList->item(i);
+    if (headers.contains(it)) break;
+    it->setHidden(collapsed);
+  }
+}
+
+void MainWindow::setSourceListThumbnailMode(bool thumbnailMode)
+{
+  _sourceListThumbnailMode = thumbnailMode;
+
+  if (_viewModeBtns[0]) _viewModeBtns[0]->setChecked(!thumbnailMode);
+  if (_viewModeBtns[1]) _viewModeBtns[1]->setChecked(thumbnailMode);
+
+  // Size buttons and preview only make sense in thumbnail mode.
+  for (auto* b : _thumbSizeBtns) if (b) b->setVisible(thumbnailMode);
+  if (_previewToggleBtn) _previewToggleBtn->setVisible(thumbnailMode);
+
+  int iconPx = thumbnailMode ? _sourceListIconSize : 0;
+  sourceList->setIconSize(QSize(iconPx, iconPx));
+
+  int rowH = thumbnailMode ? (_sourceListIconSize + 8) : 24;
+  QSet<QListWidgetItem*> headers = {
+    _sourceSectionImages, _sourceSectionVideos,
+    _sourceSectionGenerated, _sourceSectionFolders
+  };
+  for (int i = 0; i < sourceList->count(); ++i) {
+    QListWidgetItem* it = sourceList->item(i);
+    if (headers.contains(it)) continue;
+    it->setSizeHint(QSize(it->sizeHint().width(), rowH));
+  }
+
+  QSettings().setValue("sourceListThumbnailMode", thumbnailMode);
 }
 
 void MainWindow::addSourceItem(uid sourceId, const QIcon& icon, const QString& name)
@@ -3229,6 +3838,8 @@ void MainWindow::addSourceItem(uid sourceId, const QIcon& icon, const QString& n
     sourceGui = SourceGui::ptr(new ImageGui(source));
   else if (sourceType == SourceType::Color)
     sourceGui = SourceGui::ptr(new ColorGui(source));
+  else if (sourceType == SourceType::Text)
+    sourceGui = SourceGui::ptr(new TextGui(source));
   else if (sourceType == SourceType::Folder)
     sourceGui = SourceGui::ptr(new FolderGui(source));
 #ifdef Q_OS_MAC
@@ -3278,8 +3889,9 @@ void MainWindow::addSourceItem(uid sourceId, const QIcon& icon, const QString& n
   QListWidgetItem* item = new QListWidgetItem(icon, name);
   setItemId(*item, sourceId); // TODO: could possibly be replaced by a Source pointer
 
-  // Set size.
-  item->setSizeHint(QSize(item->sizeHint().width(), MainWindow::PAINT_LIST_ITEM_HEIGHT));
+  // Set size based on current view mode.
+  int rowH = _sourceListThumbnailMode ? (_sourceListIconSize + 8) : 24;
+  item->setSizeHint(QSize(item->sizeHint().width(), rowH));
 
   // Set tooltip.
   item->setToolTip(QString("ID: %1").arg(source->getId()));
@@ -3288,18 +3900,27 @@ void MainWindow::addSourceItem(uid sourceId, const QIcon& icon, const QString& n
   contentTab->setCurrentWidget(sourceSplitter);
 
   // Insert under the appropriate section header.
+  QListWidgetItem* sectionHeader = nullptr;
   if (source->getSourceType() == SourceType::Image) {
-    // Images go before the Movies header.
     int videosRow = sourceList->row(_sourceSectionVideos);
     sourceList->insertItem(videosRow, item);
+    sectionHeader = _sourceSectionImages;
   } else if (source->getSourceType() == SourceType::Folder) {
-    // Folders go at the end, after the Image Folders header.
     sourceList->addItem(item);
-  } else {
-    // Videos and other types go before the Image Folders header.
+    sectionHeader = _sourceSectionFolders;
+  } else if (source->getSourceType() == SourceType::Color ||
+             source->getSourceType() == SourceType::Text) {
     int foldersRow = sourceList->row(_sourceSectionFolders);
     sourceList->insertItem(foldersRow, item);
+    sectionHeader = _sourceSectionGenerated;
+  } else {
+    int generatedRow = sourceList->row(_sourceSectionGenerated);
+    sourceList->insertItem(generatedRow, item);
+    sectionHeader = _sourceSectionVideos;
   }
+  // Respect collapsed state of the section.
+  if (sectionHeader && _sectionCollapsed.value(sectionHeader, false))
+    item->setHidden(true);
   sourceList->setCurrentItem(item);
 
   // Update mapping guis.
@@ -3351,7 +3972,7 @@ void MainWindow::addLayerItem(uid layerId)
   // XXX hardcoded for textures
   QSharedPointer<TextureLayer> textureLayer;
   if (sourceType == SourceType::Video || sourceType == SourceType::Image
-      || sourceType == SourceType::Folder
+      || sourceType == SourceType::Folder || sourceType == SourceType::Text
 #ifdef Q_OS_MAC
       || sourceType == SourceType::Syphon
 #endif
@@ -3394,6 +4015,15 @@ void MainWindow::addLayerItem(uid layerId)
       mapper = LayerGui::ptr(new EllipseColorLayerGui(layer));
     else
       mapper = LayerGui::ptr(new EllipseTextureLayerGui(textureLayer));
+  }
+  else if (shapeType == ShapeType::Polygon)
+  {
+    defaultName = QString("Polygon %1").arg(layerId);
+    icon = MM::themedIcon(":/shape-polygon");
+    if (sourceType == SourceType::Color)
+      mapper = LayerGui::ptr(new PolygonColorLayerGui(layer));
+    else
+      mapper = LayerGui::ptr(new FreePolygonTextureLayerGui(textureLayer));
   }
   else
   {
@@ -3461,6 +4091,9 @@ void MainWindow::addLayerItem(uid layerId)
 
   // Update playing state.
   updatePlayingState();
+
+  // Refresh usage badges on source thumbnails.
+  refreshSourceBadges();
 }
 
 void MainWindow::removeLayerItem(uid layerId)
@@ -3501,6 +4134,9 @@ void MainWindow::removeLayerItem(uid layerId)
 
   // Update playing state.
   updatePlayingState();
+
+  // Refresh usage badges on source thumbnails.
+  refreshSourceBadges();
 }
 
 void MainWindow::moveLayerItem(uid layerId, int idx)
@@ -3624,7 +4260,7 @@ bool MainWindow::fileSupported(const QString &file, bool isImage)
 
   if (isImage) {
     if (MM::IMAGE_FILES_FILTER.contains(fileExtension, Qt::CaseInsensitive) &&
-        QImageReader(file).canRead()) // extra check: makes sure format is readable
+        QImageReader(file).canRead())
       return true;
   } else {
     if (MM::VIDEO_FILES_FILTER.contains(fileExtension, Qt::CaseInsensitive))
@@ -4001,10 +4637,26 @@ void MainWindow::showLayerContextMenu(const QPoint &point)
   uid layerId = currentLayerItemId();
   Layer::ptr layer = mappingManager->getLayerById(layerId);
 
+  if (!layer) {
+    clearPendingPolygonEdit();
+    return;
+  }
+
   // Switch to right action check state
   layerLockedAction->setChecked(layer->isLocked());
   layerHideAction->setChecked(!layer->isVisible());
   layerSoloAction->setChecked(layer->isSolo());
+
+  // Show vertex-edit actions only when a polygon edge/vertex was right-clicked.
+  addPolygonVertexAction->setVisible(_polyEditType == PolyEditAdd);
+  deletePolygonVertexAction->setVisible(_polyEditType == PolyEditDelete);
+
+  // Show "Reset Input Mesh to Source Dimensions" only when right-clicking in the
+  // source canvas and the current layer has a Mesh input shape.
+  bool fromSourceCanvas = (sender() == sourceCanvas);
+  bool hasMeshInput = layer->hasInputShape() &&
+                      layer->getInputShape()->getType() == MShape::ShapeType::Mesh;
+  _resetMeshInputAction->setVisible(fromSourceCanvas && hasMeshInput);
 
   if (objectSender != nullptr) {
     if (sender() == layerItemDelegate) // XXX: The item delegate is not a widget
@@ -4012,6 +4664,8 @@ void MainWindow::showLayerContextMenu(const QPoint &point)
     else
       layerContextMenu->exec(objectSender->mapToGlobal(point));
   }
+
+  clearPendingPolygonEdit();
 }
 
 void MainWindow::showSourceContextMenu(const QPoint &point)
@@ -4061,6 +4715,54 @@ const QIcon MainWindow::getSourceIcon(Source::ptr source)
     painter.setPen(QPen(QColor(255, 0, 0, 180), 6));
     painter.drawLine(0, 0, pixmap.width(), pixmap.height());
     return QIcon(pixmap);
+  }
+}
+
+static QIcon overlayUsageBadge(const QIcon& base, int count, int size)
+{
+  QPixmap pm = base.pixmap(size, size);
+  if (count <= 0)
+    return QIcon(pm);
+
+  QPainter p(&pm);
+  p.setRenderHint(QPainter::Antialiasing);
+
+  QFont f = p.font();
+  f.setBold(true);
+  f.setPixelSize(qMax(9, size / 5));
+  p.setFont(f);
+
+  QFontMetrics fm(f);
+  const QString text = QString::number(count);
+  int tw = fm.horizontalAdvance(text);
+  int th = fm.height();
+  int badgeW = qMax(tw + 6, th + 4);
+  int badgeH = th + 4;
+  int bx = pm.width() - badgeW - 2;
+  int by = 2;
+
+  p.setPen(Qt::NoPen);
+  p.setBrush(QColor(30, 30, 30, 210));
+  p.drawRoundedRect(bx, by, badgeW, badgeH, badgeH / 2, badgeH / 2);
+
+  p.setPen(Qt::white);
+  p.drawText(QRect(bx, by, badgeW, badgeH), Qt::AlignCenter, text);
+  p.end();
+
+  return QIcon(pm);
+}
+
+void MainWindow::refreshSourceBadges()
+{
+  for (int i = 0; i < sourceList->count(); ++i) {
+    QListWidgetItem* item = sourceList->item(i);
+    if (!item || item->data(Qt::UserRole).isNull()) continue;
+    uid id = getItemId(*item);
+    if (id == 0) continue;
+    Source::ptr source = mappingManager->getSourceById(id);
+    if (!source) continue;
+    int count = mappingManager->getSourceLayersById(id).size();
+    item->setIcon(overlayUsageBadge(getSourceIcon(source), count, MM::SOURCE_THUMBNAIL_SIZE));
   }
 }
 
@@ -4190,6 +4892,7 @@ void MainWindow::setCurrentSource(int uid)
       sourcePropertyPanel->setCurrentWidget(sourceGuis[uid]->getPropertiesEditor());
     }
     _hasCurrentSource = true;
+    updateSourcePreview(uid);
   }
 }
 
@@ -4212,12 +4915,95 @@ void MainWindow::removeCurrentSource() {
   _hasCurrentSource = false;
   currentSourceId = NULL_UID;
   sourceList->clearSelection();
+  if (_sourcePreviewLabel)
+    static_cast<SourcePreviewLabel*>(_sourcePreviewLabel)->clearAll();
 }
 
 void MainWindow::removeCurrentLayer() {
   _hasCurrentLayer = false;
   currentLayerId = NULL_UID;
   layerList->clearSelection();
+}
+
+void MainWindow::updateSourcePreview(uid sourceId)
+{
+  if (!_sourcePreviewLabel)
+    return;
+  auto* lbl = static_cast<SourcePreviewLabel*>(_sourcePreviewLabel);
+  Source::ptr source = mappingManager->getSourceById(sourceId);
+  if (source.isNull()) {
+    lbl->clearAll();
+    return;
+  }
+
+  // For video sources try the animated frame cache first.
+  if (source->getSourceType() == Source::SourceType::Video && _thumbnailCache) {
+    QSharedPointer<Video> vid = qSharedPointerCast<Video>(source);
+    if (!vid->getUri().isEmpty()) {
+      QStringList frames = ThumbnailCache::cachedFrames(vid->getUri(), thumbnailCacheDir());
+      if (!frames.isEmpty()) {
+        QVector<QPixmap> pixmaps;
+        pixmaps.reserve(frames.size());
+        for (const QString& f : frames) {
+          QPixmap px(f);
+          if (!px.isNull()) pixmaps << px;
+        }
+        int fps = qMax(1, qRound(4.0 * vid->getRate()));
+        lbl->setAnimationFrames(pixmaps, fps);
+        return;
+      }
+      // Not yet cached — request generation and show static fallback.
+      _thumbnailCache->request(vid->getUri(), thumbnailCacheDir());
+    }
+  }
+
+  // Static fallback (images, folders, colour, or uncached video).
+  int w = _sourcePreviewLabel->width();
+  int h = _sourcePreviewLabel->height();
+  if (w < 10) w = 320;
+  if (h < 10) h = 200;
+  lbl->setSourcePixmap(source->getPreviewPixmap(w, h));
+}
+
+void MainWindow::onThumbnailReady(const QString& videoPath, const QStringList& frames)
+{
+  if (!_sourcePreviewLabel || currentSourceId == NULL_UID)
+    return;
+  Source::ptr source = mappingManager->getSourceById(currentSourceId);
+  if (source.isNull() || source->getSourceType() != Source::SourceType::Video)
+    return;
+  auto vid = qSharedPointerCast<Video>(source);
+  if (vid->getUri() != videoPath)
+    return;
+
+  QVector<QPixmap> pixmaps;
+  pixmaps.reserve(frames.size());
+  for (const QString& f : frames) {
+    QPixmap px(f);
+    if (!px.isNull()) pixmaps << px;
+  }
+  int fps = qMax(1, qRound(4.0 * vid->getRate()));
+  static_cast<SourcePreviewLabel*>(_sourcePreviewLabel)->setAnimationFrames(pixmaps, fps);
+}
+
+void MainWindow::updatePreviewAnimSpeed()
+{
+  if (!_sourcePreviewLabel || currentSourceId == NULL_UID)
+    return;
+  Source::ptr source = mappingManager->getSourceById(currentSourceId);
+  if (source.isNull() || source->getSourceType() != Source::SourceType::Video)
+    return;
+  auto vid = qSharedPointerCast<Video>(source);
+  int fps = qMax(1, qRound(4.0 * vid->getRate()));
+  static_cast<SourcePreviewLabel*>(_sourcePreviewLabel)->setAnimationFps(fps);
+}
+
+QString MainWindow::thumbnailCacheDir() const
+{
+  if (!curFile.isEmpty())
+    return QFileInfo(curFile).absoluteDir().filePath(".thumbnails");
+  return QStandardPaths::writableLocation(QStandardPaths::TempLocation)
+         + "/MyMapMap/thumbnails";
 }
 
 void MainWindow::startOscReceiver()
@@ -4435,9 +5221,11 @@ void MainWindow::refreshIcons()
     { importMediaAction,          ":/add-video"         },
     { AddCameraAction,            ":/add-camera"        },
     { addColorAction,             ":/add-color"         },
+    { addTextAction,              ":/add-text"          },
     { addMeshAction,              ":/add-mesh"          },
     { addTriangleAction,          ":/add-triangle"      },
     { addEllipseAction,           ":/add-ellipse"       },
+    { addPolygonAction,           ":/add-polygon"       },
     { rewindAction,               ":/rewind"            },
     { outputFullScreenAction,     ":/fullscreen"        },
     { displayControlsAction,      ":/control-points"    },
@@ -4483,6 +5271,74 @@ void MainWindow::refreshIcons()
 void MainWindow::changeEvent(QEvent* event)
 {
   QMainWindow::changeEvent(event);
+}
+
+void MainWindow::resetMeshInputToSource()
+{
+  Layer::ptr layer = getCurrentLayer();
+  if (!layer || !layer->hasInputShape()) return;
+  if (layer->getInputShape()->getType() != MShape::ShapeType::Mesh) return;
+
+  Texture* tex = qobject_cast<Texture*>(layer->getSource().data());
+  if (!tex) return;
+  int w = tex->getWidth();
+  int h = tex->getHeight();
+  if (w <= 0 || h <= 0) return;
+
+  undoStack->push(new ResetMeshInputCommand(sourceCanvas, (int)tex->getX(), (int)tex->getY(), w, h));
+}
+
+void MainWindow::setBackgroundPhoto()
+{
+  QString path = QFileDialog::getOpenFileName(
+    this, tr("Set Background Reference Photo"), QString(),
+    tr("Images (*.png *.jpg *.jpeg *.bmp *.tiff *.tif *.gif *.webp)"));
+  if (path.isEmpty()) return;
+  applyBackgroundPhoto(path, _backgroundPhotoOpacity);
+}
+
+void MainWindow::clearBackgroundPhoto()
+{
+  clearBackgroundPhotoState();
+}
+
+void MainWindow::applyBackgroundPhoto(const QString& path, qreal opacity)
+{
+  QPixmap pix(path);
+  if (pix.isNull()) {
+    QMessageBox::warning(this, tr("Background Photo"),
+                         tr("Could not load image: %1").arg(path));
+    return;
+  }
+  _backgroundPhotoPath    = path;
+  _backgroundPhotoOpacity = opacity;
+
+  destinationCanvas->setBackgroundPhoto(pix, opacity);
+
+  destinationCanvasToolbar->setBackgroundPhotoControlsVisible(true);
+  destinationCanvasToolbar->setBackgroundOpacityValue(qRound(opacity * 100));
+  _clearBackgroundPhotoAction->setEnabled(true);
+}
+
+void MainWindow::clearBackgroundPhotoState()
+{
+  _backgroundPhotoPath.clear();
+
+  destinationCanvas->clearBackgroundPhoto();
+
+  destinationCanvasToolbar->setBackgroundPhotoControlsVisible(false);
+  _clearBackgroundPhotoAction->setEnabled(false);
+}
+
+void MainWindow::onBackgroundPhotoOpacityChanged(int value)
+{
+  _backgroundPhotoOpacity = value / 100.0;
+  destinationCanvas->setBackgroundPhotoOpacity(_backgroundPhotoOpacity);
+}
+
+void MainWindow::onBackgroundPhotoToggled(bool visible)
+{
+  destinationCanvas->setBackgroundPhotoVisible(visible);
 }
 
 }

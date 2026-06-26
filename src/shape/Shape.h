@@ -74,7 +74,7 @@ public:
   };
 
   enum ShapeType {
-    Mesh, Triangle, Ellipse, Quad
+    Mesh, Triangle, Ellipse, Quad, Polygon
   };
 
   typedef QSharedPointer<MShape> ptr;

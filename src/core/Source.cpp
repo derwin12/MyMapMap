@@ -29,6 +29,9 @@
 #include <QFileInfo>
 #include <QImageReader>
 #include <QSettings>
+#include <QPainter>
+#include <QFont>
+#include <QFontMetrics>
 
 namespace mmp {
 
@@ -259,6 +262,94 @@ QIcon FolderSource::getIcon() const
   return provider.icon(QFileIconProvider::Folder);
 }
 
+/* Implementation of the Text class */
+
+Text::Text(int id)
+  : Texture(id),
+    _text(tr("Text")),
+    _textColor(Qt::white),
+    _bgColor(Qt::transparent),
+    _fontFamily(""),
+    _fontSize(48),
+    _bold(false),
+    _italic(false),
+    _alignment(Qt::AlignHCenter)
+{
+  _redraw();
+}
+
+Text::Text(const QString& text, uid id)
+  : Texture(id),
+    _text(text),
+    _textColor(Qt::white),
+    _bgColor(Qt::transparent),
+    _fontFamily(""),
+    _fontSize(48),
+    _bold(false),
+    _italic(false),
+    _alignment(Qt::AlignHCenter)
+{
+  _redraw();
+}
+
+void Text::_redraw()
+{
+  _image = QImage(TEXT_WIDTH, TEXT_HEIGHT, QImage::Format_RGBA8888);
+  _image.fill(_bgColor);
+
+  QPainter p(&_image);
+  QFont font(_fontFamily, _fontSize);
+  font.setBold(_bold);
+  font.setItalic(_italic);
+  p.setFont(font);
+  p.setPen(_textColor);
+  p.drawText(QRect(4, 4, TEXT_WIDTH - 8, TEXT_HEIGHT - 8),
+             static_cast<Qt::Alignment>(_alignment) | Qt::AlignVCenter | Qt::TextWordWrap,
+             _text);
+  p.end();
+
+  bitsChanged = true;
+}
+
+const uchar* Text::getBits()
+{
+  bitsChanged = false;
+  return _image.bits();
+}
+
+QIcon Text::getIcon() const
+{
+  QPixmap pm(MM::SOURCE_THUMBNAIL_SIZE, MM::SOURCE_THUMBNAIL_SIZE);
+  pm.fill(_bgColor.alpha() > 0 ? _bgColor : Qt::black);
+  QPainter p(&pm);
+  QFont font(_fontFamily, 14);
+  font.setBold(_bold);
+  font.setItalic(_italic);
+  p.setFont(font);
+  p.setPen(_textColor);
+  QString preview = _text.isEmpty() ? QStringLiteral("T") : _text;
+  int nl = preview.indexOf('\n');
+  if (nl > 0) preview = preview.left(nl);
+  p.drawText(pm.rect(), Qt::AlignCenter | Qt::TextSingleLine, preview);
+  p.end();
+  return QIcon(pm);
+}
+
+QPixmap Text::getPreviewPixmap(int maxW, int maxH) const
+{
+  QPixmap scaled = QPixmap::fromImage(_image).scaled(maxW, maxH, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+  // Composite onto a dark background so white text on transparent bg is visible in the panel.
+  if (_image.hasAlphaChannel()) {
+    QPixmap composite(scaled.size());
+    composite.fill(QColor(0x30, 0x30, 0x30));
+    QPainter p(&composite);
+    p.drawPixmap(0, 0, scaled);
+    return composite;
+  }
+  return scaled;
+}
+
 /* Implementation of the Video class */
 Video::Video(int id) : Texture(id),
     _uri(""),
@@ -327,6 +418,31 @@ void Video::rewind()
 qint64 Video::getDuration() const
 {
   return _impl ? _impl->getDuration() : 0;
+}
+
+qint64 Video::getPosition() const
+{
+  return _impl ? _impl->getPosition() : 0;
+}
+
+bool Video::seekTo(double position)
+{
+  return _impl ? _impl->seekTo(position) : false;
+}
+
+bool Video::seekToMs(qint64 ms)
+{
+  return _impl ? _impl->seekTo(ms) : false;
+}
+
+qreal Video::getFrameRate() const
+{
+  return _impl ? _impl->getFrameRate() : 0.0;
+}
+
+QString Video::getVideoCodec() const
+{
+  return _impl ? _impl->getVideoCodec() : QString();
 }
 
 bool Video::getPlayInLoop() const

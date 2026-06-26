@@ -10,10 +10,12 @@
         <file alias="add-video">images/icons/svg/add-video.svg</file>
         <file alias="add-camera">images/icons/svg/add-camera.svg</file>
         <file alias="add-color">images/icons/svg/add-color.svg</file>
+        <file alias="add-text">images/icons/svg/add-text.svg</file>
         <file alias="add-syphon">images/icons/syphon-white.png</file>
         <file alias="add-mesh">images/icons/svg/add-mesh.svg</file>
         <file alias="add-triangle">images/icons/svg/add-triangle.svg</file>
         <file alias="add-ellipse">images/icons/svg/add-ellipse.svg</file>
+        <file alias="add-polygon">images/icons/svg/add-polygon.svg</file>
         <file alias="play">images/icons/svg/play.svg</file>
         <file alias="pause">images/icons/svg/pause.svg</file>
         <file alias="rewind">images/icons/svg/rewind.svg</file>
@@ -21,7 +23,7 @@
         <file alias="shape-mesh">images/icons/svg/add-mesh.svg</file>
         <file alias="shape-triangle">images/icons/svg/add-triangle.svg</file>
         <file alias="shape-ellipse">images/icons/svg/add-ellipse.svg</file>
-        <file alias="shape-polygon">images/icons/svg/add-ellipse.svg</file>
+        <file alias="shape-polygon">images/icons/svg/add-polygon.svg</file>
         <file alias="mapmap-title">images/logo/logomapmap.png</file>
         <file alias="mapmap-title-light">images/logo/logomapmap-light.png</file>
         <file alias="mapmap-logo">images/logo/mapmap-logo.png</file>
@@ -61,5 +63,6 @@
         <file alias="vertex-scale">images/icons/svg/vertex-scale.svg</file>
         <file alias="vertex-rotate">images/icons/svg/vertex-rotate.svg</file>
         <file alias="mute">images/icons/svg/mute.svg</file>
+        <file alias="background-photo">images/icons/svg/background-photo.svg</file>
     </qresource>
 </RCC>

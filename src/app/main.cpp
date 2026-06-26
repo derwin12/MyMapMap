@@ -45,6 +45,7 @@ void initRegistry()
   registry.add<Video>();
   registry.add<Image>();
   registry.add<Color>();
+  registry.add<Text>();
   registry.add<FolderSource>();
 #ifdef Q_OS_MAC
   registry.add<Syphon>();
@@ -63,6 +64,7 @@ void initRegistry()
   registry.add<Mesh>();
   registry.add<MM_PREPEND_NAMESPACE(Ellipse)>();
   registry.add<Triangle>();
+  registry.add<FreePolygon>();
 }
 
 // Intercept all logging message and display it in the console

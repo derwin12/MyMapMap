@@ -91,6 +91,45 @@ MapperGLCanvas::MapperGLCanvas(MainWindow* mainWindow,
   undoStack = mainWindow->getUndoStack();
 }
 
+void MapperGLCanvas::setBackgroundPhoto(const QPixmap& pixmap, qreal opacity)
+{
+  _backgroundPixmap     = pixmap;
+  _backgroundOpacity    = opacity;
+  _backgroundPhotoVisible = true;
+  update();
+}
+
+void MapperGLCanvas::clearBackgroundPhoto()
+{
+  _backgroundPixmap = QPixmap();
+  update();
+}
+
+void MapperGLCanvas::setBackgroundPhotoOpacity(qreal opacity)
+{
+  _backgroundOpacity = opacity;
+  update();
+}
+
+void MapperGLCanvas::setBackgroundPhotoVisible(bool visible)
+{
+  _backgroundPhotoVisible = visible;
+  update();
+}
+
+void MapperGLCanvas::drawBackground(QPainter* painter, const QRectF& rect)
+{
+  QGraphicsView::drawBackground(painter, rect);
+  if (_backgroundPixmap.isNull() || !_backgroundPhotoVisible) return;
+  painter->save();
+  painter->setOpacity(_backgroundOpacity);
+  // Reset to widget coordinates so the photo always fills the full viewport
+  // regardless of zoom level or scroll position.
+  painter->resetTransform();
+  painter->drawPixmap(viewport()->rect(), _backgroundPixmap);
+  painter->restore();
+}
+
 MShape::ptr MapperGLCanvas::getShapeFromMapping(Layer::ptr mapping)
 {
   if (mapping.isNull())
@@ -130,6 +169,67 @@ QSharedPointer<ShapeGraphicsItem> MapperGLCanvas::getCurrentShapeGraphicsItem()
 void MapperGLCanvas::drawForeground(QPainter *painter , const QRectF &rect)
 {
   Q_UNUSED(rect);
+
+  // Polygon draw-mode ghost overlay — active on the canvas the user is drawing on.
+  bool polygonDrawActive = _mainWindow->isPolygonDrawMode() &&
+                           (isOutput() != _mainWindow->isPolygonDrawOnSource());
+  if (polygonDrawActive) {
+    const QVector<QPointF>& pts = _mainWindow->polygonPoints();
+    QPointF cursor = _mainWindow->polygonCursorPos();
+
+    // drawForeground painter is in SCENE coordinates. Scale stroke/radius to match.
+    qreal zf = getZoomFactor();
+    qreal strokeW = MM::SHAPE_STROKE_WIDTH / zf;
+    qreal r      = MM::VERTEX_SELECT_RADIUS / zf;
+
+    painter->save();
+    QPen edgePen(QColor(255, 255, 255, 220), strokeW, Qt::DashLine);
+    QPen closePen(QColor(80, 255, 80, 240), strokeW * 1.5, Qt::SolidLine);
+    QPen vertexPen(QColor(255, 255, 255, 240), strokeW);
+    QBrush vertexBrush(QColor(255, 255, 255, 180));
+    QBrush firstBrush(QColor(80, 255, 80, 200));
+
+    // Snap check in viewport pixels (mapFromScene is correct here for distance).
+    bool snapping = false;
+    if (pts.size() >= 3 && !cursor.isNull()) {
+      QPointF d = mapFromScene(cursor) - mapFromScene(pts.first());
+      snapping = (d.x()*d.x() + d.y()*d.y()) <= sq(MM::VERTEX_SELECT_RADIUS * 2);
+    }
+
+    // Draw edges — use scene coords directly (painter is in scene space).
+    painter->setPen(edgePen);
+    for (int i = 1; i < pts.size(); i++)
+      painter->drawLine(pts[i-1], pts[i]);
+
+    // Rubber-band from last placed point to cursor.
+    if (!pts.isEmpty() && !cursor.isNull()) {
+      painter->setPen(snapping ? closePen : edgePen);
+      painter->drawLine(pts.last(), cursor);
+      if (snapping)
+        painter->drawLine(cursor, pts.first());
+    }
+
+    // Vertex dots.
+    for (int i = 0; i < pts.size(); i++) {
+      painter->setPen(vertexPen);
+      painter->setBrush(i == 0 ? firstBrush : vertexBrush);
+      qreal vr = (i == 0) ? r * 1.4 : r;
+      painter->drawEllipse(pts[i], vr, vr);
+    }
+
+    // Vertex count hint — reset to viewport coords so text stays in the corner.
+    if (!pts.isEmpty()) {
+      painter->save();
+      painter->resetTransform();
+      painter->setPen(QColor(255, 255, 255, 200));
+      painter->setFont(QFont("sans-serif", 9));
+      painter->drawText(10, 20, tr("%1 vertices — Enter or click first point to close, Esc to cancel").arg(pts.size()));
+      painter->restore();
+    }
+
+    painter->restore();
+  }
+
   if (MainWindow::window()->displayControls())
   {
     uid mid = MainWindow::window()->getCurrentLayerId();
@@ -253,6 +353,15 @@ void MapperGLCanvas::dropEvent(QDropEvent *event)
 //
 void MapperGLCanvas::mousePressEvent(QMouseEvent* event)
 {
+  // Intercept all clicks when drawing a polygon on the active draw canvas.
+  if (_mainWindow->isPolygonDrawMode() && (isOutput() != _mainWindow->isPolygonDrawOnSource())) {
+    if (event->button() == Qt::LeftButton)
+      _mainWindow->polygonCanvasClick(mapToScene(event->pos()));
+    else if (event->button() == Qt::RightButton)
+      _mainWindow->cancelPolygonDrawMode();
+    return;
+  }
+
   bool mousePressedOnSomething = false;
 
   _mousePressedPosition = event->pos();
@@ -360,9 +469,72 @@ void MapperGLCanvas::mousePressEvent(QMouseEvent* event)
         }
       }
 
-      // Add Right click for context menu
+      // Right-click: detect FreePolygon vertex/edge hit, then show context menu.
       if (event->buttons() & Qt::RightButton) {
-        emit shapeContextMenuRequested(event->pos()); // Show the shape/mapping context menu
+        _mainWindow->clearPendingPolygonEdit();
+        if (selectedShape && selectedShape->getType() == MShape::Polygon) {
+          int n = selectedShape->nVertices();
+          bool hitFound = false;
+          // 1. Vertex hit (priority — within select radius).
+          for (int i = 0; i < n && !hitFound; i++) {
+            if (distSq(event->pos(), mapFromScene(selectedShape->getVertex(i)))
+                  <= sq(MM::VERTEX_SELECT_RADIUS)) {
+              _mainWindow->setPendingPolygonEdit(MainWindow::PolyEditDelete, i, 0.0, !isOutput());
+              hitFound = true;
+            }
+          }
+          // 2. Edge hit (within 6px of the line, away from vertex zones).
+          static const qreal EDGE_HIT_PX = 6.0;
+          for (int i = 0; i < n && !hitFound; i++) {
+            QPointF p1 = mapFromScene(selectedShape->getVertex(i));
+            QPointF p2 = mapFromScene(selectedShape->getVertex((i + 1) % n));
+            QPointF d  = p2 - p1;
+            qreal lenSq = d.x()*d.x() + d.y()*d.y();
+            if (lenSq < 1.0) continue;
+            QPointF w(event->pos().x() - p1.x(), event->pos().y() - p1.y());
+            qreal t = (w.x()*d.x() + w.y()*d.y()) / lenSq;
+            if (t <= 0.05 || t >= 0.95) continue;
+            QPointF closest(p1.x() + t*d.x(), p1.y() + t*d.y());
+            QPointF diff(event->pos().x() - closest.x(), event->pos().y() - closest.y());
+            if (diff.x()*diff.x() + diff.y()*diff.y() <= EDGE_HIT_PX * EDGE_HIT_PX) {
+              _mainWindow->setPendingPolygonEdit(MainWindow::PolyEditAdd, i, t, !isOutput());
+              hitFound = true;
+            }
+          }
+        }
+        emit shapeContextMenuRequested(event->pos());
+      }
+    }
+  }
+
+  // Also show context menu when right-clicking near a FreePolygon edge
+  // that is outside the shape interior (e.g., concave polygon boundary).
+  if (!mousePressedOnSomething && (event->button() == Qt::RightButton)) {
+    Layer::ptr layer = _mainWindow->getCurrentLayer();
+    if (layer) {
+      MShape::ptr shape = getShapeFromMapping(layer);
+      if (shape && shape->getType() == MShape::Polygon && shape->nVertices() >= 3) {
+        _mainWindow->clearPendingPolygonEdit();
+        int n = shape->nVertices();
+        static const qreal EDGE_HIT_PX = 6.0;
+        for (int i = 0; i < n; i++) {
+          QPointF p1 = mapFromScene(shape->getVertex(i));
+          QPointF p2 = mapFromScene(shape->getVertex((i + 1) % n));
+          QPointF d  = p2 - p1;
+          qreal lenSq = d.x()*d.x() + d.y()*d.y();
+          if (lenSq < 1.0) continue;
+          QPointF w(event->pos().x() - p1.x(), event->pos().y() - p1.y());
+          qreal t = (w.x()*d.x() + w.y()*d.y()) / lenSq;
+          if (t <= 0.05 || t >= 0.95) continue;
+          QPointF closest(p1.x() + t*d.x(), p1.y() + t*d.y());
+          QPointF diff(event->pos().x() - closest.x(), event->pos().y() - closest.y());
+          if (diff.x()*diff.x() + diff.y()*diff.y() <= EDGE_HIT_PX * EDGE_HIT_PX) {
+            _mainWindow->setPendingPolygonEdit(MainWindow::PolyEditAdd, i, t, !isOutput());
+            emit shapeContextMenuRequested(event->pos());
+            mousePressedOnSomething = true;
+            break;
+          }
+        }
       }
     }
   }
@@ -511,6 +683,10 @@ void MapperGLCanvas::mouseMoveEvent(QMouseEvent* event)
     view->translate(diff.x(), diff.y());
   }
 
+  // Update rubber-band in polygon draw mode.
+  if (_mainWindow->isPolygonDrawMode() && (isOutput() != _mainWindow->isPolygonDrawOnSource()))
+    _mainWindow->polygonCursorMoved(mapToScene(event->pos()));
+
   // Reset last mouse position.
   lastMousePos = event->pos();
 }
@@ -520,6 +696,24 @@ void MapperGLCanvas::keyPressEvent(QKeyEvent* event)
 {
   // Checks if the key has been handled by this function or needs to be deferred to superclass.
   bool handledKey = false;
+
+  // Handle polygon draw mode keys.
+  if (_mainWindow->isPolygonDrawMode() && (isOutput() != _mainWindow->isPolygonDrawOnSource())) {
+    switch (event->key()) {
+      case Qt::Key_Return:
+      case Qt::Key_Enter:
+        _mainWindow->finishPolygon();
+        handledKey = true;
+        break;
+      case Qt::Key_Escape:
+        _mainWindow->cancelPolygonDrawMode();
+        handledKey = true;
+        break;
+      default:
+        break;
+    }
+    if (handledKey) return;
+  }
 
   // Active vertex selected.
   if (hasActiveVertex())

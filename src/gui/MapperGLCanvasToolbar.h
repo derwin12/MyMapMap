@@ -26,6 +26,7 @@
 #include <QLabel>
 #include <QToolButton>
 #include <QComboBox>
+#include <QSlider>
 
 class QHBoxLayout;
 
@@ -50,6 +51,15 @@ public:
 
   void setToolbarTitle(const QString &title) { _titleLabel->setText(title); }
 
+  // Background reference photo controls (destination canvas only).
+  void setupBackgroundPhotoControls();
+  void setBackgroundPhotoControlsVisible(bool visible);
+  void setBackgroundOpacityValue(int value); // 0–100
+
+signals:
+  void backgroundPhotoToggled(bool visible);
+  void backgroundOpacityChanged(int value);
+
 public slots:
   // Update and feedback zoom level
   void updateDropdownMenu(qreal factor = 1);
@@ -70,6 +80,9 @@ protected:
 
   bool _areEnable;
 
+  QToolButton* _bgPhotoToggleButton = nullptr;
+  QLabel*      _bgOpacityLabel      = nullptr;
+  QSlider*     _bgOpacitySlider     = nullptr;
 };
 
 }

@@ -23,6 +23,7 @@
 #include "MapperGLCanvas.h"
 
 #include "Commands.h"
+#include "Mesh.h"
 
 namespace mmp {
 
@@ -458,6 +459,61 @@ bool RotateShapeCommand::mergeWith(const QUndoCommand* other)
 	_transform = cmd->_transform;
 
 	return true;
+}
+
+SetPolygonVerticesCommand::SetPolygonVerticesCommand(MainWindow* mainWindow, uid layerId,
+                                                      const QVector<QPointF>& newOutputVerts,
+                                                      const QVector<QPointF>& newInputVerts,
+                                                      const QString& actionText,
+                                                      QUndoCommand* parent)
+  : QUndoCommand(actionText, parent),
+    _mainWindow(mainWindow),
+    _layerId(layerId),
+    _newOutputVerts(newOutputVerts),
+    _newInputVerts(newInputVerts)
+{
+  Layer::ptr layer = mainWindow->getMappingManager().getLayerById(layerId);
+  _oldOutputVerts = layer->getShape()->getVertices();
+  TextureLayer::ptr texLayer = qSharedPointerCast<TextureLayer>(layer);
+  if (texLayer)
+    _oldInputVerts = texLayer->getInputShape()->getVertices();
+}
+
+void SetPolygonVerticesCommand::_apply(const QVector<QPointF>& outVerts, const QVector<QPointF>& inVerts)
+{
+  Layer::ptr layer = _mainWindow->getMappingManager().getLayerById(_layerId);
+  if (!layer) return;
+  layer->getShape()->setVertices(outVerts);
+  TextureLayer::ptr texLayer = qSharedPointerCast<TextureLayer>(layer);
+  if (texLayer && !inVerts.isEmpty())
+    texLayer->getInputShape()->setVertices(inVerts);
+  _mainWindow->getSourceCanvas()->update();
+  _mainWindow->getDestinationCanvas()->update();
+}
+
+void SetPolygonVerticesCommand::undo() { _apply(_oldOutputVerts, _oldInputVerts); }
+void SetPolygonVerticesCommand::redo() { _apply(_newOutputVerts, _newInputVerts); }
+
+ResetMeshInputCommand::ResetMeshInputCommand(MapperGLCanvas* canvas, int sourceX, int sourceY, int sourceWidth, int sourceHeight, QUndoCommand* parent)
+  : TransformShapeCommand(canvas, TransformShapeCommand::FREE, parent),
+    _x(sourceX), _y(sourceY), _width(sourceWidth), _height(sourceHeight)
+{
+  setText(QObject::tr("Reset mesh to source dimensions"));
+}
+
+void ResetMeshInputCommand::_doTransform(MShape::ptr shape)
+{
+  Mesh* mesh = qobject_cast<Mesh*>(shape.data());
+  if (!mesh) return;
+  int nCols = mesh->nColumns();
+  int nRows = mesh->nRows();
+  for (int i = 0; i < nCols; i++) {
+    for (int j = 0; j < nRows; j++) {
+      double x = _x + ((nCols > 1) ? (_width  * double(i) / (nCols - 1)) : _width  / 2.0);
+      double y = _y + ((nRows > 1) ? (_height * double(j) / (nRows - 1)) : _height / 2.0);
+      mesh->setVertex2d(i, j, x, y);
+    }
+  }
 }
 
 }

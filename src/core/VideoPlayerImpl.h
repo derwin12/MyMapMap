@@ -47,6 +47,7 @@ public:
   void setRate(double rate) override;
   void setVolume(double volume) override;
   void setPlayInLoop(bool loop) override;
+  qint64 getPosition() const override;
 
   void update() override;
 

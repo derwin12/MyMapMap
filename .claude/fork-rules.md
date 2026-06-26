@@ -32,3 +32,18 @@ picked `upstream` by mistake) — always pass `--repo derwin12/MyMapMap` explici
 ## Pulling upstream changes
 
 `git fetch upstream && git merge upstream/dev` (or rebase) to bring in MapMap fixes.
+
+## Keep the wiki up to date
+
+The wiki lives at https://github.com/derwin12/MyMapMap/wiki (git remote:
+`https://github.com/derwin12/MyMapMap.wiki.git`, branch `master`).
+
+**After any session that adds, removes, or changes a user-facing feature**, update the
+relevant wiki page(s) before wrapping up:
+
+- Clone the wiki repo into a temp directory, edit the affected `.md` file(s), commit, and
+  push to `origin master`.
+- Pages to keep current: `MCP-Server.md` (tools, endpoint, config), `Getting-Started.md`
+  (install/first-run), `Keyboard-Shortcuts.md`, `OSC-Commands.md`.
+- If a new feature has no existing page, create one and add a link from `Home.md`.
+- The wiki is public — write for an end-user audience, not a developer audience.

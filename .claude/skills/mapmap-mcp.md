@@ -48,12 +48,13 @@ curl -s -X POST http://localhost:49452/mcp \
 |------|------|-------------|
 | `create_color_source` | `color` (string, required: "#rrggbb" or name) | Create solid-color source |
 | `create_media_source` | `uri` (string, required), `is_image` (bool, default false) | Import image or video |
+| `create_folder_source` | `path` (string, required: absolute directory path) | Create image-sequence source from a folder of images |
 | `delete_source` | `id` (int, required) | Delete source and its layers |
 
 ### Layers
 | Tool | Args | Description |
 |------|------|-------------|
-| `create_layer` | `source_id` (int, required), `shape` (string, required: "triangle", "quad", or "ellipse") | Create a layer with a shape for a source |
+| `create_layer` | `source_id` (int, required), `shape` (string: "triangle", "quad", "ellipse", or "freepolygon"), `vertices` (array of `{x,y}`, required for freepolygon, ≥3 pts) | Create a layer with a shape for a source |
 | `delete_layer` | `id` (int, required) | Delete a layer |
 | `duplicate_layer` | `id` (int, required) | Duplicate a layer |
 | `move_layer` | `id` (int, required), `index` (int, required, 0=bottom) | Move layer in stack |
@@ -64,12 +65,15 @@ curl -s -X POST http://localhost:49452/mcp \
 ### Geometry
 | Tool | Args | Description |
 |------|------|-------------|
-| `set_vertices` | `id` (int, layer id), `vertices` (array of `{x, y}`) | Set the output vertices of a layer's shape |
+| `set_vertices` | `id` (int, layer id), `vertices` (array of `{x, y}`) | Set the output (destination) vertices of a layer's shape |
+| `set_source_vertices` | `id` (int, layer id), `vertices` (array of `{x, y}`) | Set the input (source/texture) vertices of a texture layer's shape |
+| `nudge_vertex` | `id` (int), `vertex` (int, 0-based index), `dx` (number), `dy` (number), `input` (bool, optional) | Move a single vertex by a relative delta |
 
 Vertex order is **clockwise from top-left**: top-left, top-right, bottom-right, bottom-left.
 - Quad: 4 vertices
 - Triangle: 3 vertices (bottom-left, bottom-right, top-center)
 - Ellipse: 5 vertices (left, top, right, bottom, rotation-handle)
+- FreePolygon: any number ≥ 3, in order
 
 ### Properties
 | Tool | Args | Description |
@@ -80,7 +84,7 @@ Common properties:
 - **Source (color):** `color` ("#rrggbb"), `name`, `opacity` (0.0-1.0), `locked`
 - **Layer:** `name`, `opacity`, `visible`, `solo`, `locked`, `depth`
 
-### Introspection
+### Introspection & Preview
 | Tool | Args | Description |
 |------|------|-------------|
 | `get_state` | — | Get playing, fps, counts, current selection |
@@ -88,6 +92,7 @@ Common properties:
 | `list_layers` | — | List all layers |
 | `get_source` | `id` (int) | Get all properties of a source |
 | `get_layer` | `id` (int) | Get all properties of a layer |
+| `get_preview` | `max_size` (int, default 800), `quality` (int 1-100, default 75) | Capture JPEG screenshot of output canvas; returns `{base64, mime_type, width, height}`. Output window must be visible. |
 
 ## Typical workflow
 

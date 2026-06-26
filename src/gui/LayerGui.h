@@ -229,6 +229,14 @@ private:
   QtVariantProperty* _meshItem;
 };
 
+class FreePolygonTextureLayerGui : public PolygonTextureLayerGui
+{
+  Q_OBJECT
+public:
+  FreePolygonTextureLayerGui(QSharedPointer<TextureLayer> mapping);
+  virtual ~FreePolygonTextureLayerGui() {}
+};
+
 class EllipseTextureLayerGui : public PolygonTextureLayerGui {
   Q_OBJECT
 

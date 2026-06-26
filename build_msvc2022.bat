@@ -11,4 +11,8 @@ if errorlevel 1 (
   echo NMAKE_FAILED
   exit /b 1
 )
+:: Copy Qt modules that windeployqt misses (HttpServer and its WebSockets dep)
+set QT_BIN=C:\Qt\6.11.1\msvc2022_64\bin
+if exist "%QT_BIN%\Qt6HttpServer.dll"  copy /y "%QT_BIN%\Qt6HttpServer.dll"  bin\ >nul
+if exist "%QT_BIN%\Qt6WebSockets.dll"  copy /y "%QT_BIN%\Qt6WebSockets.dll"  bin\ >nul
 echo BUILD_OK

@@ -74,7 +74,7 @@ protected:
 public:
 
   enum SourceType {
-    Video, Image, Color, Syphon, Folder
+    Video, Image, Color, Syphon, Folder, Text
   };
 
   typedef QSharedPointer<Source> ptr;
@@ -119,6 +119,13 @@ public:
   virtual void unlockMutex() {}
 
   virtual SourceType getSourceType() const = 0;
+
+  virtual QIcon getIcon() const { return QIcon(); }
+
+  /// Returns a pixmap for the large preview panel. Default: scales the icon up.
+  virtual QPixmap getPreviewPixmap(int maxW, int maxH) const {
+    return getIcon().pixmap(maxW, maxH);
+  }
 
 protected:
   virtual void _doPlay() {}
@@ -302,6 +309,12 @@ public:
 
   virtual QIcon getIcon() const;
 
+  virtual QPixmap getPreviewPixmap(int maxW, int maxH) const override {
+    if (!_images.isEmpty())
+      return QPixmap::fromImage(_images[0]).scaled(maxW, maxH, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    return Source::getPreviewPixmap(maxW, maxH);
+  }
+
   /// Sets playback rate (in %). Negative values mean reverse playback.
   virtual void setRate(double rate);
 
@@ -377,6 +390,21 @@ public:
   /// Duration of the video in milliseconds (0 if not yet known).
   qint64 getDuration() const;
 
+  /// Current playback position in milliseconds.
+  qint64 getPosition() const;
+
+  /// Seek to a fractional position [0,1].
+  bool seekTo(double position);
+
+  /// Seek to an absolute position in milliseconds.
+  bool seekToMs(qint64 ms);
+
+  /// Frame rate in frames per second (0 if not yet known).
+  qreal getFrameRate() const;
+
+  /// Short codec name, e.g. "h264" (empty if not yet known).
+  QString getVideoCodec() const;
+
   /// Whether this video loops on end-of-stream.
   bool getPlayInLoop() const;
 
@@ -439,6 +467,69 @@ protected:
   VideoType _videoType;
 
   VideoImpl *_impl;
+};
+
+/**
+ * Source that renders a text string onto a fixed-size OpenGL texture.
+ * Font, color, background, and alignment are all configurable and persisted.
+ */
+class Text : public Texture
+{
+  Q_OBJECT
+
+  Q_PROPERTY(QString text       READ getText       WRITE setText)
+  Q_PROPERTY(QColor  textColor  READ getTextColor  WRITE setTextColor)
+  Q_PROPERTY(QColor  bgColor    READ getBgColor    WRITE setBgColor)
+  Q_PROPERTY(QString fontFamily READ getFontFamily WRITE setFontFamily)
+  Q_PROPERTY(int     fontSize   READ getFontSize   WRITE setFontSize)
+  Q_PROPERTY(bool    bold       READ isBold        WRITE setBold)
+  Q_PROPERTY(bool    italic     READ isItalic      WRITE setItalic)
+  Q_PROPERTY(int     alignment  READ getAlignment  WRITE setAlignment)
+
+  static const int TEXT_WIDTH  = 512;
+  static const int TEXT_HEIGHT = 128;
+
+  QString _text;
+  QColor  _textColor;
+  QColor  _bgColor;
+  QString _fontFamily;
+  int     _fontSize;
+  bool    _bold;
+  bool    _italic;
+  int     _alignment;
+  QImage  _image;
+
+  void _redraw();
+
+public:
+  Q_INVOKABLE Text(int id = NULL_UID);
+  Text(const QString& text, uid id = NULL_UID);
+
+  QString getText()       const { return _text; }
+  QColor  getTextColor()  const { return _textColor; }
+  QColor  getBgColor()    const { return _bgColor; }
+  QString getFontFamily() const { return _fontFamily; }
+  int     getFontSize()   const { return _fontSize; }
+  bool    isBold()        const { return _bold; }
+  bool    isItalic()      const { return _italic; }
+  int     getAlignment()  const { return _alignment; }
+
+  void setText(const QString& t)       { _text = t;       _redraw(); _emitPropertyChanged("text"); }
+  void setTextColor(const QColor& c)   { _textColor = c;  _redraw(); _emitPropertyChanged("textColor"); }
+  void setBgColor(const QColor& c)     { _bgColor = c;    _redraw(); _emitPropertyChanged("bgColor"); }
+  void setFontFamily(const QString& f) { _fontFamily = f; _redraw(); _emitPropertyChanged("fontFamily"); }
+  void setFontSize(int s)              { _fontSize = s;   _redraw(); _emitPropertyChanged("fontSize"); }
+  void setBold(bool b)                 { _bold = b;       _redraw(); _emitPropertyChanged("bold"); }
+  void setItalic(bool i)               { _italic = i;     _redraw(); _emitPropertyChanged("italic"); }
+  void setAlignment(int a)             { _alignment = a;  _redraw(); _emitPropertyChanged("alignment"); }
+
+  virtual SourceType getSourceType() const override { return SourceType::Text; }
+  virtual int getWidth()  const override { return TEXT_WIDTH; }
+  virtual int getHeight() const override { return TEXT_HEIGHT; }
+  virtual const uchar* getBits() override;
+  virtual bool bitsHaveChanged() const override { return bitsChanged; }
+  virtual QIcon getIcon() const override;
+  virtual QPixmap getPreviewPixmap(int maxW, int maxH) const override;
 };
 
 }
