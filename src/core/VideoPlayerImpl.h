@@ -46,12 +46,9 @@ public:
   bool seekTo(qint64 positionMs) override;
 
   qint64 getPosition() const override;
-  qreal getFrameRate() const override;
-  QString getVideoCodec() const override;
   void setRate(double rate) override;
   void setVolume(double volume) override;
   void setPlayInLoop(bool loop) override;
-  qint64 getPosition() const override;
 
   void update() override;
 

@@ -181,21 +181,6 @@ qint64 VideoPlayerImpl::getPosition() const
   return _player ? _player->position() : 0;
 }
 
-qreal VideoPlayerImpl::getFrameRate() const
-{
-  if (!_player)
-    return 0.0;
-  const QVariant fps = _player->metaData().value(QMediaMetaData::VideoFrameRate);
-  return fps.isValid() ? fps.toReal() : 0.0;
-}
-
-QString VideoPlayerImpl::getVideoCodec() const
-{
-  if (!_player)
-    return QString();
-  return _player->metaData().stringValue(QMediaMetaData::VideoCodec);
-}
-
 void VideoPlayerImpl::setRate(double rate)
 {
   _rate = rate;
@@ -215,11 +200,6 @@ void VideoPlayerImpl::setPlayInLoop(bool loop)
   _playInLoop = loop;
   if (_player)
     _player->setLoops(loop ? QMediaPlayer::Infinite : 1);
-}
-
-qint64 VideoPlayerImpl::getPosition() const
-{
-  return _player ? _player->position() : 0;
 }
 
 void VideoPlayerImpl::update()
