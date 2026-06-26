@@ -922,6 +922,21 @@ void MainWindow::addColor()
   if (wasPlaying) play(false);
 }
 
+void MainWindow::addText()
+{
+  bool wasPlaying = _isPlaying;
+  if (wasPlaying) pause(false);
+
+  bool ok = false;
+  QString text = QInputDialog::getText(this, tr("Add Text Source"),
+                                       tr("Text:"), QLineEdit::Normal,
+                                       tr("Text"), &ok);
+  if (ok && !text.isEmpty())
+    addTextSource(text);
+
+  if (wasPlaying) play(false);
+}
+
 void MainWindow::addSyphon()
 {
 #ifdef Q_OS_MAC
@@ -1780,6 +1795,26 @@ uid MainWindow::createColorSource(uid sourceId, QColor color)
   }
 }
 
+bool MainWindow::addTextSource(const QString& text)
+{
+  uid id = createTextSource(NULL_UID, text);
+  return id != NULL_UID;
+}
+
+uid MainWindow::createTextSource(uid sourceId, const QString& text)
+{
+  if (Source::getUidAllocator().exists(sourceId))
+    return NULL_UID;
+
+  Text* ts = new Text(text, sourceId);
+  Source::ptr source(ts);
+  source->setName(text.left(20));
+
+  uid id = mappingManager->addSource(source);
+  undoStack->push(new AddSourceCommand(this, id, source->getIcon(), source->getName()));
+  return id;
+}
+
 uid MainWindow::createFolderSource(uid sourceId, const QString& dirPath)
 {
   if (Source::getUidAllocator().exists(sourceId))
@@ -2287,6 +2322,15 @@ void MainWindow::createActions()
   addColorAction->setShortcutContext(Qt::ApplicationShortcut);
   addAction(addColorAction);
   connect(addColorAction, SIGNAL(triggered()), this, SLOT(addColor()));
+
+  addTextAction = new QAction(tr("Add &Text Source..."), this);
+  addTextAction->setShortcut(Qt::CTRL | Qt::SHIFT | Qt::Key_T);
+  addTextAction->setIcon(themedIcon(":/add-text"));
+  addTextAction->setToolTip(tr("Add a text source..."));
+  addTextAction->setIconVisibleInMenu(false);
+  addTextAction->setShortcutContext(Qt::ApplicationShortcut);
+  addAction(addTextAction);
+  connect(addTextAction, &QAction::triggered, this, &MainWindow::addText);
 
 #ifdef Q_OS_MAC
   // Add Syphon source (macOS only).
@@ -2843,6 +2887,7 @@ void MainWindow::createMenus()
   fileMenu->addAction(importFolderAction);
   fileMenu->addAction(AddCameraAction);
   fileMenu->addAction(addColorAction);
+  fileMenu->addAction(addTextAction);
 #ifdef Q_OS_MAC
   fileMenu->addAction(addSyphonAction);
 #endif
@@ -3040,6 +3085,7 @@ void MainWindow::createToolBars()
   mainToolBar->addAction(importMediaAction);
   mainToolBar->addAction(AddCameraAction);
   mainToolBar->addAction(addColorAction);
+  mainToolBar->addAction(addTextAction);
 #ifdef Q_OS_MAC
   mainToolBar->addAction(addSyphonAction);
 #endif
@@ -3592,6 +3638,8 @@ void MainWindow::addSourceItem(uid sourceId, const QIcon& icon, const QString& n
     sourceGui = SourceGui::ptr(new ImageGui(source));
   else if (sourceType == SourceType::Color)
     sourceGui = SourceGui::ptr(new ColorGui(source));
+  else if (sourceType == SourceType::Text)
+    sourceGui = SourceGui::ptr(new TextGui(source));
   else if (sourceType == SourceType::Folder)
     sourceGui = SourceGui::ptr(new FolderGui(source));
 #ifdef Q_OS_MAC
@@ -4902,6 +4950,7 @@ void MainWindow::refreshIcons()
     { importMediaAction,          ":/add-video"         },
     { AddCameraAction,            ":/add-camera"        },
     { addColorAction,             ":/add-color"         },
+    { addTextAction,              ":/add-text"          },
     { addMeshAction,              ":/add-mesh"          },
     { addTriangleAction,          ":/add-triangle"      },
     { addEllipseAction,           ":/add-ellipse"       },

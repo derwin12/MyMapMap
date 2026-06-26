@@ -45,6 +45,7 @@ void initRegistry()
   registry.add<Video>();
   registry.add<Image>();
   registry.add<Color>();
+  registry.add<Text>();
   registry.add<FolderSource>();
 #ifdef Q_OS_MAC
   registry.add<Syphon>();

@@ -10,6 +10,7 @@
         <file alias="add-video">images/icons/svg/add-video.svg</file>
         <file alias="add-camera">images/icons/svg/add-camera.svg</file>
         <file alias="add-color">images/icons/svg/add-color.svg</file>
+        <file alias="add-text">images/icons/svg/add-text.svg</file>
         <file alias="add-syphon">images/icons/syphon-white.png</file>
         <file alias="add-mesh">images/icons/svg/add-mesh.svg</file>
         <file alias="add-triangle">images/icons/svg/add-triangle.svg</file>

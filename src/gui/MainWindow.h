@@ -117,6 +117,7 @@ private slots:
   void importFolderAsSource();
   void openCameraDevice();
   void addColor();
+  void addText();
   void addSyphon();
   void about();
   void checkForUpdates(bool autoCheck = false);
@@ -214,6 +215,7 @@ public slots:
 
   /// Create or replace a color source.
   uid createColorSource(uid sourceId, QColor color);
+  uid createTextSource(uid sourceId, const QString& text);
 
   /// Create a folder source from a directory path.
   uid createFolderSource(uid sourceId, const QString& dirPath);
@@ -328,6 +330,7 @@ public:
   void setCurrentVideo(const QString &filename);
   bool importMediaFile(const QString &fileName, bool isImage = false, bool isCamera = false);
   bool addColorSource(const QColor& color);
+  bool addTextSource(const QString& text);
   void addLayerItem(uid mappingId);
   void removeLayerItem(uid mappingId);
   void moveLayerItem(uid mappingId, int steps);
@@ -408,6 +411,7 @@ private:
   QAction *importFolderAction;
   QAction *AddCameraAction;
   QAction *addColorAction;
+  QAction *addTextAction;
   QAction *addSyphonAction;
   QAction *saveAction;
   QAction *saveAsAction;

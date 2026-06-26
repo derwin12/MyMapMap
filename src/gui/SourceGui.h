@@ -24,6 +24,9 @@
 #include <QtGlobal>
 #include <QSlider>
 #include <QLabel>
+#include <QToolButton>
+#include <QButtonGroup>
+#include <QTimer>
 
 #if __APPLE__
 #include <OpenGL/gl.h>
@@ -110,6 +113,29 @@ protected:
   QtVariantProperty* _colorItem;
 };
 
+class TextGui : public SourceGui {
+  Q_OBJECT
+
+public:
+  TextGui(Source::ptr source);
+  virtual ~TextGui() {}
+
+public slots:
+  virtual void setValue(QtProperty* property, const QVariant& value);
+  virtual void setValue(QString propertyName, QVariant value);
+
+protected:
+  QSharedPointer<Text> textSource;
+  QtVariantProperty* _textItem;
+  QtVariantProperty* _textColorItem;
+  QtVariantProperty* _bgColorItem;
+  QtVariantProperty* _fontFamilyItem;
+  QtVariantProperty* _fontSizeItem;
+  QtVariantProperty* _boldItem;
+  QtVariantProperty* _italicItem;
+  QtVariantProperty* _alignmentItem;
+};
+
 class TextureGui : public SourceGui {
   Q_OBJECT
 
@@ -171,16 +197,42 @@ public slots:
   virtual void setValue(QtProperty* property, const QVariant& value);
   virtual void setValue(QString propertyName, QVariant value);
 
+private slots:
+  void _refreshMetadata();
+
 protected:
   QSharedPointer<Video> media;
   QtVariantProperty* _mediaFileItem;
   QtVariantProperty* _mediaRateItem;
   QtVariantProperty* _mediaVolumeItem;
-//  QtVariantProperty* _mediaReverseItem;
   QSlider* _speedSlider    = nullptr;
   QLabel*  _speedValueLbl  = nullptr;
   QSlider* _volumeSlider   = nullptr;
   QLabel*  _volumeValueLbl = nullptr;
+
+  // Info display
+  QLabel* _infoNameLbl  = nullptr;
+  QLabel* _infoResLbl   = nullptr;
+  QLabel* _infoDurLbl   = nullptr;
+  QLabel* _infoFpsLbl   = nullptr;
+  QLabel* _infoCodecLbl = nullptr;
+
+  // Transport buttons (left group)
+  QToolButton* _btnStepBack = nullptr;
+  QToolButton* _btnPause    = nullptr;
+  QToolButton* _btnPlay     = nullptr;
+  // Transport buttons (right group)
+  QToolButton* _btnToStart  = nullptr;
+  QToolButton* _btnSeekBack = nullptr;
+  QToolButton* _btnSeekFwd  = nullptr;
+
+  // Mode buttons
+  QToolButton* _btnModeLoop    = nullptr;
+  QToolButton* _btnModeForward = nullptr;
+  QToolButton* _btnModeReverse = nullptr;
+  QToolButton* _btnModeRevLoop = nullptr;
+
+  QTimer* _metadataTimer = nullptr;
 };
 
 #ifdef HAVE_SYPHON

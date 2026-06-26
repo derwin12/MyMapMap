@@ -22,7 +22,9 @@
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QGridLayout>
 #include <QFrame>
+#include <QFileInfo>
 
 namespace mmp {
 
@@ -160,6 +162,102 @@ void ColorGui::setValue(QString propertyName, QVariant value)
     setValue(_colorItem, value);
   else
     SourceGui::setValue(propertyName, value);
+}
+
+TextGui::TextGui(Source::ptr source)
+  : SourceGui(source)
+{
+  textSource = qSharedPointerCast<Text>(source);
+  Q_CHECK_PTR(textSource);
+
+  _textItem = _variantManager->addProperty(QMetaType::QString, tr("Text"));
+  _textItem->setValue(textSource->getText());
+
+  _textColorItem = _variantManager->addProperty(QMetaType::QColor, tr("Text color"));
+  _textColorItem->setValue(textSource->getTextColor());
+
+  _bgColorItem = _variantManager->addProperty(QMetaType::QColor, tr("Background color"));
+  _bgColorItem->setValue(textSource->getBgColor());
+
+  _fontFamilyItem = _variantManager->addProperty(QMetaType::QString, tr("Font family"));
+  _fontFamilyItem->setValue(textSource->getFontFamily());
+
+  _fontSizeItem = _variantManager->addProperty(QMetaType::Int, tr("Font size (pt)"));
+  _fontSizeItem->setAttribute("minimum", 6);
+  _fontSizeItem->setAttribute("maximum", 200);
+  _fontSizeItem->setValue(textSource->getFontSize());
+
+  _boldItem = _variantManager->addProperty(QMetaType::Bool, tr("Bold"));
+  _boldItem->setValue(textSource->isBold());
+
+  _italicItem = _variantManager->addProperty(QMetaType::Bool, tr("Italic"));
+  _italicItem->setValue(textSource->isItalic());
+
+  _alignmentItem = _variantManager->addProperty(QtVariantPropertyManager::enumTypeId(), tr("Alignment"));
+  QStringList alignNames;
+  alignNames << tr("Left") << tr("Center") << tr("Right");
+  _alignmentItem->setAttribute("enumNames", alignNames);
+  int alignIdx = 1; // Center default
+  if (textSource->getAlignment() & Qt::AlignLeft)        alignIdx = 0;
+  else if (textSource->getAlignment() & Qt::AlignHCenter) alignIdx = 1;
+  else if (textSource->getAlignment() & Qt::AlignRight)   alignIdx = 2;
+  _alignmentItem->setValue(alignIdx);
+
+  _propertyBrowser->addProperty(_textItem);
+  _propertyBrowser->addProperty(_textColorItem);
+  _propertyBrowser->addProperty(_bgColorItem);
+  _propertyBrowser->addProperty(_fontFamilyItem);
+  _propertyBrowser->addProperty(_fontSizeItem);
+  _propertyBrowser->addProperty(_boldItem);
+  _propertyBrowser->addProperty(_italicItem);
+  _propertyBrowser->addProperty(_alignmentItem);
+}
+
+void TextGui::setValue(QtProperty* property, const QVariant& value)
+{
+  static const Qt::Alignment kAlignments[3] = { Qt::AlignLeft, Qt::AlignHCenter, Qt::AlignRight };
+
+  if (property == _textItem) {
+    textSource->setText(value.toString());
+    emit valueChanged(_source);
+  } else if (property == _textColorItem) {
+    textSource->setTextColor(value.value<QColor>());
+    emit valueChanged(_source);
+  } else if (property == _bgColorItem) {
+    textSource->setBgColor(value.value<QColor>());
+    emit valueChanged(_source);
+  } else if (property == _fontFamilyItem) {
+    textSource->setFontFamily(value.toString());
+    emit valueChanged(_source);
+  } else if (property == _fontSizeItem) {
+    textSource->setFontSize(value.toInt());
+    emit valueChanged(_source);
+  } else if (property == _boldItem) {
+    textSource->setBold(value.toBool());
+    emit valueChanged(_source);
+  } else if (property == _italicItem) {
+    textSource->setItalic(value.toBool());
+    emit valueChanged(_source);
+  } else if (property == _alignmentItem) {
+    int idx = qBound(0, value.toInt(), 2);
+    textSource->setAlignment(static_cast<int>(kAlignments[idx]));
+    emit valueChanged(_source);
+  } else {
+    SourceGui::setValue(property, value);
+  }
+}
+
+void TextGui::setValue(QString propertyName, QVariant value)
+{
+  if      (propertyName == "text")        setValue(_textItem, value);
+  else if (propertyName == "textColor")   setValue(_textColorItem, value);
+  else if (propertyName == "bgColor")     setValue(_bgColorItem, value);
+  else if (propertyName == "fontFamily")  setValue(_fontFamilyItem, value);
+  else if (propertyName == "fontSize")    setValue(_fontSizeItem, value);
+  else if (propertyName == "bold")        setValue(_boldItem, value);
+  else if (propertyName == "italic")      setValue(_italicItem, value);
+  else if (propertyName == "alignment")   setValue(_alignmentItem, value);
+  else SourceGui::setValue(propertyName, value);
 }
 
 TextureGui::TextureGui(Source::ptr source) : SourceGui(source) {
@@ -324,6 +422,7 @@ VideoGui::VideoGui(Source::ptr source)
   media = qSharedPointerCast<Video>(source);
   Q_CHECK_PTR(media);
 
+  // --- Property items (file picker + numeric fields) ---
   _mediaFileItem = _variantManager->addProperty(VariantManager::filePathTypeId(), tr("Source"));
   _mediaFileItem->setAttribute("filter", tr("Video files (%1);;All files (*)").arg(MM::VIDEO_FILES_FILTER));
   _mediaFileItem->setValue(media->getUri());
@@ -344,7 +443,100 @@ VideoGui::VideoGui(Source::ptr source)
   _propertyBrowser->addProperty(_mediaRateItem);
   _propertyBrowser->addProperty(_mediaVolumeItem);
 
-  // Slider panel
+  // --- Info section (Name / Resolution / Duration / FPS / Codec) ---
+  auto* infoFrame = new QFrame;
+  infoFrame->setFrameShape(QFrame::StyledPanel);
+  auto* infoGrid = new QGridLayout(infoFrame);
+  infoGrid->setContentsMargins(8, 6, 8, 6);
+  infoGrid->setVerticalSpacing(2);
+  infoGrid->setHorizontalSpacing(8);
+
+  auto addInfoRow = [&](const QString& key, QLabel*& valueOut, int row) {
+    auto* kl = new QLabel(key);
+    kl->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    kl->setStyleSheet("color: palette(mid);");
+    valueOut = new QLabel(tr("\xe2\x80\x94")); // em-dash
+    valueOut->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    infoGrid->addWidget(kl, row, 0);
+    infoGrid->addWidget(valueOut, row, 1);
+  };
+  addInfoRow(tr("Name"),       _infoNameLbl,  0);
+  addInfoRow(tr("Resolution"), _infoResLbl,   1);
+  addInfoRow(tr("Duration"),   _infoDurLbl,   2);
+  addInfoRow(tr("FPS"),        _infoFpsLbl,   3);
+  addInfoRow(tr("Codec"),      _infoCodecLbl, 4);
+  infoGrid->setColumnStretch(1, 1);
+
+  // --- Transport controls ---
+  auto makeBtn = [](const QString& text, bool checkable = false) {
+    auto* b = new QToolButton;
+    b->setText(text);
+    b->setFixedSize(26, 26);
+    b->setAutoRaise(true);
+    b->setCheckable(checkable);
+    QFont f = b->font();
+    f.setPointSize(10);
+    b->setFont(f);
+    return b;
+  };
+
+  _btnStepBack = makeBtn(QString::fromUtf8("\xe2\x97\x84")); // ◄
+  _btnPause    = makeBtn(QString::fromUtf8("\xe2\x8f\xb8")); // ⏸
+  _btnPlay     = makeBtn(QString::fromUtf8("\xe2\x96\xb6")); // ▶
+  _btnToStart  = makeBtn(QString::fromUtf8("\xe2\x8f\xae")); // ⏮
+  _btnSeekBack = makeBtn(QString::fromUtf8("\xe2\x8f\xaa")); // ⏪
+  _btnSeekFwd  = makeBtn(QString::fromUtf8("\xe2\x8f\xa9")); // ⏩
+
+  auto* transpRow = new QWidget;
+  auto* transpHl  = new QHBoxLayout(transpRow);
+  transpHl->setContentsMargins(6, 4, 6, 4);
+  transpHl->setSpacing(2);
+  auto* playLbl = new QLabel(tr("Play"));
+  playLbl->setMinimumWidth(36);
+  transpHl->addWidget(playLbl);
+  transpHl->addWidget(_btnStepBack);
+  transpHl->addWidget(_btnPause);
+  transpHl->addWidget(_btnPlay);
+  transpHl->addStretch();
+  transpHl->addWidget(_btnToStart);
+  transpHl->addWidget(_btnSeekBack);
+  transpHl->addWidget(_btnSeekFwd);
+
+  // --- Mode controls ---
+  _btnModeLoop    = makeBtn(QString::fromUtf8("\xe2\x88\x9e"), true); // ∞
+  _btnModeForward = makeBtn(QString::fromUtf8("\xe2\x86\x92"), true); // →
+  _btnModeReverse = makeBtn(QString::fromUtf8("\xe2\x86\x90"), true); // ←
+  _btnModeRevLoop = makeBtn(QString::fromUtf8("\xe2\x86\xba"), true); // ↺
+
+  auto* modeGroup = new QButtonGroup(this);
+  modeGroup->setExclusive(true);
+  modeGroup->addButton(_btnModeLoop,    0);
+  modeGroup->addButton(_btnModeForward, 1);
+  modeGroup->addButton(_btnModeReverse, 2);
+  modeGroup->addButton(_btnModeRevLoop, 3);
+
+  // Set initial mode
+  bool looping  = media->getPlayInLoop();
+  bool reversed = media->getRate() < 0.0;
+  if      ( looping && !reversed) _btnModeLoop->setChecked(true);
+  else if (!looping && !reversed) _btnModeForward->setChecked(true);
+  else if (!looping &&  reversed) _btnModeReverse->setChecked(true);
+  else                            _btnModeRevLoop->setChecked(true);
+
+  auto* modeRow = new QWidget;
+  auto* modeHl  = new QHBoxLayout(modeRow);
+  modeHl->setContentsMargins(6, 4, 6, 4);
+  modeHl->setSpacing(2);
+  auto* modeLbl = new QLabel(tr("Mode"));
+  modeLbl->setMinimumWidth(36);
+  modeHl->addWidget(modeLbl);
+  modeHl->addWidget(_btnModeLoop);
+  modeHl->addWidget(_btnModeForward);
+  modeHl->addWidget(_btnModeReverse);
+  modeHl->addWidget(_btnModeRevLoop);
+  modeHl->addStretch();
+
+  // --- Speed / Volume sliders ---
   auto* sliders = new QWidget;
   auto* svl = new QVBoxLayout(sliders);
   svl->setContentsMargins(0, 2, 0, 2);
@@ -352,8 +544,30 @@ VideoGui::VideoGui(Source::ptr source)
   svl->addWidget(makeSliderRow(tr("Speed (%)"),  0, 200, (int)rate,   _speedSlider,  _speedValueLbl));
   svl->addWidget(makeSliderRow(tr("Volume (%)"), 0, 100, (int)volume, _volumeSlider, _volumeValueLbl));
 
-  _compositeWidget = makeComposite(sliders, _propertyBrowser);
+  // --- Build composite widget ---
+  auto addSep = [](QVBoxLayout* vl) {
+    auto* sep = new QFrame;
+    sep->setFrameShape(QFrame::HLine);
+    sep->setFrameShadow(QFrame::Sunken);
+    vl->addWidget(sep);
+  };
 
+  auto* composite = new QWidget;
+  auto* vl = new QVBoxLayout(composite);
+  vl->setContentsMargins(0, 0, 0, 0);
+  vl->setSpacing(0);
+  vl->addWidget(infoFrame);
+  addSep(vl);
+  vl->addWidget(transpRow);
+  addSep(vl);
+  vl->addWidget(modeRow);
+  addSep(vl);
+  vl->addWidget(sliders);
+  addSep(vl);
+  vl->addWidget(_propertyBrowser, 1);
+  _compositeWidget = composite;
+
+  // --- Slider connections ---
   connect(_speedSlider, &QSlider::valueChanged, this, [this](int v) {
     _speedValueLbl->setText(QString::number(v) + "%");
     _mediaRateItem->setValue(double(v));
@@ -362,6 +576,93 @@ VideoGui::VideoGui(Source::ptr source)
     _volumeValueLbl->setText(QString::number(v) + "%");
     _mediaVolumeItem->setValue(double(v));
   });
+
+  // --- Transport connections ---
+  connect(_btnPlay, &QToolButton::clicked, this, [this]() {
+    media->play();
+  });
+  connect(_btnPause, &QToolButton::clicked, this, [this]() {
+    media->pause();
+  });
+  connect(_btnToStart, &QToolButton::clicked, this, [this]() {
+    media->seekTo(0.0);
+  });
+  connect(_btnStepBack, &QToolButton::clicked, this, [this]() {
+    qreal fps = media->getFrameRate();
+    qint64 step = fps > 0.0 ? qint64(1000.0 / fps) : 33;
+    media->seekToMs(qMax(0LL, media->getPosition() - step));
+  });
+  connect(_btnSeekBack, &QToolButton::clicked, this, [this]() {
+    media->seekToMs(qMax(0LL, media->getPosition() - 5000));
+  });
+  connect(_btnSeekFwd, &QToolButton::clicked, this, [this]() {
+    qint64 dur = media->getDuration();
+    qint64 pos = media->getPosition() + 5000;
+    media->seekToMs(dur > 0 ? qMin(dur, pos) : pos);
+  });
+
+  // --- Mode connections ---
+  connect(_btnModeLoop, &QToolButton::clicked, this, [this]() {
+    media->setPlayInLoop(true);
+    if (media->getRate() < 0.0) { media->setRate(-media->getRate()); _mediaRateItem->setValue(media->getRate()*100); }
+    emit valueChanged(_source);
+  });
+  connect(_btnModeForward, &QToolButton::clicked, this, [this]() {
+    media->setPlayInLoop(false);
+    if (media->getRate() < 0.0) { media->setRate(-media->getRate()); _mediaRateItem->setValue(media->getRate()*100); }
+    emit valueChanged(_source);
+  });
+  connect(_btnModeReverse, &QToolButton::clicked, this, [this]() {
+    media->setPlayInLoop(false);
+    if (media->getRate() > 0.0) { media->setRate(-media->getRate()); _mediaRateItem->setValue(media->getRate()*100); }
+    emit valueChanged(_source);
+  });
+  connect(_btnModeRevLoop, &QToolButton::clicked, this, [this]() {
+    media->setPlayInLoop(true);
+    if (media->getRate() > 0.0) { media->setRate(-media->getRate()); _mediaRateItem->setValue(media->getRate()*100); }
+    emit valueChanged(_source);
+  });
+
+  // --- Metadata polling (stops once fps+codec arrive) ---
+  _metadataTimer = new QTimer(this);
+  _metadataTimer->setInterval(400);
+  connect(_metadataTimer, &QTimer::timeout, this, &VideoGui::_refreshMetadata);
+  QTimer::singleShot(0, this, &VideoGui::_refreshMetadata);
+  _metadataTimer->start();
+}
+
+void VideoGui::_refreshMetadata()
+{
+  const QString uri = media->getUri();
+  _infoNameLbl->setText(uri.isEmpty() ? tr("\xe2\x80\x94") : QFileInfo(uri).fileName());
+
+  int w = media->getWidth(), h = media->getHeight();
+  _infoResLbl->setText((w > 0 && h > 0) ? QString("%1\xc3\x97%2").arg(w).arg(h) : tr("\xe2\x80\x94"));
+
+  qint64 dur = media->getDuration();
+  if (dur > 0) {
+    int ms  = (int)(dur % 1000);
+    int sec = (int)((dur / 1000) % 60);
+    int min = (int)((dur / 60000) % 60);
+    int hr  = (int)(dur / 3600000);
+    _infoDurLbl->setText(QString("%1:%2:%3.%4")
+      .arg(hr,  2, 10, QChar('0'))
+      .arg(min, 2, 10, QChar('0'))
+      .arg(sec, 2, 10, QChar('0'))
+      .arg(ms,  3, 10, QChar('0')));
+  } else {
+    _infoDurLbl->setText(tr("\xe2\x80\x94"));
+  }
+
+  qreal fps = media->getFrameRate();
+  _infoFpsLbl->setText(fps > 0.0 ? QString::number(fps, 'f', 4) : tr("\xe2\x80\x94"));
+
+  QString codec = media->getVideoCodec();
+  _infoCodecLbl->setText(codec.isEmpty() ? tr("\xe2\x80\x94") : codec);
+
+  // Stop polling once we have complete metadata
+  if (dur > 0 && fps > 0.0 && !codec.isEmpty() && _metadataTimer)
+    _metadataTimer->stop();
 }
 
 void VideoGui::setValue(QtProperty* property, const QVariant& value)
@@ -371,6 +672,8 @@ void VideoGui::setValue(QtProperty* property, const QVariant& value)
     QString newUri = value.toString();
     if (newUri != media->getUri()) {
       media->setUri(newUri);
+      // Restart metadata polling for the new file
+      if (_metadataTimer) _metadataTimer->start();
       emit valueChanged(_source);
     }
   }
