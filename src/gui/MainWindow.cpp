@@ -1974,7 +1974,7 @@ void MainWindow::createLayout()
 
     // Thumbnail size picker: 3 buttons with small squares indicating small/medium/large icon size.
     static const int kThumbSizes[3] = { 24, 32, 48 };
-    static const int kSquareSizes[3] = { 6, 9, 12 };
+    static const int kSquareSizes[3] = { 9, 13, 18 };
     auto applyThumbSize = [this](int size) {
       sourceList->setIconSize(QSize(size, size));
       for (int i = 0; i < 3; ++i) {
@@ -1987,13 +1987,13 @@ void MainWindow::createLayout()
       btn->setCheckable(true);
       btn->setAutoExclusive(true);
       btn->setAutoRaise(true);
-      btn->setFixedSize(20, 20);
+      btn->setFixedSize(30, 30);
       // Draw a filled square that grows with i.
       int sq = kSquareSizes[i];
-      QPixmap pm(16, 16);
+      QPixmap pm(24, 24);
       pm.fill(Qt::transparent);
       QPainter p(&pm);
-      p.fillRect((16 - sq) / 2, (16 - sq) / 2, sq, sq, palette().color(QPalette::ButtonText));
+      p.fillRect((24 - sq) / 2, (24 - sq) / 2, sq, sq, palette().color(QPalette::ButtonText));
       btn->setIcon(QIcon(pm));
       int size = kThumbSizes[i];
       connect(btn, &QToolButton::clicked, this, [this, size, applyThumbSize]() {
