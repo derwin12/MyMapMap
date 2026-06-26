@@ -515,6 +515,7 @@ private:
   QWidget*      _sourcePreviewContainer = nullptr;
   QLabel*       _sourcePreviewLabel     = nullptr;
   QCheckBox*    _previewToggleBtn       = nullptr;
+  QToolButton*  _thumbSizeBtns[3]      = {};
   ThumbnailCache* _thumbnailCache       = nullptr;
 
   QSplitter* layerSplitter;

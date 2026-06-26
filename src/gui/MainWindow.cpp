@@ -209,6 +209,12 @@ MainWindow::MainWindow()
     muteAllAction->setChecked(s.value("audioMuted", false).toBool());
     int toolBarIconSize = s.value("toolbarIconSize", MM::TOOLBAR_ICON_SIZE).toInt();
     mainToolBar->setIconSize(QSize(toolBarIconSize, toolBarIconSize));
+    int srcIconSize = s.value("sourceListIconSize", MainWindow::PAINT_LIST_ICON_SIZE).toInt();
+    sourceList->setIconSize(QSize(srcIconSize, srcIconSize));
+    for (int i = 0; i < 3; ++i) {
+      static const int kSizes[3] = { 24, 32, 48 };
+      if (_thumbSizeBtns[i]) _thumbSizeBtns[i]->setChecked(kSizes[i] == srcIconSize);
+    }
 
     // Recent file/video menus
     updateRecentFileActions();
@@ -1964,6 +1970,40 @@ void MainWindow::createLayout()
     auto* headerLayout = new QHBoxLayout(_sourcePreviewContainer);
     headerLayout->setContentsMargins(4, 2, 4, 2);
     headerLayout->addWidget(_previewToggleBtn);
+    headerLayout->addStretch();
+
+    // Thumbnail size picker: 3 buttons with small squares indicating small/medium/large icon size.
+    static const int kThumbSizes[3] = { 24, 32, 48 };
+    static const int kSquareSizes[3] = { 6, 9, 12 };
+    auto applyThumbSize = [this](int size) {
+      sourceList->setIconSize(QSize(size, size));
+      for (int i = 0; i < 3; ++i) {
+        static const int kSizes[3] = { 24, 32, 48 };
+        _thumbSizeBtns[i]->setChecked(kSizes[i] == size);
+      }
+    };
+    for (int i = 0; i < 3; ++i) {
+      auto* btn = new QToolButton;
+      btn->setCheckable(true);
+      btn->setAutoExclusive(true);
+      btn->setAutoRaise(true);
+      btn->setFixedSize(20, 20);
+      // Draw a filled square that grows with i.
+      int sq = kSquareSizes[i];
+      QPixmap pm(16, 16);
+      pm.fill(Qt::transparent);
+      QPainter p(&pm);
+      p.fillRect((16 - sq) / 2, (16 - sq) / 2, sq, sq, palette().color(QPalette::ButtonText));
+      btn->setIcon(QIcon(pm));
+      int size = kThumbSizes[i];
+      connect(btn, &QToolButton::clicked, this, [this, size, applyThumbSize]() {
+        applyThumbSize(size);
+        QSettings().setValue("sourceListIconSize", size);
+      });
+      headerLayout->addWidget(btn);
+      _thumbSizeBtns[i] = btn;
+    }
+    _thumbSizeBtns[1]->setChecked(true); // default: medium (32)
 
     // Image area: lives INSIDE the splitter so it can be resized.
     _sourcePreviewLabel = new SourcePreviewLabel;
@@ -3113,6 +3153,7 @@ void MainWindow::writeSettings()
   settings.setValue("displayOutputWindow", outputFullScreenAction->isChecked());
   settings.setValue("displayTestSignal", displayTestSignalAction->isChecked());
   settings.setValue("displayAllControls", displaySourceControlsAction->isChecked());
+  settings.setValue("sourceListIconSize", sourceList->iconSize().width());
   settings.setValue("oscListeningPort", oscListeningPort);
 #ifdef HAVE_MCP
   settings.setValue("mcpListeningPort", mcpListeningPort);
