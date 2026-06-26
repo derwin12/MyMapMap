@@ -571,11 +571,11 @@ VideoGui::VideoGui(Source::ptr source)
       "  background: palette(highlight);"
       "}"
       "QToolButton:pressed {"
-      "  background: palette(dark);"
+      "  background: palette(highlight);"
       "}"
       "QToolButton:checked {"
       "  border: 2px solid palette(highlight);"
-      "  background: palette(midlight);"
+      "  background: palette(highlight);"
       "}");
     QFont f = b->font();
     f.setPointSize(17);
