@@ -242,6 +242,22 @@ private:
   int _toIdx;
 };
 
+// Resets a Mesh input shape's vertices to evenly fill the source's pixel dimensions (undo-able).
+class ResetMeshInputCommand : public TransformShapeCommand
+{
+public:
+  ResetMeshInputCommand(MapperGLCanvas* canvas, int sourceX, int sourceY, int sourceWidth, int sourceHeight, QUndoCommand* parent = nullptr);
+
+protected:
+  void _doTransform(MShape::ptr shape) override;
+
+private:
+  int _x;
+  int _y;
+  int _width;
+  int _height;
+};
+
 // Inserts or removes a vertex from a FreePolygon layer (undo-able).
 // Updates both output and input shapes atomically.
 class SetPolygonVerticesCommand : public QUndoCommand

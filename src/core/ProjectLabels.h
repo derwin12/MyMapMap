@@ -36,6 +36,9 @@ public:
 
   static const char* DESTINATION;
   static const char* SOURCE;
+
+  static const char* BACKGROUND_PHOTO;
+  static const char* BACKGROUND_OPACITY;
 };
 
 }

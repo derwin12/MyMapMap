@@ -83,6 +83,18 @@ void ProjectReader::parseProject(const QJsonObject& project)
   QJsonArray sources = project[ProjectLabels::SOURCES].toArray();
   QJsonArray layers  = project[ProjectLabels::LAYERS].toArray();
 
+  // Background reference photo.
+  if (project.contains(ProjectLabels::BACKGROUND_PHOTO)) {
+    QString path    = project[ProjectLabels::BACKGROUND_PHOTO].toString();
+    qreal   opacity = project[ProjectLabels::BACKGROUND_OPACITY].toDouble(0.5);
+    if (!QFileInfo(path).isAbsolute()) {
+      QDir projectDir = _window->getProjectDir();
+      if (!projectDir.path().isEmpty())
+        path = projectDir.absoluteFilePath(path);
+    }
+    _window->applyBackgroundPhoto(path, opacity);
+  }
+
   // Parse sources (formerly sources).
   for (const auto& val : sources)
   {

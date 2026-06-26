@@ -63,5 +63,6 @@
         <file alias="vertex-scale">images/icons/svg/vertex-scale.svg</file>
         <file alias="vertex-rotate">images/icons/svg/vertex-rotate.svg</file>
         <file alias="mute">images/icons/svg/mute.svg</file>
+        <file alias="background-photo">images/icons/svg/background-photo.svg</file>
     </qresource>
 </RCC>

@@ -21,6 +21,7 @@
 #include <QLabel>
 #include <QToolButton>
 #include <QComboBox>
+#include <QSlider>
 #include <QHBoxLayout>
 
 namespace mmp {
@@ -120,6 +121,52 @@ void MapperGLCanvasToolbar::refreshIcons()
   _zoomOutButton->setIcon(MM::themedIcon(":/zoom-out"));
   _resetZoomButton->setIcon(MM::themedIcon(":/reset-zoom"));
   _fitToViewButton->setIcon(MM::themedIcon(":/zoom-fit"));
+  if (_bgPhotoToggleButton)
+    _bgPhotoToggleButton->setIcon(MM::themedIcon(":/background-photo"));
+}
+
+void MapperGLCanvasToolbar::setupBackgroundPhotoControls()
+{
+  QHBoxLayout* lay = qobject_cast<QHBoxLayout*>(layout());
+  if (!lay || _bgPhotoToggleButton) return; // already set up
+
+  lay->addSpacing(20);
+
+  _bgPhotoToggleButton = new QToolButton;
+  _bgPhotoToggleButton->setIcon(MM::themedIcon(":/background-photo"));
+  _bgPhotoToggleButton->setIconSize(QSize(MM::ZOOM_TOOLBAR_ICON_SIZE, MM::ZOOM_TOOLBAR_ICON_SIZE));
+  _bgPhotoToggleButton->setFixedSize(QSize(MM::ZOOM_TOOLBAR_BUTTON_SIZE, MM::ZOOM_TOOLBAR_BUTTON_SIZE));
+  _bgPhotoToggleButton->setToolTip(tr("Show/hide background reference photo"));
+  _bgPhotoToggleButton->setCheckable(true);
+  _bgPhotoToggleButton->setChecked(true);
+  connect(_bgPhotoToggleButton, &QToolButton::toggled, this, &MapperGLCanvasToolbar::backgroundPhotoToggled);
+  lay->addWidget(_bgPhotoToggleButton, 0, Qt::AlignVCenter);
+
+  _bgOpacityLabel = new QLabel(tr("Opacity:"));
+  lay->addWidget(_bgOpacityLabel, 0, Qt::AlignVCenter);
+
+  _bgOpacitySlider = new QSlider(Qt::Horizontal);
+  _bgOpacitySlider->setRange(0, 100);
+  _bgOpacitySlider->setValue(50);
+  _bgOpacitySlider->setFixedWidth(80);
+  _bgOpacitySlider->setToolTip(tr("Background photo opacity"));
+  connect(_bgOpacitySlider, &QSlider::valueChanged, this, &MapperGLCanvasToolbar::backgroundOpacityChanged);
+  lay->addWidget(_bgOpacitySlider, 0, Qt::AlignVCenter);
+
+  setBackgroundPhotoControlsVisible(false);
+}
+
+void MapperGLCanvasToolbar::setBackgroundPhotoControlsVisible(bool visible)
+{
+  if (_bgPhotoToggleButton) _bgPhotoToggleButton->setVisible(visible);
+  if (_bgOpacityLabel)      _bgOpacityLabel->setVisible(visible);
+  if (_bgOpacitySlider)     _bgOpacitySlider->setVisible(visible);
+}
+
+void MapperGLCanvasToolbar::setBackgroundOpacityValue(int value)
+{
+  if (_bgOpacitySlider)
+    _bgOpacitySlider->setValue(value);
 }
 
 void MapperGLCanvasToolbar::enableZoomToolBar(bool enabled)

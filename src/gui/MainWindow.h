@@ -185,6 +185,15 @@ private slots:
 
   void updateLayerListColumnWidth();
 
+  // Background reference photo slots.
+  void setBackgroundPhoto();
+  void clearBackgroundPhoto();
+
+  // Mesh input reset.
+  void resetMeshInputToSource();
+  void onBackgroundPhotoOpacityChanged(int value);
+  void onBackgroundPhotoToggled(bool visible);
+
 public slots:
 
   void refreshIcons();
@@ -461,6 +470,10 @@ private:
   QAction *addPolygonVertexAction = nullptr;
   QAction *deletePolygonVertexAction = nullptr;
 
+  // Background reference photo state.
+  QString _backgroundPhotoPath;
+  qreal   _backgroundPhotoOpacity = 0.5;
+
   // Polygon draw-mode state.
   bool _polygonDrawMode = false;
   bool _polygonDrawOnSource = false; // true when drawing on source/input canvas
@@ -486,6 +499,10 @@ private:
   QAction *displayUndoHistoryAction;
   QAction *displayZoomToolAction;
   QAction *openConsoleAction;
+
+  QAction *_setBackgroundPhotoAction;
+  QAction *_clearBackgroundPhotoAction;
+  QAction *_resetMeshInputAction;
   QAction *showMenuBarAction;
   QAction *showToolBarAction;
 
@@ -676,6 +693,7 @@ public:
   void removeCurrentLayer();
 
   OutputGLWindow* getOutputWindow() const { return outputWindow; }
+  QDir getProjectDir() const { return curFile.isEmpty() ? QDir() : QFileInfo(curFile).absoluteDir(); }
   MapperGLCanvas* getSourceCanvas() const { return sourceCanvas; }
   MapperGLCanvas* getDestinationCanvas() const { return destinationCanvas; }
   int getPreferredScreen() const { return outputWindow->getPreferredScreen(); }
@@ -735,6 +753,12 @@ public:
   }
   void clearPendingPolygonEdit() { _polyEditType = PolyEditNone; }
   bool hasPendingPolygonEdit() const { return _polyEditType != PolyEditNone; }
+
+  // Background reference photo.
+  void applyBackgroundPhoto(const QString& path, qreal opacity);
+  void clearBackgroundPhotoState();
+  QString getBackgroundPhotoPath() const { return _backgroundPhotoPath; }
+  qreal getBackgroundPhotoOpacity() const { return _backgroundPhotoOpacity; }
 };
 
 }

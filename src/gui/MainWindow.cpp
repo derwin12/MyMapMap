@@ -20,6 +20,7 @@
  */
 
 #include "MainWindow.h"
+#include "Mesh.h"
 #include "Maths.h"
 #include "PreferenceDialog.h"
 #include "AboutDialog.h"
@@ -1720,6 +1721,9 @@ bool MainWindow::clearProject()
   // Clear model.
   mappingManager->clearAll();
 
+  // Clear background reference photo.
+  clearBackgroundPhotoState();
+
   // Refresh GL canvases to clear them out.
   sourceCanvas->repaint();
   destinationCanvas->repaint();
@@ -2216,6 +2220,11 @@ void MainWindow::createLayout()
 
   destinationCanvasToolbar = new MapperGLCanvasToolbar(destinationCanvas);
   destinationCanvasToolbar->setToolbarTitle(tr("Output Editor"));
+  destinationCanvasToolbar->setupBackgroundPhotoControls();
+  connect(destinationCanvasToolbar, &MapperGLCanvasToolbar::backgroundPhotoToggled,
+          this, &MainWindow::onBackgroundPhotoToggled);
+  connect(destinationCanvasToolbar, &MapperGLCanvasToolbar::backgroundOpacityChanged,
+          this, &MainWindow::onBackgroundPhotoOpacityChanged);
   QVBoxLayout* destinationLayout = new QVBoxLayout;
   destinationLayout->setContentsMargins(0, 0, 0, 0);
   destinationLayout->setSpacing(0);
@@ -2868,6 +2877,19 @@ void MainWindow::createActions()
   connect(displayZoomToolAction, SIGNAL(toggled(bool)), sourceCanvasToolbar, SLOT(showZoomToolBar(bool)));
   connect(displayZoomToolAction, SIGNAL(toggled(bool)), destinationCanvasToolbar, SLOT(showZoomToolBar(bool)));
 
+  // Background reference photo
+  _setBackgroundPhotoAction = new QAction(tr("Set Background &Reference Photo..."), this);
+  _setBackgroundPhotoAction->setToolTip(tr("Load a photo of your projection surface to use as a reference while mapping"));
+  connect(_setBackgroundPhotoAction, &QAction::triggered, this, &MainWindow::setBackgroundPhoto);
+
+  _clearBackgroundPhotoAction = new QAction(tr("Clear Background Photo"), this);
+  _clearBackgroundPhotoAction->setEnabled(false);
+  connect(_clearBackgroundPhotoAction, &QAction::triggered, this, &MainWindow::clearBackgroundPhoto);
+
+  _resetMeshInputAction = new QAction(tr("Reset Input Mesh to Source Dimensions"), this);
+  _resetMeshInputAction->setToolTip(tr("Redistribute the input mesh vertices to cover the full source width and height"));
+  connect(_resetMeshInputAction, &QAction::triggered, this, &MainWindow::resetMeshInputToSource);
+
   // Toggle show/hide menuBar
   showMenuBarAction = new QAction(tr("&Menu Bar"), this);
   showMenuBarAction->setCheckable(true);
@@ -3060,6 +3082,9 @@ void MainWindow::createMenus()
   viewMenu->addAction(displayTestSignalAction);
   viewMenu->addAction(displayControlsAction);
   viewMenu->addAction(displaySourceControlsAction);
+  viewMenu->addSeparator();
+  viewMenu->addAction(_setBackgroundPhotoAction);
+  viewMenu->addAction(_clearBackgroundPhotoAction);
   outputScreenMenu = viewMenu->addMenu(tr("&Output screen"));
   outputScreenMenu->addActions(screenActions);
   viewMenu->addSeparator();
@@ -3125,6 +3150,9 @@ void MainWindow::createLayerContextMenu()
 
   // Create menu for source list
   _changeLayerMediaMenu = layerContextMenu->addMenu(tr("Change Layer Source"));
+
+  // Mesh input reset (visible only when right-clicking in the source canvas on a Mesh layer).
+  layerContextMenu->addAction(_resetMeshInputAction);
 
   // Add another separator
   layerContextMenu->addSeparator();
@@ -4623,6 +4651,13 @@ void MainWindow::showLayerContextMenu(const QPoint &point)
   addPolygonVertexAction->setVisible(_polyEditType == PolyEditAdd);
   deletePolygonVertexAction->setVisible(_polyEditType == PolyEditDelete);
 
+  // Show "Reset Input Mesh to Source Dimensions" only when right-clicking in the
+  // source canvas and the current layer has a Mesh input shape.
+  bool fromSourceCanvas = (sender() == sourceCanvas);
+  bool hasMeshInput = layer->hasInputShape() &&
+                      layer->getInputShape()->getType() == MShape::ShapeType::Mesh;
+  _resetMeshInputAction->setVisible(fromSourceCanvas && hasMeshInput);
+
   if (objectSender != nullptr) {
     if (sender() == layerItemDelegate) // XXX: The item delegate is not a widget
       layerContextMenu->exec(layerList->mapToGlobal(point));
@@ -5236,6 +5271,74 @@ void MainWindow::refreshIcons()
 void MainWindow::changeEvent(QEvent* event)
 {
   QMainWindow::changeEvent(event);
+}
+
+void MainWindow::resetMeshInputToSource()
+{
+  Layer::ptr layer = getCurrentLayer();
+  if (!layer || !layer->hasInputShape()) return;
+  if (layer->getInputShape()->getType() != MShape::ShapeType::Mesh) return;
+
+  Texture* tex = qobject_cast<Texture*>(layer->getSource().data());
+  if (!tex) return;
+  int w = tex->getWidth();
+  int h = tex->getHeight();
+  if (w <= 0 || h <= 0) return;
+
+  undoStack->push(new ResetMeshInputCommand(sourceCanvas, (int)tex->getX(), (int)tex->getY(), w, h));
+}
+
+void MainWindow::setBackgroundPhoto()
+{
+  QString path = QFileDialog::getOpenFileName(
+    this, tr("Set Background Reference Photo"), QString(),
+    tr("Images (*.png *.jpg *.jpeg *.bmp *.tiff *.tif *.gif *.webp)"));
+  if (path.isEmpty()) return;
+  applyBackgroundPhoto(path, _backgroundPhotoOpacity);
+}
+
+void MainWindow::clearBackgroundPhoto()
+{
+  clearBackgroundPhotoState();
+}
+
+void MainWindow::applyBackgroundPhoto(const QString& path, qreal opacity)
+{
+  QPixmap pix(path);
+  if (pix.isNull()) {
+    QMessageBox::warning(this, tr("Background Photo"),
+                         tr("Could not load image: %1").arg(path));
+    return;
+  }
+  _backgroundPhotoPath    = path;
+  _backgroundPhotoOpacity = opacity;
+
+  destinationCanvas->setBackgroundPhoto(pix, opacity);
+
+  destinationCanvasToolbar->setBackgroundPhotoControlsVisible(true);
+  destinationCanvasToolbar->setBackgroundOpacityValue(qRound(opacity * 100));
+  _clearBackgroundPhotoAction->setEnabled(true);
+}
+
+void MainWindow::clearBackgroundPhotoState()
+{
+  _backgroundPhotoPath.clear();
+
+  destinationCanvas->clearBackgroundPhoto();
+
+  destinationCanvasToolbar->setBackgroundPhotoControlsVisible(false);
+  _clearBackgroundPhotoAction->setEnabled(false);
+}
+
+void MainWindow::onBackgroundPhotoOpacityChanged(int value)
+{
+  _backgroundPhotoOpacity = value / 100.0;
+  destinationCanvas->setBackgroundPhotoOpacity(_backgroundPhotoOpacity);
+}
+
+void MainWindow::onBackgroundPhotoToggled(bool visible)
+{
+  destinationCanvas->setBackgroundPhotoVisible(visible);
 }
 
 }

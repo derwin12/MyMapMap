@@ -30,4 +30,7 @@ const char* ProjectLabels::NAME        = "name";
 const char* ProjectLabels::SOURCE      = "source";
 const char* ProjectLabels::DESTINATION = "destination";
 
+const char* ProjectLabels::BACKGROUND_PHOTO   = "backgroundPhoto";
+const char* ProjectLabels::BACKGROUND_OPACITY = "backgroundOpacity";
+
 }

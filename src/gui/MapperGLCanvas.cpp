@@ -91,6 +91,45 @@ MapperGLCanvas::MapperGLCanvas(MainWindow* mainWindow,
   undoStack = mainWindow->getUndoStack();
 }
 
+void MapperGLCanvas::setBackgroundPhoto(const QPixmap& pixmap, qreal opacity)
+{
+  _backgroundPixmap     = pixmap;
+  _backgroundOpacity    = opacity;
+  _backgroundPhotoVisible = true;
+  update();
+}
+
+void MapperGLCanvas::clearBackgroundPhoto()
+{
+  _backgroundPixmap = QPixmap();
+  update();
+}
+
+void MapperGLCanvas::setBackgroundPhotoOpacity(qreal opacity)
+{
+  _backgroundOpacity = opacity;
+  update();
+}
+
+void MapperGLCanvas::setBackgroundPhotoVisible(bool visible)
+{
+  _backgroundPhotoVisible = visible;
+  update();
+}
+
+void MapperGLCanvas::drawBackground(QPainter* painter, const QRectF& rect)
+{
+  QGraphicsView::drawBackground(painter, rect);
+  if (_backgroundPixmap.isNull() || !_backgroundPhotoVisible) return;
+  painter->save();
+  painter->setOpacity(_backgroundOpacity);
+  // Reset to widget coordinates so the photo always fills the full viewport
+  // regardless of zoom level or scroll position.
+  painter->resetTransform();
+  painter->drawPixmap(viewport()->rect(), _backgroundPixmap);
+  painter->restore();
+}
+
 MShape::ptr MapperGLCanvas::getShapeFromMapping(Layer::ptr mapping)
 {
   if (mapping.isNull())

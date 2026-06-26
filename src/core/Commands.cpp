@@ -23,6 +23,7 @@
 #include "MapperGLCanvas.h"
 
 #include "Commands.h"
+#include "Mesh.h"
 
 namespace mmp {
 
@@ -492,5 +493,27 @@ void SetPolygonVerticesCommand::_apply(const QVector<QPointF>& outVerts, const Q
 
 void SetPolygonVerticesCommand::undo() { _apply(_oldOutputVerts, _oldInputVerts); }
 void SetPolygonVerticesCommand::redo() { _apply(_newOutputVerts, _newInputVerts); }
+
+ResetMeshInputCommand::ResetMeshInputCommand(MapperGLCanvas* canvas, int sourceX, int sourceY, int sourceWidth, int sourceHeight, QUndoCommand* parent)
+  : TransformShapeCommand(canvas, TransformShapeCommand::FREE, parent),
+    _x(sourceX), _y(sourceY), _width(sourceWidth), _height(sourceHeight)
+{
+  setText(QObject::tr("Reset mesh to source dimensions"));
+}
+
+void ResetMeshInputCommand::_doTransform(MShape::ptr shape)
+{
+  Mesh* mesh = qobject_cast<Mesh*>(shape.data());
+  if (!mesh) return;
+  int nCols = mesh->nColumns();
+  int nRows = mesh->nRows();
+  for (int i = 0; i < nCols; i++) {
+    for (int j = 0; j < nRows; j++) {
+      double x = _x + ((nCols > 1) ? (_width  * double(i) / (nCols - 1)) : _width  / 2.0);
+      double y = _y + ((nRows > 1) ? (_height * double(j) / (nRows - 1)) : _height / 2.0);
+      mesh->setVertex2d(i, j, x, y);
+    }
+  }
+}
 
 }
