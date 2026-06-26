@@ -308,12 +308,6 @@ void Text::_redraw()
              _text);
   p.end();
 
-  // Flip for OpenGL (same as Image::build)
-  QT_WARNING_PUSH
-  QT_WARNING_DISABLE_DEPRECATED
-  _image = _image.mirrored(true, false).transformed(QTransform().rotate(180));
-  QT_WARNING_POP
-
   bitsChanged = true;
 }
 
@@ -343,16 +337,10 @@ QIcon Text::getIcon() const
 
 QPixmap Text::getPreviewPixmap(int maxW, int maxH) const
 {
-  // Un-flip the OpenGL image for display
-  QT_WARNING_PUSH
-  QT_WARNING_DISABLE_DEPRECATED
-  QImage display = _image.mirrored(true, false).transformed(QTransform().rotate(180));
-  QT_WARNING_POP
-
-  QPixmap scaled = QPixmap::fromImage(display).scaled(maxW, maxH, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+  QPixmap scaled = QPixmap::fromImage(_image).scaled(maxW, maxH, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
   // Composite onto a dark background so white text on transparent bg is visible in the panel.
-  if (display.hasAlphaChannel()) {
+  if (_image.hasAlphaChannel()) {
     QPixmap composite(scaled.size());
     composite.fill(QColor(0x30, 0x30, 0x30));
     QPainter p(&composite);
