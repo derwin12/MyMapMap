@@ -39,6 +39,7 @@
 #include "MapperGLCanvas.h"
 #include "MapperGLCanvasToolbar.h"
 #include "OscInterface.h"
+#include "FppMultiSyncListener.h"
 #ifdef HAVE_MCP
 #include "McpServer.h"
 #endif
@@ -167,6 +168,11 @@ private slots:
   void windowModified();
   void pollOscInterface();
   void exitFullScreen();
+
+  // FPP MultiSync: chase a Falcon Player show clock (see startFppSync()).
+  void onFppMediaStart(const QString& filename, double secondsElapsed);
+  void onFppMediaStop(const QString& filename);
+  void onFppMediaSync(const QString& filename, double secondsElapsed, quint32 frameNumber);
 
   // Some help links
   void documentation() {
@@ -311,6 +317,12 @@ private:
 
   // OSC.
   void startOscReceiver();
+
+  // FPP MultiSync.
+  void startFppSync();
+  /// Seeks every Video source to the given absolute position (ms), used to
+  /// keep playback locked to the FPP master clock.
+  void seekAllVideosToMs(qint64 ms);
 
   // Polygon draw mode internals.
   void startPolygonDrawMode();
@@ -566,6 +578,11 @@ private:
   OscInterface::ptr osc_interface;
   int oscListeningPort;
   QTimer *osc_timer;
+
+  // FPP MultiSync follower.
+  FppMultiSyncListener *fppSyncListener = nullptr;
+  // Re-seek only when drift from the master clock exceeds this (ms).
+  static const qint64 FPP_SYNC_THRESHOLD_MS = 50;
 
 #ifdef HAVE_MCP
   // MCP server.

@@ -238,6 +238,9 @@ MainWindow::MainWindow()
   // Start osc.
   startOscReceiver();
 
+  // Start FPP MultiSync follower.
+  startFppSync();
+
 #ifdef HAVE_MCP
   // Start MCP server.
   startMcpServer();
@@ -4770,6 +4773,80 @@ bool MainWindow::setOscPort(int port)
   oscListeningPort = port;
   startOscReceiver();
   return true;
+}
+
+void MainWindow::startFppSync()
+{
+  if (fppSyncListener)
+    return;
+
+  fppSyncListener = new FppMultiSyncListener(FppMultiSyncListener::DEFAULT_PORT, this);
+  connect(fppSyncListener, &FppMultiSyncListener::mediaStart,
+          this, &MainWindow::onFppMediaStart);
+  connect(fppSyncListener, &FppMultiSyncListener::mediaStop,
+          this, &MainWindow::onFppMediaStop);
+  connect(fppSyncListener, &FppMultiSyncListener::mediaSync,
+          this, &MainWindow::onFppMediaSync);
+
+  if (!fppSyncListener->start())
+  {
+    // Bind failed (port busy, no permission): keep the object so we don't
+    // retry on every call; it simply never emits.
+    qWarning() << "FPP MultiSync follower disabled (could not bind UDP port"
+               << fppSyncListener->port() << ")";
+  }
+}
+
+void MainWindow::seekAllVideosToMs(qint64 ms)
+{
+  if (ms < 0)
+    ms = 0;
+  const int n = mappingManager->nSources();
+  for (int i = 0; i < n; ++i)
+  {
+    QSharedPointer<Video> video =
+        qSharedPointerDynamicCast<Video>(mappingManager->getSource(i));
+    if (video)
+      video->seekToMs(ms);
+  }
+}
+
+void MainWindow::onFppMediaStart(const QString& filename, double secondsElapsed)
+{
+  Q_UNUSED(filename);
+  // Start playback and align to the master's reported position.
+  play();
+  seekAllVideosToMs(qint64(secondsElapsed * 1000.0));
+}
+
+void MainWindow::onFppMediaStop(const QString& filename)
+{
+  Q_UNUSED(filename);
+  pause();
+}
+
+void MainWindow::onFppMediaSync(const QString& filename, double secondsElapsed,
+                                quint32 frameNumber)
+{
+  Q_UNUSED(filename);
+  Q_UNUSED(frameNumber);
+
+  // Ensure we're rolling, then drift-correct only when needed so we don't
+  // stutter the players by seeking on every sync packet.
+  if (!isPlaying())
+    play();
+
+  const qint64 targetMs = qint64(secondsElapsed * 1000.0);
+  const int n = mappingManager->nSources();
+  for (int i = 0; i < n; ++i)
+  {
+    QSharedPointer<Video> video =
+        qSharedPointerDynamicCast<Video>(mappingManager->getSource(i));
+    if (!video)
+      continue;
+    if (qAbs(video->getPosition() - targetMs) > FPP_SYNC_THRESHOLD_MS)
+      video->seekToMs(targetMs);
+  }
 }
 
 int MainWindow::getOscPort() const
