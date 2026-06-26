@@ -1209,6 +1209,9 @@ void MainWindow::addPolygonVertex()
   Layer::ptr layer = getCurrentLayer();
   if (!layer) return;
 
+  if (_polyEditOnSource && qSharedPointerCast<TextureLayer>(layer).isNull())
+    return;
+
   // Choose which shape the user clicked on and which is the "other" shape.
   MShape::ptr editedShape = _polyEditOnSource
     ? qSharedPointerCast<TextureLayer>(layer)->getInputShape()
@@ -4328,6 +4331,11 @@ void MainWindow::showLayerContextMenu(const QPoint &point)
   QWidget *objectSender = static_cast<QWidget*>(sender());
   uid layerId = currentLayerItemId();
   Layer::ptr layer = mappingManager->getLayerById(layerId);
+
+  if (!layer) {
+    clearPendingPolygonEdit();
+    return;
+  }
 
   // Switch to right action check state
   layerLockedAction->setChecked(layer->isLocked());
