@@ -3616,9 +3616,10 @@ void MainWindow::initSourceListSections()
     return h;
   };
 
-  _sourceSectionImages  = makeHeader(tr("Images"),        SLOT(importMedia()));
-  _sourceSectionVideos  = makeHeader(tr("Movies"),        SLOT(importMedia()));
-  _sourceSectionFolders = makeHeader(tr("Image Folders"), SLOT(importFolderAsSource()));
+  _sourceSectionImages    = makeHeader(tr("Images"),        SLOT(importMedia()));
+  _sourceSectionVideos    = makeHeader(tr("Movies"),        SLOT(importMedia()));
+  _sourceSectionGenerated = makeHeader(tr("Generated"),     SLOT(addColor()));
+  _sourceSectionFolders   = makeHeader(tr("Image Folders"), SLOT(importFolderAsSource()));
 }
 
 void MainWindow::addSourceItem(uid sourceId, const QIcon& icon, const QString& name)
@@ -3706,10 +3707,15 @@ void MainWindow::addSourceItem(uid sourceId, const QIcon& icon, const QString& n
   } else if (source->getSourceType() == SourceType::Folder) {
     // Folders go at the end, after the Image Folders header.
     sourceList->addItem(item);
-  } else {
-    // Videos and other types go before the Image Folders header.
+  } else if (source->getSourceType() == SourceType::Color ||
+             source->getSourceType() == SourceType::Text) {
+    // Generated sources (Color, Text) go in the Generated section.
     int foldersRow = sourceList->row(_sourceSectionFolders);
     sourceList->insertItem(foldersRow, item);
+  } else {
+    // Videos go before the Generated header.
+    int generatedRow = sourceList->row(_sourceSectionGenerated);
+    sourceList->insertItem(generatedRow, item);
   }
   sourceList->setCurrentItem(item);
 

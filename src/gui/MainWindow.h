@@ -511,9 +511,10 @@ private:
 
   QSplitter* sourceSplitter;
   QListWidget* sourceList;
-  QListWidgetItem* _sourceSectionImages  = nullptr; // non-selectable section header
-  QListWidgetItem* _sourceSectionVideos  = nullptr; // non-selectable section header
-  QListWidgetItem* _sourceSectionFolders = nullptr; // non-selectable section header
+  QListWidgetItem* _sourceSectionImages    = nullptr; // non-selectable section header
+  QListWidgetItem* _sourceSectionVideos    = nullptr; // non-selectable section header
+  QListWidgetItem* _sourceSectionGenerated = nullptr; // non-selectable section header (Color, Text)
+  QListWidgetItem* _sourceSectionFolders   = nullptr; // non-selectable section header
   QStackedWidget* sourcePropertyPanel;
 
   QWidget*      _sourcePreviewContainer = nullptr;

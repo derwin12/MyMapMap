@@ -183,9 +183,9 @@ TextGui::TextGui(Source::ptr source)
   _fontFamilyItem->setValue(textSource->getFontFamily());
 
   _fontSizeItem = _variantManager->addProperty(QMetaType::Int, tr("Font size (pt)"));
+  _fontSizeItem->setValue(textSource->getFontSize());
   _fontSizeItem->setAttribute("minimum", 6);
   _fontSizeItem->setAttribute("maximum", 200);
-  _fontSizeItem->setValue(textSource->getFontSize());
 
   _boldItem = _variantManager->addProperty(QMetaType::Bool, tr("Bold"));
   _boldItem->setValue(textSource->isBold());
@@ -211,6 +211,12 @@ TextGui::TextGui(Source::ptr source)
   _propertyBrowser->addProperty(_boldItem);
   _propertyBrowser->addProperty(_italicItem);
   _propertyBrowser->addProperty(_alignmentItem);
+
+  // Collapse color sub-items (R/G/B/A) so font properties are visible without scrolling.
+  if (auto* tree = qobject_cast<QtTreePropertyBrowser*>(_propertyBrowser)) {
+    tree->setExpanded(tree->items(_textColorItem).first(), false);
+    tree->setExpanded(tree->items(_bgColorItem).first(), false);
+  }
 }
 
 void TextGui::setValue(QtProperty* property, const QVariant& value)

@@ -348,7 +348,18 @@ QPixmap Text::getPreviewPixmap(int maxW, int maxH) const
   QT_WARNING_DISABLE_DEPRECATED
   QImage display = _image.mirrored(true, false).transformed(QTransform().rotate(180));
   QT_WARNING_POP
-  return QPixmap::fromImage(display).scaled(maxW, maxH, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+  QPixmap scaled = QPixmap::fromImage(display).scaled(maxW, maxH, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+  // Composite onto a dark background so white text on transparent bg is visible in the panel.
+  if (display.hasAlphaChannel()) {
+    QPixmap composite(scaled.size());
+    composite.fill(QColor(0x30, 0x30, 0x30));
+    QPainter p(&composite);
+    p.drawPixmap(0, 0, scaled);
+    return composite;
+  }
+  return scaled;
 }
 
 /* Implementation of the Video class */
