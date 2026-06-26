@@ -113,6 +113,7 @@ set(SOURCES
 
     # control
     ${CONTROL_DIR}/OscInterface.cpp
+    ${CONTROL_DIR}/FppMultiSyncListener.cpp
 
     # control/qosc (OSC support)
     ${QOSC_DIR}/contrib/oscpack/OscOutboundPacketStream.cpp
@@ -157,6 +158,7 @@ set(HEADERS
     ${QPBE_DIR}/variantmanager.h ${QPBE_DIR}/variantfactory.h
 
     ${CONTROL_DIR}/ConcurrentQueue.h ${CONTROL_DIR}/OscInterface.h
+    ${CONTROL_DIR}/FppMultiSyncListener.h
     ${QOSC_DIR}/oscreceiver.h ${QOSC_DIR}/oscsender.h
 
     ${APP_DIR}/MainApplication.h
