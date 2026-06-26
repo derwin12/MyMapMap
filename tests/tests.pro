@@ -29,6 +29,7 @@ HEADERS += \
     $$CORE/UidAllocator.h \
     $$SHAPE/Shape.h \
     $$SHAPE/Polygon.h \
+    $$SHAPE/FreePolygon.h \
     $$SHAPE/Triangle.h \
     $$SHAPE/Quad.h \
     $$SHAPE/Mesh.h \
