@@ -1,6 +1,6 @@
 @echo off
 call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
-cd /d H:\Github\MyMapMap
+cd /d "%~dp0"
 C:\Qt\6.11.1\msvc2022_64\bin\qmake.exe mymapmap.pro CONFIG+=release
 if errorlevel 1 (
   echo QMAKE_FAILED

@@ -89,6 +89,16 @@ public:
   /// Duration in milliseconds (0 if not yet known).
   qint64 getDuration() const { return _duration; }
 
+  /// Current playback position in milliseconds. Base returns 0; players
+  /// backed by an actual media pipeline override to query live position.
+  virtual qint64 getPosition() const { return 0; }
+
+  /// Nominal video frame rate in frames per second (0 if unknown).
+  virtual qreal getFrameRate() const { return 0.0; }
+
+  /// Human-readable video codec name (empty if unknown).
+  virtual QString getVideoCodec() const { return QString(); }
+
   /// Whether the video loops on end-of-stream.
   bool getPlayInLoop() const { return _playInLoop; }
 
