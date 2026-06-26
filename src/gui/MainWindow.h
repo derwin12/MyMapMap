@@ -220,6 +220,9 @@ public slots:
   /// Create a folder source from a directory path.
   uid createFolderSource(uid sourceId, const QString& dirPath);
 
+  /// Create a free-polygon layer for the given source with the given vertices.
+  uid addFreePolygonLayer(int sourceId, const QVector<QPointF>& vertices);
+
   /// Create a Syphon source pointing at the given server (macOS only).
   uid createSyphonSource(uid sourceId, const QString& serverUUID,
                          const QString& serverName, const QString& appName);

@@ -29,6 +29,10 @@
 #include <QMetaProperty>
 #include <QColor>
 #include <QDebug>
+#include <QBuffer>
+#include <QCoreApplication>
+#include <QGuiApplication>
+#include <QScreen>
 
 #include "MM.h"
 #include "Element.h"
@@ -37,6 +41,8 @@
 #include "Shape.h"
 #include "MappingManager.h"
 #include "MainWindow.h"
+#include "OutputGLWindow.h"
+#include "Util.h"
 
 namespace mmp {
 
@@ -259,17 +265,42 @@ QJsonObject McpServer::handleToolsCall(const QJsonObject& params)
       return textResult(QString("No source with id %1.").arg(sourceId), true);
     const QString shape = args.value("shape").toString("quad").toLower();
 
+    if (shape == "freepolygon")
+    {
+      const QJsonArray verts = args.value("vertices").toArray();
+      if (verts.size() < 3)
+        return textResult("'vertices' must contain at least 3 points for a freepolygon.", true);
+      QVector<QPointF> pts;
+      for (const QJsonValue& v : verts)
+      {
+        const QJsonObject pt = v.toObject();
+        pts.append(QPointF(pt.value("x").toDouble(), pt.value("y").toDouble()));
+      }
+      const uid layerId = _mainWindow->addFreePolygonLayer(sourceId, pts);
+      if (layerId == NULL_UID) return textResult("Failed to create freepolygon layer.", true);
+      return jsonResult(layerSummary(static_cast<int>(layerId)));
+    }
+
     // Select the source so addTriangle/addMesh/addEllipse use it.
     _mainWindow->setCurrentSource(sourceId);
 
     if (shape == "triangle")       _mainWindow->addTriangle();
     else if (shape == "quad")      _mainWindow->addMesh();
     else if (shape == "ellipse")   _mainWindow->addEllipse();
-    else return textResult(QString("Unknown shape '%1'. Use triangle, quad or ellipse.").arg(shape), true);
+    else return textResult(QString("Unknown shape '%1'. Use triangle, quad, ellipse or freepolygon.").arg(shape), true);
 
     const int layerId = static_cast<int>(_mainWindow->getCurrentLayerId());
     if (layerId == 0) return textResult("Failed to create layer.", true);
     return jsonResult(layerSummary(layerId));
+  }
+  if (name == "create_folder_source")
+  {
+    const QString path = args.value("path").toString();
+    if (path.isEmpty()) return textResult("Missing required argument 'path'.", true);
+    const uid id = _mainWindow->createFolderSource(NULL_UID, path);
+    if (id == NULL_UID)
+      return textResult(QString("Failed to create folder source from '%1'. Directory may be empty or invalid.").arg(path), true);
+    return jsonResult(sourceSummary(static_cast<int>(id)));
   }
   if (name == "delete_source")
   {
@@ -333,6 +364,48 @@ QJsonObject McpServer::handleToolsCall(const QJsonObject& params)
     shape->setVertices(points);
     _mainWindow->updateCanvases();
     return textResult(QString("Set %1 vertices on layer %2.").arg(points.size()).arg(id));
+  }
+
+  if (name == "set_source_vertices")
+  {
+    const int id = static_cast<int>(args.value("id").toInteger(0));
+    Layer::ptr layer = mm.getLayerById(id);
+    if (layer.isNull()) return textResult(QString("No layer with id %1.").arg(id), true);
+    if (!layer->hasInputShape()) return textResult("Layer has no source (input) shape.", true);
+    const QJsonArray verts = args.value("vertices").toArray();
+    if (verts.isEmpty()) return textResult("Missing or empty 'vertices' array.", true);
+    QVector<QPointF> points;
+    for (const QJsonValue& v : verts)
+    {
+      const QJsonObject pt = v.toObject();
+      points.append(QPointF(pt.value("x").toDouble(), pt.value("y").toDouble()));
+    }
+    MShape::ptr inputShape = layer->getInputShape();
+    if (points.size() != inputShape->nVertices())
+      return textResult(QString("Expected %1 vertices, got %2.").arg(inputShape->nVertices()).arg(points.size()), true);
+    inputShape->setVertices(points);
+    _mainWindow->updateCanvases();
+    return textResult(QString("Set %1 source vertices on layer %2.").arg(points.size()).arg(id));
+  }
+
+  if (name == "nudge_vertex")
+  {
+    const int id = static_cast<int>(args.value("id").toInteger(0));
+    Layer::ptr layer = mm.getLayerById(id);
+    if (layer.isNull()) return textResult(QString("No layer with id %1.").arg(id), true);
+    const bool useInput = args.value("input").toBool(false);
+    MShape::ptr shape = useInput ? layer->getInputShape() : layer->getShape();
+    if (shape.isNull()) return textResult(useInput ? "Layer has no input shape." : "Layer has no shape.", true);
+    const int index = static_cast<int>(args.value("vertex").toInteger(-1));
+    if (index < 0 || index >= shape->nVertices())
+      return textResult(QString("'vertex' must be 0–%1.").arg(shape->nVertices() - 1), true);
+    const double dx = args.value("dx").toDouble(0);
+    const double dy = args.value("dy").toDouble(0);
+    QVector<QPointF> pts = shape->getVertices();
+    pts[index] += QPointF(dx, dy);
+    shape->setVertices(pts);
+    _mainWindow->updateCanvases();
+    return textResult(QString("Nudged vertex %1 of layer %2 by (%3, %4).").arg(index).arg(id).arg(dx).arg(dy));
   }
 
   // ---- Generic property set ----
@@ -408,6 +481,35 @@ QJsonObject McpServer::handleToolsCall(const QJsonObject& params)
     return jsonResult(elementProperties(layer.data()));
   }
 
+  if (name == "get_preview")
+  {
+    OutputGLWindow* outWin = _mainWindow->getOutputWindow();
+    if (!outWin || !outWin->isVisible())
+      return textResult("Output window is not visible — open or show it first.", true);
+    outWin->repaint();
+    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+    QWindow* wh = outWin->windowHandle();
+    QScreen* scr = (wh && wh->screen()) ? wh->screen() : QGuiApplication::primaryScreen();
+    QPixmap px = scr->grabWindow(outWin->winId());
+    if (px.isNull())
+      return textResult("Failed to grab output window.", true);
+    const int maxDim = args.value("max_size").toInt(800);
+    if (px.width() > maxDim || px.height() > maxDim)
+      px = px.scaled(maxDim, maxDim, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    QByteArray ba;
+    QBuffer buf(&ba);
+    buf.open(QIODevice::WriteOnly);
+    const int quality = args.value("quality").toInt(75);
+    px.save(&buf, "JPEG", quality);
+    buf.close();
+    QJsonObject data;
+    data["mime_type"] = "image/jpeg";
+    data["base64"] = QString::fromLatin1(ba.toBase64());
+    data["width"] = px.width();
+    data["height"] = px.height();
+    return jsonResult(data);
+  }
+
   return textResult(QString("Unknown tool: %1").arg(name), true);
 }
 
@@ -424,10 +526,11 @@ QJsonObject McpServer::sourceSummary(int sourceId) const
   o["locked"] = source->isLocked();
   switch (source->getSourceType())
   {
-    case Source::Video: o["type"] = "video"; break;
-    case Source::Image: o["type"] = "image"; break;
-    case Source::Color: o["type"] = "color"; break;
-    default:           o["type"] = "unknown"; break;
+    case Source::Video:  o["type"] = "video";  break;
+    case Source::Image:  o["type"] = "image";  break;
+    case Source::Color:  o["type"] = "color";  break;
+    case Source::Folder: o["type"] = "folder"; break;
+    default:             o["type"] = "unknown"; break;
   }
   return o;
 }
@@ -520,11 +623,16 @@ QJsonArray McpServer::toolDefinitions() const
                       {"is_image", prop("boolean", "True for an image, false for a video (default false).")}
                     },
                     QJsonArray{"uri"}));
+  tools.append(tool("create_folder_source",
+                    "Create an image-sequence (folder) source from a directory of images. Returns the new source.",
+                    QJsonObject{{"path", prop("string", "Absolute path to a directory containing image files.")}},
+                    QJsonArray{"path"}));
   tools.append(tool("create_layer",
                     "Create a layer with a given shape for a source. Returns the new layer.",
                     QJsonObject{
                       {"source_id", prop("integer", "Source id to use.")},
-                      {"shape", prop("string", "Shape type: \"triangle\", \"quad\" or \"ellipse\" (default \"quad\").")}
+                      {"shape", prop("string", "Shape type: \"triangle\", \"quad\", \"ellipse\" or \"freepolygon\" (default \"quad\").")},
+                      {"vertices", QJsonObject{{"type", "array"}, {"description", "Required for freepolygon: array of {x,y} points (≥3)."}}}
                     },
                     QJsonArray{"source_id", "shape"}));
   tools.append(tool("delete_source", "Delete a source and its associated layers.",
@@ -560,12 +668,29 @@ QJsonArray McpServer::toolDefinitions() const
                     QJsonArray{"id", "value"}));
 
   tools.append(tool("set_vertices",
-                    "Set the output vertices of a layer's shape.",
+                    "Set the output (destination) vertices of a layer's shape.",
                     QJsonObject{
                       {"id", prop("integer", "Layer id.")},
                       {"vertices", QJsonObject{{"type", "array"}, {"description", "Array of {x, y} points. Count must match shape (3 for triangle, 4 for quad)."}}}
                     },
                     QJsonArray{"id", "vertices"}));
+  tools.append(tool("set_source_vertices",
+                    "Set the input (source/texture) vertices of a texture layer's shape.",
+                    QJsonObject{
+                      {"id", prop("integer", "Layer id.")},
+                      {"vertices", QJsonObject{{"type", "array"}, {"description", "Array of {x, y} points in source-canvas coordinates. Count must match shape."}}}
+                    },
+                    QJsonArray{"id", "vertices"}));
+  tools.append(tool("nudge_vertex",
+                    "Move a single vertex of a layer's shape by a relative delta.",
+                    QJsonObject{
+                      {"id", prop("integer", "Layer id.")},
+                      {"vertex", prop("integer", "Vertex index (0-based).")},
+                      {"dx", prop("number", "Horizontal delta in pixels.")},
+                      {"dy", prop("number", "Vertical delta in pixels.")},
+                      {"input", prop("boolean", "If true, nudge the input (source) shape instead of the output shape (default false).")}
+                    },
+                    QJsonArray{"id", "vertex", "dx", "dy"}));
   tools.append(tool("set_property",
                     "Set an arbitrary property on a source or layer (e.g. name, opacity, color, uri).",
                     QJsonObject{
@@ -587,6 +712,13 @@ QJsonArray McpServer::toolDefinitions() const
                     QJsonObject{{"id", prop("integer", "Source id.")}}, QJsonArray{"id"}));
   tools.append(tool("get_layer", "Get all properties of a layer.",
                     QJsonObject{{"id", prop("integer", "Layer id.")}}, QJsonArray{"id"}));
+  tools.append(tool("get_preview",
+                    "Capture a JPEG screenshot of the output canvas. Returns base64-encoded image data. Output window must be visible.",
+                    QJsonObject{
+                      {"max_size", prop("integer", "Maximum width/height in pixels (default 800).")},
+                      {"quality", prop("integer", "JPEG quality 1–100 (default 75).")}
+                    },
+                    QJsonArray()));
 
   return tools;
 }

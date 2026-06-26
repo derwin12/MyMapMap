@@ -1815,6 +1815,32 @@ uid MainWindow::createTextSource(uid sourceId, const QString& text)
   return id;
 }
 
+uid MainWindow::addFreePolygonLayer(int sourceId, const QVector<QPointF>& vertices)
+{
+  Source::ptr source = getMappingManager().getSourceById(sourceId);
+  if (!source) return NULL_UID;
+
+  Layer* layerPtr;
+  if (source->getSourceType() == SourceType::Color)
+  {
+    MShape::ptr outPoly(Util::createFreePolygonForColor(vertices));
+    layerPtr = new ColorLayer(source, outPoly);
+  }
+  else
+  {
+    QSharedPointer<Texture> texture = qSharedPointerCast<Texture>(source);
+    if (!texture) return NULL_UID;
+    MShape::ptr outPoly(Util::createFreePolygonForColor(vertices));
+    MShape::ptr inPoly(Util::createFreePolygonInputForTexture(vertices, texture.data()));
+    layerPtr = new TextureLayer(source, outPoly, inPoly);
+  }
+
+  Layer::ptr layer(layerPtr);
+  uid layerId = mappingManager->addLayer(layer);
+  undoStack->push(new AddLayerCommand(this, layerId));
+  return layerId;
+}
+
 uid MainWindow::createFolderSource(uid sourceId, const QString& dirPath)
 {
   if (Source::getUidAllocator().exists(sourceId))
