@@ -3768,7 +3768,7 @@ void MainWindow::addLayerItem(uid layerId)
   // XXX hardcoded for textures
   QSharedPointer<TextureLayer> textureLayer;
   if (sourceType == SourceType::Video || sourceType == SourceType::Image
-      || sourceType == SourceType::Folder
+      || sourceType == SourceType::Folder || sourceType == SourceType::Text
 #ifdef Q_OS_MAC
       || sourceType == SourceType::Syphon
 #endif
