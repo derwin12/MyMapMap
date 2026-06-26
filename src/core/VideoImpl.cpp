@@ -73,6 +73,7 @@ VideoImpl::VideoImpl()
     _width(-1),
     _height(-1),
     _duration(0),
+    _fps(0.0),
     _videoIsConnected(false),
     _audioIsConnected(false),
     _seekEnabled(false),
@@ -109,6 +110,8 @@ void VideoImpl::freeResources()
   _bitsChanged = false;
   _width = _height = -1;
   _duration = 0;
+  _fps = 0.0;
+  _codec.clear();
   _videoIsConnected = false;
   _audioIsConnected = false;
 }

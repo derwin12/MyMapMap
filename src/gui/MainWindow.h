@@ -143,6 +143,8 @@ private slots:
   void deleteSourceItem();
   void renameSourceItem();
   void sourceListEditEnd(QWidget* editor);
+  void setSectionCollapsed(QListWidgetItem* header, bool collapsed);
+  void setSourceListThumbnailMode(bool thumbnailMode);
   // Output menu
   void setupOutputScreen();
   void updateScreenCount();
@@ -363,6 +365,9 @@ public:
   // Returns the source icon depending on play/pause state.
   static const QIcon getSourceIcon(Source::ptr source);
 
+  // Refreshes the usage-count badge on every source thumbnail.
+  void refreshSourceBadges();
+
 private:
   // Connects/disconnects project-specific widgets (sources and mappings).
   void connectProjectWidgets();
@@ -518,12 +523,17 @@ private:
   QListWidgetItem* _sourceSectionVideos    = nullptr; // non-selectable section header
   QListWidgetItem* _sourceSectionGenerated = nullptr; // non-selectable section header (Color, Text)
   QListWidgetItem* _sourceSectionFolders   = nullptr; // non-selectable section header
+  QMap<QListWidgetItem*, QToolButton*> _sectionArrows;
+  QMap<QListWidgetItem*, bool>         _sectionCollapsed;
+  bool _sourceListThumbnailMode = true; // false = list, true = thumbnail
+  int  _sourceListIconSize = PAINT_LIST_ICON_SIZE;
   QStackedWidget* sourcePropertyPanel;
 
   QWidget*      _sourcePreviewContainer = nullptr;
   QLabel*       _sourcePreviewLabel     = nullptr;
   QCheckBox*    _previewToggleBtn       = nullptr;
   QToolButton*  _thumbSizeBtns[3]      = {};
+  QToolButton*  _viewModeBtns[2]       = {}; // [0]=list, [1]=thumbnail
   ThumbnailCache* _thumbnailCache       = nullptr;
 
   QSplitter* layerSplitter;
@@ -704,8 +714,8 @@ public:
   // Constants. ///////////////////////////////////////////////////////////////////////////////////////
   static const int DEFAULT_WIDTH = 1360;
   static const int DEFAULT_HEIGHT = 768;
-  static const int PAINT_LIST_ITEM_HEIGHT = 40;
-  static const int PAINT_LIST_ICON_SIZE = 32;
+  static const int PAINT_LIST_ITEM_HEIGHT = 72;
+  static const int PAINT_LIST_ICON_SIZE = 64;
   static const int SHAPE_LIST_ITEM_HEIGHT = 40;
   static const int PAINT_LIST_MINIMUM_HEIGHT = 290;
   static const int MAPPING_LIST_MINIMUM_HEIGHT = 290;

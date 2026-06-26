@@ -25,6 +25,8 @@
 #include <QGridLayout>
 #include <QFrame>
 #include <QFileInfo>
+#include <QPushButton>
+#include <QColorDialog>
 
 namespace mmp {
 
@@ -136,32 +138,74 @@ ColorGui::ColorGui(Source::ptr source)
   color = qSharedPointerCast<Color>(source);
   Q_CHECK_PTR(color);
 
-  _colorItem = _variantManager->addProperty(QMetaType::QColor,
-                                            QObject::tr("Color"));
+  // Color swatch button — replaces the property browser entry for color.
+  _colorButton = new QPushButton;
+  _colorButton->setMinimumHeight(48);
+  _colorButton->setCursor(Qt::PointingHandCursor);
+  _colorButton->setToolTip(QObject::tr("Click to change color"));
+  _colorButton->setFlat(true);
+  updateColorButton();
+  connect(_colorButton, &QPushButton::clicked, this, &ColorGui::openColorDialog);
 
-  _colorItem->setValue(color->getColor());
+  auto* swatchWidget = new QWidget;
+  auto* vl = new QVBoxLayout(swatchWidget);
+  vl->setContentsMargins(8, 8, 8, 4);
+  vl->addWidget(_colorButton);
 
-  _propertyBrowser->addProperty(_colorItem);
-}
-
-void ColorGui::setValue(QtProperty* property, const QVariant& value) {
-  if (property == _colorItem) {
-    QColor newColor = value.value<QColor>();
-    if (newColor != color->getColor()) {
-      color->setColor(newColor);
-      emit valueChanged(_source);
-    }
-  }
-  else
-    SourceGui::setValue(property, value);
+  _compositeWidget = makeComposite(swatchWidget, _propertyBrowser);
 }
 
 void ColorGui::setValue(QString propertyName, QVariant value)
 {
-  if (propertyName == "color")
-    setValue(_colorItem, value);
-  else
+  if (propertyName == "color") {
+    color->setColor(value.value<QColor>());
+    updateColorButton();
+  } else {
     SourceGui::setValue(propertyName, value);
+  }
+}
+
+void ColorGui::updateColorButton()
+{
+  QColor c = color->getColor();
+  QString hex = c.name(QColor::HexArgb).toUpper();
+  _colorButton->setText(hex);
+  // Choose contrasting text color.
+  double luminance = 0.299*c.redF() + 0.587*c.greenF() + 0.114*c.blueF();
+  QString textColor = (luminance > 0.5) ? "#000000" : "#ffffff";
+  _colorButton->setStyleSheet(QString(
+    "QPushButton { background: %1; border: 1px solid #555; border-radius: 4px;"
+    "  color: %2; font-weight: bold; }"
+    "QPushButton:hover { border: 2px solid #aaa; }").arg(hex, textColor));
+}
+
+void ColorGui::openColorDialog()
+{
+  QColor c = QColorDialog::getColor(color->getColor(), _colorButton,
+                                    QObject::tr("Choose Color"),
+                                    QColorDialog::ShowAlphaChannel);
+  if (c.isValid()) {
+    color->setColor(c);
+    updateColorButton();
+    emit valueChanged(_source);
+  }
+}
+
+// Shared helper used by TextGui.
+static void applyColorToButton(QPushButton* btn, const QColor& c)
+{
+  QString hex = c.name(QColor::HexArgb).toUpper();
+  double luminance = 0.299*c.redF() + 0.587*c.greenF() + 0.114*c.blueF();
+  QString textColor = (luminance > 0.5) ? "#000000" : "#ffffff";
+  btn->setStyleSheet(QString(
+    "QPushButton { background: %1; border: 1px solid #555; border-radius: 4px;"
+    "  color: %2; font-weight: bold; }"
+    "QPushButton:hover { border: 2px solid #aaa; }").arg(hex, textColor));
+}
+
+void TextGui::updateColorButton(QPushButton* btn, const QColor& c)
+{
+  applyColorToButton(btn, c);
 }
 
 TextGui::TextGui(Source::ptr source)
@@ -172,12 +216,6 @@ TextGui::TextGui(Source::ptr source)
 
   _textItem = _variantManager->addProperty(QMetaType::QString, tr("Text"));
   _textItem->setValue(textSource->getText());
-
-  _textColorItem = _variantManager->addProperty(QMetaType::QColor, tr("Text color"));
-  _textColorItem->setValue(textSource->getTextColor());
-
-  _bgColorItem = _variantManager->addProperty(QMetaType::QColor, tr("Background color"));
-  _bgColorItem->setValue(textSource->getBgColor());
 
   _fontFamilyItem = _variantManager->addProperty(QMetaType::QString, tr("Font family"));
   _fontFamilyItem->setValue(textSource->getFontFamily());
@@ -197,26 +235,70 @@ TextGui::TextGui(Source::ptr source)
   QStringList alignNames;
   alignNames << tr("Left") << tr("Center") << tr("Right");
   _alignmentItem->setAttribute("enumNames", alignNames);
-  int alignIdx = 1; // Center default
+  int alignIdx = 1;
   if (textSource->getAlignment() & Qt::AlignLeft)        alignIdx = 0;
   else if (textSource->getAlignment() & Qt::AlignHCenter) alignIdx = 1;
   else if (textSource->getAlignment() & Qt::AlignRight)   alignIdx = 2;
   _alignmentItem->setValue(alignIdx);
 
   _propertyBrowser->addProperty(_textItem);
-  _propertyBrowser->addProperty(_textColorItem);
-  _propertyBrowser->addProperty(_bgColorItem);
   _propertyBrowser->addProperty(_fontFamilyItem);
   _propertyBrowser->addProperty(_fontSizeItem);
   _propertyBrowser->addProperty(_boldItem);
   _propertyBrowser->addProperty(_italicItem);
   _propertyBrowser->addProperty(_alignmentItem);
 
-  // Collapse color sub-items (R/G/B/A) so font properties are visible without scrolling.
-  if (auto* tree = qobject_cast<QtTreePropertyBrowser*>(_propertyBrowser)) {
-    tree->setExpanded(tree->items(_textColorItem).first(), false);
-    tree->setExpanded(tree->items(_bgColorItem).first(), false);
-  }
+  // Color swatch panel — replaces the color property browser rows.
+  auto* colorPanel = new QWidget;
+  auto* colorLayout = new QHBoxLayout(colorPanel);
+  colorLayout->setContentsMargins(6, 6, 6, 4);
+  colorLayout->setSpacing(6);
+
+  auto makeColorBtn = [this](const QString& label, const QColor& initColor,
+                             std::function<QColor()> getter,
+                             std::function<void(const QColor&)> setter) -> QPushButton* {
+    auto* btn = new QPushButton;
+    btn->setMinimumHeight(36);
+    btn->setCursor(Qt::PointingHandCursor);
+    btn->setToolTip(label);
+    btn->setFlat(true);
+    updateColorButton(btn, initColor);
+    connect(btn, &QPushButton::clicked, this, [this, btn, label, getter, setter]() {
+      QColor c = QColorDialog::getColor(getter(), btn, label,
+                                        QColorDialog::ShowAlphaChannel);
+      if (c.isValid()) {
+        setter(c);
+        updateColorButton(btn, c);
+        emit valueChanged(_source);
+      }
+    });
+    return btn;
+  };
+
+  _textColorButton = makeColorBtn(tr("Text color"),
+    textSource->getTextColor(),
+    [this]() { return textSource->getTextColor(); },
+    [this](const QColor& c) { textSource->setTextColor(c); });
+
+  _bgColorButton = makeColorBtn(tr("Background color"),
+    textSource->getBgColor(),
+    [this]() { return textSource->getBgColor(); },
+    [this](const QColor& c) { textSource->setBgColor(c); });
+
+  auto* textLbl = new QLabel(tr("Text"));
+  textLbl->setAlignment(Qt::AlignCenter);
+  auto* bgLbl = new QLabel(tr("BG"));
+  bgLbl->setAlignment(Qt::AlignCenter);
+
+  auto* col1 = new QVBoxLayout; col1->setSpacing(2);
+  col1->addWidget(textLbl); col1->addWidget(_textColorButton);
+  auto* col2 = new QVBoxLayout; col2->setSpacing(2);
+  col2->addWidget(bgLbl); col2->addWidget(_bgColorButton);
+
+  colorLayout->addLayout(col1);
+  colorLayout->addLayout(col2);
+
+  _compositeWidget = makeComposite(colorPanel, _propertyBrowser);
 }
 
 void TextGui::setValue(QtProperty* property, const QVariant& value)
@@ -225,12 +307,6 @@ void TextGui::setValue(QtProperty* property, const QVariant& value)
 
   if (property == _textItem) {
     textSource->setText(value.toString());
-    emit valueChanged(_source);
-  } else if (property == _textColorItem) {
-    textSource->setTextColor(value.value<QColor>());
-    emit valueChanged(_source);
-  } else if (property == _bgColorItem) {
-    textSource->setBgColor(value.value<QColor>());
     emit valueChanged(_source);
   } else if (property == _fontFamilyItem) {
     textSource->setFontFamily(value.toString());
@@ -256,9 +332,13 @@ void TextGui::setValue(QtProperty* property, const QVariant& value)
 void TextGui::setValue(QString propertyName, QVariant value)
 {
   if      (propertyName == "text")        setValue(_textItem, value);
-  else if (propertyName == "textColor")   setValue(_textColorItem, value);
-  else if (propertyName == "bgColor")     setValue(_bgColorItem, value);
-  else if (propertyName == "fontFamily")  setValue(_fontFamilyItem, value);
+  else if (propertyName == "textColor") {
+    textSource->setTextColor(value.value<QColor>());
+    if (_textColorButton) updateColorButton(_textColorButton, value.value<QColor>());
+  } else if (propertyName == "bgColor") {
+    textSource->setBgColor(value.value<QColor>());
+    if (_bgColorButton) updateColorButton(_bgColorButton, value.value<QColor>());
+  } else if (propertyName == "fontFamily")  setValue(_fontFamilyItem, value);
   else if (propertyName == "fontSize")    setValue(_fontSizeItem, value);
   else if (propertyName == "bold")        setValue(_boldItem, value);
   else if (propertyName == "italic")      setValue(_italicItem, value);
@@ -477,16 +557,33 @@ VideoGui::VideoGui(Source::ptr source)
   auto makeBtn = [](const QString& text, bool checkable = false) {
     auto* b = new QToolButton;
     b->setText(text);
-    b->setFixedSize(26, 26);
-    b->setAutoRaise(true);
+    b->setFixedSize(34, 34);
+    b->setAutoRaise(false);
     b->setCheckable(checkable);
+    b->setStyleSheet(
+      "QToolButton {"
+      "  border: 1px solid palette(mid);"
+      "  border-radius: 0px;"
+      "  padding: 0px;"
+      "}"
+      "QToolButton:hover {"
+      "  border-color: palette(highlight);"
+      "  background: palette(highlight);"
+      "}"
+      "QToolButton:pressed {"
+      "  background: palette(dark);"
+      "}"
+      "QToolButton:checked {"
+      "  border: 2px solid palette(highlight);"
+      "  background: palette(midlight);"
+      "}");
     QFont f = b->font();
-    f.setPointSize(10);
+    f.setPointSize(17);
     b->setFont(f);
     return b;
   };
 
-  _btnStepBack = makeBtn(QString::fromUtf8("\xe2\x97\x84")); // ◄
+  _btnStepBack = makeBtn(QString::fromUtf8("\xe2\x97\x80")); // ◀
   _btnPause    = makeBtn(QString::fromUtf8("\xe2\x8f\xb8")); // ⏸
   _btnPlay     = makeBtn(QString::fromUtf8("\xe2\x96\xb6")); // ▶
   _btnToStart  = makeBtn(QString::fromUtf8("\xe2\x8f\xae")); // ⏮
@@ -495,7 +592,7 @@ VideoGui::VideoGui(Source::ptr source)
 
   auto* transpRow = new QWidget;
   auto* transpHl  = new QHBoxLayout(transpRow);
-  transpHl->setContentsMargins(6, 4, 6, 4);
+  transpHl->setContentsMargins(6, 4, 6, 8);
   transpHl->setSpacing(2);
   auto* playLbl = new QLabel(tr("Play"));
   playLbl->setMinimumWidth(36);
@@ -531,7 +628,7 @@ VideoGui::VideoGui(Source::ptr source)
 
   auto* modeRow = new QWidget;
   auto* modeHl  = new QHBoxLayout(modeRow);
-  modeHl->setContentsMargins(6, 4, 6, 4);
+  modeHl->setContentsMargins(6, 4, 6, 8);
   modeHl->setSpacing(2);
   auto* modeLbl = new QLabel(tr("Mode"));
   modeLbl->setMinimumWidth(36);

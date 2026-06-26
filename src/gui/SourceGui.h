@@ -25,6 +25,7 @@
 #include <QSlider>
 #include <QLabel>
 #include <QToolButton>
+#include <QPushButton>
 #include <QButtonGroup>
 #include <QTimer>
 
@@ -105,12 +106,14 @@ public:
   virtual ~ColorGui() {}
 
 public slots:
-  virtual void setValue(QtProperty* property, const QVariant& value);
   virtual void setValue(QString propertyName, QVariant value);
 
 protected:
   QSharedPointer<Color> color;
-  QtVariantProperty* _colorItem;
+  QPushButton* _colorButton = nullptr;
+
+  void updateColorButton();
+  void openColorDialog();
 };
 
 class TextGui : public SourceGui {
@@ -127,13 +130,16 @@ public slots:
 protected:
   QSharedPointer<Text> textSource;
   QtVariantProperty* _textItem;
-  QtVariantProperty* _textColorItem;
-  QtVariantProperty* _bgColorItem;
   QtVariantProperty* _fontFamilyItem;
   QtVariantProperty* _fontSizeItem;
   QtVariantProperty* _boldItem;
   QtVariantProperty* _italicItem;
   QtVariantProperty* _alignmentItem;
+
+  QPushButton* _textColorButton = nullptr;
+  QPushButton* _bgColorButton   = nullptr;
+
+  void updateColorButton(QPushButton* btn, const QColor& c);
 };
 
 class TextureGui : public SourceGui {

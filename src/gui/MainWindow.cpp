@@ -210,11 +210,13 @@ MainWindow::MainWindow()
     int toolBarIconSize = s.value("toolbarIconSize", MM::TOOLBAR_ICON_SIZE).toInt();
     mainToolBar->setIconSize(QSize(toolBarIconSize, toolBarIconSize));
     int srcIconSize = s.value("sourceListIconSize", MainWindow::PAINT_LIST_ICON_SIZE).toInt();
-    sourceList->setIconSize(QSize(srcIconSize, srcIconSize));
+    _sourceListIconSize = srcIconSize;
     for (int i = 0; i < 3; ++i) {
       static const int kSizes[3] = { 24, 32, 48 };
       if (_thumbSizeBtns[i]) _thumbSizeBtns[i]->setChecked(kSizes[i] == srcIconSize);
     }
+    bool thumbMode = s.value("sourceListThumbnailMode", true).toBool();
+    setSourceListThumbnailMode(thumbMode);
 
     // Recent file/video menus
     updateRecentFileActions();
@@ -278,7 +280,8 @@ void MainWindow::handleSourceItemSelectionChanged()
   QListWidgetItem* item = sourceList->currentItem();
 
   // Ignore clicks on section-header items (they are not selectable sources).
-  if (item == _sourceSectionImages || item == _sourceSectionVideos || item == _sourceSectionFolders) {
+  if (item == _sourceSectionImages || item == _sourceSectionVideos ||
+      item == _sourceSectionGenerated || item == _sourceSectionFolders) {
     sourceList->clearSelection();
     return;
   }
@@ -2030,16 +2033,73 @@ void MainWindow::createLayout()
     _sourcePreviewContainer = new QWidget;
     auto* headerLayout = new QHBoxLayout(_sourcePreviewContainer);
     headerLayout->setContentsMargins(4, 2, 4, 2);
+    headerLayout->setSpacing(2);
+
+    // List / Thumbnail view-mode toggle buttons.
+    {
+      // List-mode button: 4 horizontal lines.
+      auto* listBtn = new QToolButton;
+      listBtn->setCheckable(true);
+      listBtn->setAutoExclusive(true);
+      listBtn->setAutoRaise(true);
+      listBtn->setFixedSize(26, 26);
+      listBtn->setToolTip(tr("List view"));
+      {
+        QPixmap pm(20, 20);
+        pm.fill(Qt::transparent);
+        QPainter p(&pm);
+        p.setPen(QPen(palette().color(QPalette::ButtonText), 1.5));
+        for (int row = 0; row < 4; ++row) {
+          int y = 3 + row * 4;
+          p.drawLine(2, y, 18, y);
+        }
+      listBtn->setIcon(QIcon(pm));
+      }
+      _viewModeBtns[0] = listBtn;
+      headerLayout->addWidget(listBtn);
+
+      // Thumbnail-mode button: 2×2 grid of squares.
+      auto* thumbBtn = new QToolButton;
+      thumbBtn->setCheckable(true);
+      thumbBtn->setAutoExclusive(true);
+      thumbBtn->setAutoRaise(true);
+      thumbBtn->setFixedSize(26, 26);
+      thumbBtn->setToolTip(tr("Thumbnail view"));
+      {
+        QPixmap pm(20, 20);
+        pm.fill(Qt::transparent);
+        QPainter p(&pm);
+        p.fillRect(2,  2,  7, 7, palette().color(QPalette::ButtonText));
+        p.fillRect(11, 2,  7, 7, palette().color(QPalette::ButtonText));
+        p.fillRect(2,  11, 7, 7, palette().color(QPalette::ButtonText));
+        p.fillRect(11, 11, 7, 7, palette().color(QPalette::ButtonText));
+        thumbBtn->setIcon(QIcon(pm));
+      }
+      _viewModeBtns[1] = thumbBtn;
+      headerLayout->addWidget(thumbBtn);
+
+      connect(listBtn,  &QToolButton::clicked, this, [this]() { setSourceListThumbnailMode(false); });
+      connect(thumbBtn, &QToolButton::clicked, this, [this]() { setSourceListThumbnailMode(true);  });
+    }
+
     headerLayout->addWidget(_previewToggleBtn);
     headerLayout->addStretch();
 
     // Thumbnail size picker: 3 buttons with small squares indicating small/medium/large icon size.
-    static const int kThumbSizes[3] = { 24, 32, 48 };
+    static const int kThumbSizes[3] = { 48, 64, 96 };
     static const int kSquareSizes[3] = { 9, 13, 18 };
     auto applyThumbSize = [this](int size) {
-      sourceList->setIconSize(QSize(size, size));
+      _sourceListIconSize = size;
+      if (_sourceListThumbnailMode) {
+        sourceList->setIconSize(QSize(size, size));
+        int rowH = size + 8;
+        for (int j = 0; j < sourceList->count(); ++j) {
+          QListWidgetItem* it = sourceList->item(j);
+          if (it) it->setSizeHint(QSize(it->sizeHint().width(), rowH));
+        }
+      }
       for (int i = 0; i < 3; ++i) {
-        static const int kSizes[3] = { 24, 32, 48 };
+        static const int kSizes[3] = { 48, 64, 96 };
         _thumbSizeBtns[i]->setChecked(kSizes[i] == size);
       }
     };
@@ -2048,13 +2108,13 @@ void MainWindow::createLayout()
       btn->setCheckable(true);
       btn->setAutoExclusive(true);
       btn->setAutoRaise(true);
-      btn->setFixedSize(30, 30);
+      btn->setFixedSize(26, 26);
       // Draw a filled square that grows with i.
       int sq = kSquareSizes[i];
-      QPixmap pm(24, 24);
+      QPixmap pm(20, 20);
       pm.fill(Qt::transparent);
       QPainter p(&pm);
-      p.fillRect((24 - sq) / 2, (24 - sq) / 2, sq, sq, palette().color(QPalette::ButtonText));
+      p.fillRect((20 - sq) / 2, (20 - sq) / 2, sq, sq, palette().color(QPalette::ButtonText));
       btn->setIcon(QIcon(pm));
       int size = kThumbSizes[i];
       connect(btn, &QToolButton::clicked, this, [this, size, applyThumbSize]() {
@@ -2064,7 +2124,19 @@ void MainWindow::createLayout()
       headerLayout->addWidget(btn);
       _thumbSizeBtns[i] = btn;
     }
-    _thumbSizeBtns[1]->setChecked(true); // default: medium (32)
+    // Select the button matching the restored icon size; fall back to medium.
+    bool anyChecked = false;
+    for (int i = 0; i < 3; ++i) {
+      bool match = (kThumbSizes[i] == _sourceListIconSize);
+      _thumbSizeBtns[i]->setChecked(match);
+      if (match) anyChecked = true;
+    }
+    if (!anyChecked) {
+      _sourceListIconSize = kThumbSizes[1]; // stale saved value — reset to medium
+      QSettings().setValue("sourceListIconSize", _sourceListIconSize);
+      _thumbSizeBtns[1]->setChecked(true);
+    }
+    _viewModeBtns[1]->setChecked(true);  // default: thumbnail mode
 
     // Image area: lives INSIDE the splitter so it can be resized.
     _sourcePreviewLabel = new SourcePreviewLabel;
@@ -3148,8 +3220,12 @@ void MainWindow::createToolBars()
   // Add toolbars.
   addToolBar(Qt::TopToolBarArea, mainToolBar);
 
-  // XXX: style hack
-  mainToolBar->setStyleSheet("border-bottom: solid 5px #272a36;");
+  // XXX: style hack — keep border-bottom separator; also style action buttons
+  mainToolBar->setStyleSheet(
+    "QToolBar { border-bottom: solid 5px #272a36; }"
+    "QToolButton { border: 1px solid palette(mid); margin: 2px; }"
+    "QToolButton:hover { border-color: palette(highlight); background: palette(highlight); }"
+    "QToolButton:pressed, QToolButton:checked { background: palette(dark); border-color: palette(highlight); }");
 }
 
 void MainWindow::createStatusBar()
@@ -3225,7 +3301,8 @@ void MainWindow::writeSettings()
   settings.setValue("displayOutputWindow", outputFullScreenAction->isChecked());
   settings.setValue("displayTestSignal", displayTestSignalAction->isChecked());
   settings.setValue("displayAllControls", displaySourceControlsAction->isChecked());
-  settings.setValue("sourceListIconSize", sourceList->iconSize().width());
+  settings.setValue("sourceListIconSize", _sourceListIconSize);
+  settings.setValue("sourceListThumbnailMode", _sourceListThumbnailMode);
   settings.setValue("oscListeningPort", oscListeningPort);
 #ifdef HAVE_MCP
   settings.setValue("mcpListeningPort", mcpListeningPort);
@@ -3350,9 +3427,16 @@ void MainWindow::setCurrentFile(const QString &fileName)
   if (!curFile.isEmpty())
   {
     shownName = strippedName(curFile);
+    QString canonicalFile = QFileInfo(curFile).canonicalFilePath();
+    if (canonicalFile.isEmpty()) canonicalFile = curFile;
     recentFiles = settings.value("recentFiles").toStringList();
-    recentFiles.removeAll(curFile);
-    recentFiles.prepend(curFile);
+    // Normalize existing entries and remove any that resolve to the same file.
+    recentFiles.erase(std::remove_if(recentFiles.begin(), recentFiles.end(),
+      [&](const QString& f) {
+        QString c = QFileInfo(f).canonicalFilePath();
+        return c.isEmpty() ? f == canonicalFile : c == canonicalFile;
+      }), recentFiles.end());
+    recentFiles.prepend(canonicalFile);
     while (recentFiles.size() > MaxRecentFiles)
     {
       recentFiles.removeLast();
@@ -3606,15 +3690,28 @@ void MainWindow::initSourceListSections()
   auto makeHeader = [this](const QString& title, const char* addSlot) -> QListWidgetItem* {
     QListWidgetItem* h = new QListWidgetItem();
     h->setFlags(Qt::ItemIsEnabled);
-    h->setSizeHint(QSize(0, 26));
+    h->setSizeHint(QSize(0, 20));
     sourceList->addItem(h);
 
     QWidget* container = new QWidget;
     container->setAutoFillBackground(false);
 
     QHBoxLayout* layout = new QHBoxLayout(container);
-    layout->setContentsMargins(6, 2, 4, 2);
-    layout->setSpacing(4);
+    layout->setContentsMargins(2, 2, 4, 2);
+    layout->setSpacing(2);
+
+    QToolButton* arrow = new QToolButton;
+    arrow->setText("▼");
+    arrow->setFixedSize(16, 16);
+    arrow->setAutoRaise(true);
+    arrow->setCursor(Qt::ArrowCursor);
+    arrow->setStyleSheet(
+      "QToolButton { color: rgb(140,140,140); border: none; font-size: 8px; }"
+      "QToolButton:hover { color: rgb(200,200,200); }");
+    _sectionArrows[h] = arrow;
+    connect(arrow, &QToolButton::clicked, this, [this, h]() {
+      setSectionCollapsed(h, !_sectionCollapsed.value(h, false));
+    });
 
     QLabel* label = new QLabel(title);
     QFont f = label->font();
@@ -3634,6 +3731,7 @@ void MainWindow::initSourceListSections()
       "QToolButton:hover { background: rgb(80,80,80); }");
     connect(btn, SIGNAL(clicked()), this, addSlot);
 
+    layout->addWidget(arrow);
     layout->addWidget(label);
     layout->addStretch();
     layout->addWidget(btn);
@@ -3646,6 +3744,53 @@ void MainWindow::initSourceListSections()
   _sourceSectionVideos    = makeHeader(tr("Movies"),        SLOT(importMedia()));
   _sourceSectionGenerated = makeHeader(tr("Generated"),     SLOT(addColor()));
   _sourceSectionFolders   = makeHeader(tr("Image Folders"), SLOT(importFolderAsSource()));
+}
+
+void MainWindow::setSectionCollapsed(QListWidgetItem* header, bool collapsed)
+{
+  _sectionCollapsed[header] = collapsed;
+
+  if (_sectionArrows.contains(header))
+    _sectionArrows[header]->setText(collapsed ? "▶" : "▼");
+
+  QSet<QListWidgetItem*> headers = {
+    _sourceSectionImages, _sourceSectionVideos,
+    _sourceSectionGenerated, _sourceSectionFolders
+  };
+  int start = sourceList->row(header) + 1;
+  for (int i = start; i < sourceList->count(); ++i) {
+    QListWidgetItem* it = sourceList->item(i);
+    if (headers.contains(it)) break;
+    it->setHidden(collapsed);
+  }
+}
+
+void MainWindow::setSourceListThumbnailMode(bool thumbnailMode)
+{
+  _sourceListThumbnailMode = thumbnailMode;
+
+  if (_viewModeBtns[0]) _viewModeBtns[0]->setChecked(!thumbnailMode);
+  if (_viewModeBtns[1]) _viewModeBtns[1]->setChecked(thumbnailMode);
+
+  // Size buttons and preview only make sense in thumbnail mode.
+  for (auto* b : _thumbSizeBtns) if (b) b->setVisible(thumbnailMode);
+  if (_previewToggleBtn) _previewToggleBtn->setVisible(thumbnailMode);
+
+  int iconPx = thumbnailMode ? _sourceListIconSize : 0;
+  sourceList->setIconSize(QSize(iconPx, iconPx));
+
+  int rowH = thumbnailMode ? (_sourceListIconSize + 8) : 24;
+  QSet<QListWidgetItem*> headers = {
+    _sourceSectionImages, _sourceSectionVideos,
+    _sourceSectionGenerated, _sourceSectionFolders
+  };
+  for (int i = 0; i < sourceList->count(); ++i) {
+    QListWidgetItem* it = sourceList->item(i);
+    if (headers.contains(it)) continue;
+    it->setSizeHint(QSize(it->sizeHint().width(), rowH));
+  }
+
+  QSettings().setValue("sourceListThumbnailMode", thumbnailMode);
 }
 
 void MainWindow::addSourceItem(uid sourceId, const QIcon& icon, const QString& name)
@@ -3716,8 +3861,9 @@ void MainWindow::addSourceItem(uid sourceId, const QIcon& icon, const QString& n
   QListWidgetItem* item = new QListWidgetItem(icon, name);
   setItemId(*item, sourceId); // TODO: could possibly be replaced by a Source pointer
 
-  // Set size.
-  item->setSizeHint(QSize(item->sizeHint().width(), MainWindow::PAINT_LIST_ITEM_HEIGHT));
+  // Set size based on current view mode.
+  int rowH = _sourceListThumbnailMode ? (_sourceListIconSize + 8) : 24;
+  item->setSizeHint(QSize(item->sizeHint().width(), rowH));
 
   // Set tooltip.
   item->setToolTip(QString("ID: %1").arg(source->getId()));
@@ -3726,23 +3872,27 @@ void MainWindow::addSourceItem(uid sourceId, const QIcon& icon, const QString& n
   contentTab->setCurrentWidget(sourceSplitter);
 
   // Insert under the appropriate section header.
+  QListWidgetItem* sectionHeader = nullptr;
   if (source->getSourceType() == SourceType::Image) {
-    // Images go before the Movies header.
     int videosRow = sourceList->row(_sourceSectionVideos);
     sourceList->insertItem(videosRow, item);
+    sectionHeader = _sourceSectionImages;
   } else if (source->getSourceType() == SourceType::Folder) {
-    // Folders go at the end, after the Image Folders header.
     sourceList->addItem(item);
+    sectionHeader = _sourceSectionFolders;
   } else if (source->getSourceType() == SourceType::Color ||
              source->getSourceType() == SourceType::Text) {
-    // Generated sources (Color, Text) go in the Generated section.
     int foldersRow = sourceList->row(_sourceSectionFolders);
     sourceList->insertItem(foldersRow, item);
+    sectionHeader = _sourceSectionGenerated;
   } else {
-    // Videos go before the Generated header.
     int generatedRow = sourceList->row(_sourceSectionGenerated);
     sourceList->insertItem(generatedRow, item);
+    sectionHeader = _sourceSectionVideos;
   }
+  // Respect collapsed state of the section.
+  if (sectionHeader && _sectionCollapsed.value(sectionHeader, false))
+    item->setHidden(true);
   sourceList->setCurrentItem(item);
 
   // Update mapping guis.
@@ -3913,6 +4063,9 @@ void MainWindow::addLayerItem(uid layerId)
 
   // Update playing state.
   updatePlayingState();
+
+  // Refresh usage badges on source thumbnails.
+  refreshSourceBadges();
 }
 
 void MainWindow::removeLayerItem(uid layerId)
@@ -3953,6 +4106,9 @@ void MainWindow::removeLayerItem(uid layerId)
 
   // Update playing state.
   updatePlayingState();
+
+  // Refresh usage badges on source thumbnails.
+  refreshSourceBadges();
 }
 
 void MainWindow::moveLayerItem(uid layerId, int idx)
@@ -4524,6 +4680,54 @@ const QIcon MainWindow::getSourceIcon(Source::ptr source)
     painter.setPen(QPen(QColor(255, 0, 0, 180), 6));
     painter.drawLine(0, 0, pixmap.width(), pixmap.height());
     return QIcon(pixmap);
+  }
+}
+
+static QIcon overlayUsageBadge(const QIcon& base, int count, int size)
+{
+  QPixmap pm = base.pixmap(size, size);
+  if (count <= 0)
+    return QIcon(pm);
+
+  QPainter p(&pm);
+  p.setRenderHint(QPainter::Antialiasing);
+
+  QFont f = p.font();
+  f.setBold(true);
+  f.setPixelSize(qMax(9, size / 5));
+  p.setFont(f);
+
+  QFontMetrics fm(f);
+  const QString text = QString::number(count);
+  int tw = fm.horizontalAdvance(text);
+  int th = fm.height();
+  int badgeW = qMax(tw + 6, th + 4);
+  int badgeH = th + 4;
+  int bx = pm.width() - badgeW - 2;
+  int by = 2;
+
+  p.setPen(Qt::NoPen);
+  p.setBrush(QColor(30, 30, 30, 210));
+  p.drawRoundedRect(bx, by, badgeW, badgeH, badgeH / 2, badgeH / 2);
+
+  p.setPen(Qt::white);
+  p.drawText(QRect(bx, by, badgeW, badgeH), Qt::AlignCenter, text);
+  p.end();
+
+  return QIcon(pm);
+}
+
+void MainWindow::refreshSourceBadges()
+{
+  for (int i = 0; i < sourceList->count(); ++i) {
+    QListWidgetItem* item = sourceList->item(i);
+    if (!item || item->data(Qt::UserRole).isNull()) continue;
+    uid id = getItemId(*item);
+    if (id == 0) continue;
+    Source::ptr source = mappingManager->getSourceById(id);
+    if (!source) continue;
+    int count = mappingManager->getSourceLayersById(id).size();
+    item->setIcon(overlayUsageBadge(getSourceIcon(source), count, MM::SOURCE_THUMBNAIL_SIZE));
   }
 }
 
