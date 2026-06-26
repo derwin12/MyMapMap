@@ -793,16 +793,17 @@ void MainWindow::importMedia()
 
 void MainWindow::importFolder()
 {
+  QString startDir = QFileInfo(settings.value("defaultVideoDir").toString()).absolutePath();
   QString dirPath = QFileDialog::getExistingDirectory(
-      this, tr("Import Media Folder"),
-      settings.value("defaultVideoDir").toString());
+      this, tr("Import Files From Folder"),
+      startDir);
   if (dirPath.isEmpty())
     return;
 
   const QStringList allExts = (MM::IMAGE_FILES_FILTER + " " + MM::VIDEO_FILES_FILTER)
                                 .split(' ', Qt::SkipEmptyParts);
 
-  QDirIterator it(dirPath, allExts, QDir::Files, QDirIterator::Subdirectories);
+  QDirIterator it(dirPath, allExts, QDir::Files);
   int imported = 0;
   while (it.hasNext()) {
     QString filePath = it.next();
@@ -2215,10 +2216,10 @@ void MainWindow::createActions()
   connect(importMediaAction, SIGNAL(triggered()), this, SLOT(importMedia()));
 
   // Import Folder.
-  importFolderAction = new QAction(tr("Import Media &Folder..."), this);
+  importFolderAction = new QAction(tr("Import Files From &Folder..."), this);
   importFolderAction->setShortcut(Qt::CTRL | Qt::SHIFT | Qt::Key_I);
   importFolderAction->setIcon(QIcon(":/add-video"));
-  importFolderAction->setToolTip(tr("Import all images and videos from a folder..."));
+  importFolderAction->setToolTip(tr("Import all images and videos from a folder as individual sources..."));
   importFolderAction->setIconVisibleInMenu(false);
   importFolderAction->setShortcutContext(Qt::ApplicationShortcut);
   addAction(importFolderAction);
@@ -2986,7 +2987,7 @@ void MainWindow::createSourceContextMenu()
 
   // Connexions
   connect(sourceList, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showSourceContextMenu(const QPoint&)));
-  connect(sourceCanvas, SIGNAL(shapeContextMenuRequested(const QPoint&)), this, SLOT(showSourceContextMenu(const QPoint&)));
+  connect(sourceCanvas, SIGNAL(shapeContextMenuRequested(const QPoint&)), this, SLOT(showLayerContextMenu(const QPoint&)));
 }
 
 void MainWindow::createToolBars()
@@ -3350,8 +3351,8 @@ void MainWindow::updateMediaListActions()
   // Clear media list menu
   _changeLayerMediaMenu->clear();
 
-  if (sourceList->count() > 1) { // No need to load the same video
-    for (auto i = 0; i < sourceList->count(); i++) {
+  if (mappingManager->nSources() > 1) { // No need to load the same video
+    for (auto i = 0; i < mappingManager->nSources(); i++) {
       QAction *mediaAction = new QAction(this);
       mediaAction->setText(tr("&%1 %2").arg(i + 1).arg(mappingManager->getSource(i)->getName()));
       mediaAction->setData(mappingManager->getSource(i)->getId());
@@ -3438,7 +3439,7 @@ bool MainWindow::importMediaFile(const QString &fileName, bool isImage, bool isC
   uint mediaId = createMediaSource(NULL_UID, fileName, 0, 0, isImage, type);
 
   // Initialize position (center).
-  QSharedPointer<Video> media = qSharedPointerCast<Video>(mappingManager->getSourceById(mediaId));
+  QSharedPointer<Texture> media = qSharedPointerCast<Texture>(mappingManager->getSourceById(mediaId));
   Q_CHECK_PTR(media);
 
   media->setPosition((sourceCanvas->width()  - media->getWidth() ) / 2.0f,
@@ -3951,7 +3952,7 @@ bool MainWindow::fileSupported(const QString &file, bool isImage)
 
   if (isImage) {
     if (MM::IMAGE_FILES_FILTER.contains(fileExtension, Qt::CaseInsensitive) &&
-        QImageReader(file).canRead()) // extra check: makes sure format is readable
+        QImageReader(file).canRead())
       return true;
   } else {
     if (MM::VIDEO_FILES_FILTER.contains(fileExtension, Qt::CaseInsensitive))
