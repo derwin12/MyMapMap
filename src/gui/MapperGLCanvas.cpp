@@ -303,14 +303,15 @@ void MapperGLCanvas::currentShapeWasChanged()
 void MapperGLCanvas::applyZoomToView()
 {
   qreal zoomFactor = getZoomFactor();
-  resetTransform();
-  // For the output editor the stored _scalingFactor already encodes
-  // fit-scale * user-zoom, so apply it directly; otherwise getZoomFactor()
-  // is the raw scale.
   qreal rawScale = (_useOutputFit && _fitScaleFactor > 0)
                    ? zoomFactor * _fitScaleFactor
                    : zoomFactor;
-  scale(rawScale, rawScale);
+  // Single setTransform() so AnchorUnderMouse fires exactly once and keeps
+  // the scene position under the cursor fixed. The old resetTransform()+scale()
+  // pair fired the anchor twice, causing the view to recenter unexpectedly.
+  QTransform t;
+  t.scale(rawScale, rawScale);
+  setTransform(t);
   update();
   emit zoomFactorChanged(zoomFactor);
 }
@@ -974,43 +975,24 @@ void MapperGLCanvas::deselectAll()
 
 void MapperGLCanvas::wheelEvent(QWheelEvent *event)
 {
-  // [-120]-----[-1]|[1]++++++[120]
-  // See: http://doc.qt.io/qt-5/qwheelevent.html#angleDelta
-#if QT_VERSION >= 0x050500
   int deltaLevel = event->angleDelta().y() / 120;
-#else
-  int deltaLevel = event->delta() / 120;
-#endif
-  bool control_is_pressed = event->modifiers().testFlag(Qt::ControlModifier);
-  bool shift_is_pressed = event->modifiers().testFlag(Qt::ShiftModifier);
+  if (deltaLevel == 0) { QGraphicsView::wheelEvent(event); return; }
 
-  if (control_is_pressed) { // control is pressed: zoom
-    // zoom in or out:
-    if (deltaLevel > 0) {
-      // Increase zoom level
-      increaseZoomLevel(deltaLevel);
-    } else {
-      // Decrease zoom level
-      decreaseZoomLevel(-deltaLevel);
-    }
-    // Accept wheel scrolling event.
-    event->accept();
-  } else { // control is not pressed: scroll
-    QScrollBar* scrollbar;
-    if (shift_is_pressed) { // shift is pressed: pans horizontally
-      scrollbar = this->horizontalScrollBar();
-    } else { // shift is not pressed: scrolls vertically
-      scrollbar = this->verticalScrollBar();
-    }
-    // FIXME: scrolling with the mouse doesn't currently work
-    int scroll = scrollbar->value();
-    if (deltaLevel > 0) {
-      scrollbar->setValue(scroll + 50);
-    } else {
-      scrollbar->setValue(scroll - 50);
-    }
-    event->accept();
+  bool ctrl  = event->modifiers().testFlag(Qt::ControlModifier);
+  bool shift = event->modifiers().testFlag(Qt::ShiftModifier);
+
+  if (ctrl) {
+    // Zoom anchored to cursor (AnchorUnderMouse + single setTransform in
+    // applyZoomToView keeps the scene point under the cursor fixed).
+    if (deltaLevel > 0) increaseZoomLevel(deltaLevel);
+    else                 decreaseZoomLevel(-deltaLevel);
+  } else {
+    // Scroll: wheel-up → negative scrollbar delta (content moves up, natural).
+    // Shift scrolls horizontally.
+    QScrollBar *bar = shift ? horizontalScrollBar() : verticalScrollBar();
+    bar->setValue(bar->value() - deltaLevel * 60);
   }
+  event->accept();
 }
 
 bool MapperGLCanvas::eventFilter(QObject *target, QEvent *event)
