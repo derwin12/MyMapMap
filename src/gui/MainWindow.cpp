@@ -3352,6 +3352,9 @@ void MainWindow::createToolBars()
 {
   mainToolBar = addToolBar(tr("&Toolbar"));
   mainToolBar->setMovable(false);
+  mainToolBar->addAction(openAction);
+  mainToolBar->addAction(saveAction);
+  mainToolBar->addSeparator();
   mainToolBar->addAction(importMediaAction);
   mainToolBar->addAction(AddCameraAction);
   mainToolBar->addAction(addColorAction);
