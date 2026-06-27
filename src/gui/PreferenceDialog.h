@@ -93,6 +93,7 @@ private:
   QComboBox *_videoQualityBox;
 
   // Output widgets
+  QComboBox *_outputResolutionBox;
   QCheckBox *_showResolutionBox;
   QRadioButton *_classicRadio;
   QRadioButton *_palTestRadio;

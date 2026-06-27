@@ -2248,13 +2248,13 @@ void MainWindow::createLayout()
   outputWindow->installEventFilter(destinationCanvas);
 
   // Keep the output editor's coordinate space locked to the projector screen
-  // so 100% zoom always shows the full output and shape positions match 1:1.
+  // (or the user-chosen resolution preference when no projector is detected).
   {
     int preferredScreen = outputWindow->getPreferredScreen();
     const QList<QScreen*> screens = QGuiApplication::screens();
-    QSize outputSize(1920, 1080);
-    if (preferredScreen < screens.size())
-      outputSize = screens.at(preferredScreen)->geometry().size();
+    QSize outputSize = (preferredScreen < screens.size())
+        ? screens.at(preferredScreen)->geometry().size()
+        : preferredOutputSize();
     destinationCanvas->setOutputCanvasSize(outputSize);
   }
   connect(outputWindow->getCanvas(), &OutputGLCanvas::outputCanvasSizeChanged,
@@ -5205,6 +5205,24 @@ bool MainWindow::setMcpPort(QString portNumber)
   }
 }
 #endif // HAVE_MCP
+
+QSize MainWindow::preferredOutputSize() const
+{
+  QSettings settings;
+  QString res = settings.value("outputResolution", "1920x1080").toString();
+  QStringList parts = res.split('x');
+  if (parts.size() == 2)
+    return QSize(parts[0].toInt(), parts[1].toInt());
+  return QSize(1920, 1080);
+}
+
+void MainWindow::applyOutputResolutionFromPref()
+{
+  int preferredScreen = outputWindow->getPreferredScreen();
+  const QList<QScreen*> screens = QGuiApplication::screens();
+  if (preferredScreen >= screens.size())
+    destinationCanvas->setOutputCanvasSize(preferredOutputSize());
+}
 
 void MainWindow::pollOscInterface()
 {

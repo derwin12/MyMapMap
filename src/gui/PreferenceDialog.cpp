@@ -110,6 +110,11 @@ bool PreferenceDialog::loadSettings()
   _stickyVerticesBox->setChecked(settings.value("stickyVertices", MM::STICKY_VERTICES).toBool());
   // Sticky vertices radius
   _stickyRadiusBox->setCurrentText(settings.value("vertexStickRadius", MM::VERTEX_STICK_RADIUS).toString());
+  // Output resolution preference
+  _outputResolutionBox->setCurrentIndex(
+    _outputResolutionBox->findData(settings.value("outputResolution", "1920x1080").toString()));
+  if (_outputResolutionBox->currentIndex() < 0)
+    _outputResolutionBox->setCurrentIndex(0);
   // Show screen resolution on output
   _showResolutionBox->setChecked(settings.value("showResolution", MM::SHOW_OUTPUT_RESOLUTION).toBool());
   // Show control on mouse hover
@@ -151,6 +156,9 @@ void PreferenceDialog::applySettings()
   settings.setValue("stickyVertices", _stickyVerticesBox->isChecked());
   // Sticky vertices radius
   settings.setValue("vertexStickRadius", _stickyRadiusBox->currentText());
+  // Output resolution preference (apply immediately if no projector is connected)
+  settings.setValue("outputResolution", _outputResolutionBox->currentData().toString());
+  mainWindow->applyOutputResolutionFromPref();
   // Show screen resolution on output
   settings.setValue("showResolution", _showResolutionBox->isChecked());
   // Show control on mouse hover
@@ -275,6 +283,22 @@ void PreferenceDialog::createOutputPage()
 {
   _outputPage = new QWidget;
 
+  // Output resolution preference (used when no projector is detected)
+  _outputResolutionBox = new QComboBox;
+  _outputResolutionBox->addItem(tr("720p HD (1280×720)"),    QString("1280x720"));
+  _outputResolutionBox->addItem(tr("1080p HD (1920×1080)"), QString("1920x1080"));
+  _outputResolutionBox->addItem(tr("2K (2560×1440)"),        QString("2560x1440"));
+  _outputResolutionBox->addItem(tr("4K (3840×2160)"),        QString("3840x2160"));
+
+  QFormLayout *resolutionForm = new QFormLayout;
+  resolutionForm->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
+  resolutionForm->setSpacing(8);
+  resolutionForm->setContentsMargins(12, 8, 12, 8);
+  resolutionForm->addRow(tr("Output resolution"), _outputResolutionBox);
+
+  QGroupBox *resolutionGroupBox = new QGroupBox(tr("Output Resolution"));
+  resolutionGroupBox->setLayout(resolutionForm);
+
   _showControlOnOverBox = new QCheckBox(tr("Only show output controls on mouse over"));
 
   QVBoxLayout *outputLayout = new QVBoxLayout;
@@ -342,6 +366,7 @@ void PreferenceDialog::createOutputPage()
   recordingGroupBox->setLayout(recordingForm);
 
   QVBoxLayout *outputPageLayout = new QVBoxLayout;
+  outputPageLayout->addWidget(resolutionGroupBox);
   outputPageLayout->addWidget(outputGroupBox);
   outputPageLayout->addWidget(testCardGroupbox);
   outputPageLayout->addWidget(recordingGroupBox);

@@ -715,6 +715,9 @@ public:
   MapperGLCanvas* getDestinationCanvas() const { return destinationCanvas; }
   int getPreferredScreen() const { return outputWindow->getPreferredScreen(); }
 
+  QSize preferredOutputSize() const;
+  void applyOutputResolutionFromPref();
+
   /// Returns the number of frames per second.
   qreal framesPerSecond() const { return _framesPerSecond; }
 
