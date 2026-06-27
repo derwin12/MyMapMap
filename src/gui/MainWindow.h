@@ -113,6 +113,7 @@ private slots:
   void open();
   bool save();
   bool saveAs();
+  void exportPackage();
   void importMedia();
   void importFolder();
   void importFolderAsSource();
@@ -444,6 +445,7 @@ private:
   QAction *addSyphonAction;
   QAction *saveAction;
   QAction *saveAsAction;
+  QAction *exportPackageAction;
   QAction *exitAction;
   QAction *undoAction;
   QAction *redoAction;

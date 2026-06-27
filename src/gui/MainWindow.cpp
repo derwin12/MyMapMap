@@ -28,6 +28,9 @@
 #include "Commands.h"
 #include "ProjectWriter.h"
 #include "ProjectReader.h"
+#include "ProjectLabels.h"
+#include <private/qzipwriter_p.h>
+#include <QJsonArray>
 #ifdef Q_OS_MAC
 #include "Syphon.h"
 #include "SyphonServerDialog.h"
@@ -766,6 +769,125 @@ bool MainWindow::saveAs()
 
   // Save to filename.
   return saveFile(fileName);
+}
+
+void MainWindow::exportPackage()
+{
+  if (curFile.isEmpty()) {
+    QMessageBox::warning(this, tr("Export Package"),
+      tr("Please save the project before exporting."));
+    return;
+  }
+
+  QFileInfo projectInfo(curFile);
+  QDir projectDir = projectInfo.absoluteDir();
+
+  QString defaultZip = projectDir.filePath(projectInfo.completeBaseName() + ".zip");
+  QString zipPath = QFileDialog::getSaveFileName(this,
+    tr("Export Project Package"), defaultZip, tr("Zip Archive (*.zip)"));
+  if (zipPath.isEmpty()) return;
+
+  // Collect media files: absolute path -> flat zip entry name (deduped).
+  QMap<QString, QString> fileMap;
+  QSet<QString> usedNames;
+  bool hasFolderSources = false;
+
+  auto addMedia = [&](const QString &uri) {
+    if (uri.isEmpty()) return;
+    QString abs = QDir::cleanPath(QDir::isAbsolutePath(uri) ? uri : projectDir.filePath(uri));
+    if (!QFile::exists(abs) || fileMap.contains(abs)) return;
+    QString base = QFileInfo(abs).fileName();
+    QString name = base;
+    int n = 1;
+    while (usedNames.contains(name)) {
+      QFileInfo bn(base);
+      name = bn.completeBaseName() + QString("_%1.").arg(n++) + bn.suffix();
+    }
+    usedNames.insert(name);
+    fileMap[abs] = name;
+  };
+
+  for (int i = 0; i < mappingManager->nSources(); i++) {
+    Source::ptr src = mappingManager->getSource(i);
+    switch (src->getSourceType()) {
+    case SourceType::Video:
+      addMedia(static_cast<Video*>(src.get())->getUri());
+      break;
+    case SourceType::Image:
+      addMedia(static_cast<Image*>(src.get())->getUri());
+      break;
+    case SourceType::Folder:
+      hasFolderSources = true;
+      break;
+    default:
+      break;
+    }
+  }
+  addMedia(_backgroundPhotoPath);
+
+  // Read the .mmp and rewrite URIs to their flat zip entry names.
+  QFile mmpFile(curFile);
+  if (!mmpFile.open(QIODevice::ReadOnly)) {
+    QMessageBox::critical(this, tr("Export Package"),
+      tr("Cannot read project file:\n%1").arg(curFile));
+    return;
+  }
+  QJsonDocument doc = QJsonDocument::fromJson(mmpFile.readAll());
+  mmpFile.close();
+
+  QJsonObject root = doc.object();
+
+  auto patchUri = [&](const QString &uri) -> QString {
+    if (uri.isEmpty()) return uri;
+    QString abs = QDir::cleanPath(QDir::isAbsolutePath(uri) ? uri : projectDir.filePath(uri));
+    return fileMap.value(abs, uri);
+  };
+
+  QJsonArray sources = root[ProjectLabels::SOURCES].toArray();
+  for (int i = 0; i < sources.size(); i++) {
+    QJsonObject src = sources[i].toObject();
+    if (src.contains("uri"))
+      src["uri"] = patchUri(src["uri"].toString());
+    sources[i] = src;
+  }
+  root[ProjectLabels::SOURCES] = sources;
+
+  if (root.contains(ProjectLabels::BACKGROUND_PHOTO))
+    root[ProjectLabels::BACKGROUND_PHOTO] = patchUri(root[ProjectLabels::BACKGROUND_PHOTO].toString());
+
+  doc = QJsonDocument(root);
+
+  // Write zip.
+  QZipWriter zip(zipPath);
+  zip.setCompressionPolicy(QZipWriter::AutoCompress);
+  zip.addFile(projectInfo.fileName(), doc.toJson(QJsonDocument::Indented));
+
+  int failed = 0;
+  for (auto it = fileMap.cbegin(); it != fileMap.cend(); ++it) {
+    QFile f(it.key());
+    if (f.open(QIODevice::ReadOnly)) {
+      zip.addFile(it.value(), f.readAll());
+      f.close();
+    } else {
+      ++failed;
+    }
+  }
+  zip.close();
+
+  if (zip.status() != QZipWriter::NoError) {
+    QMessageBox::critical(this, tr("Export Package"),
+      tr("Failed to write package:\n%1").arg(zipPath));
+    return;
+  }
+
+  QString msg = tr("Package exported successfully:\n%1\n\n%2 media file(s) included.")
+    .arg(zipPath).arg(fileMap.size() - failed);
+  if (hasFolderSources)
+    msg += tr("\n\nNote: Folder sources are not bundled — add them manually.");
+  if (failed > 0)
+    msg += tr("\n\nWarning: %1 file(s) could not be read and were skipped.").arg(failed);
+
+  QMessageBox::information(this, tr("Export Package"), msg);
 }
 
 void MainWindow::importMedia()
@@ -2378,6 +2500,12 @@ void MainWindow::createActions()
   addAction(saveAsAction);
   connect(saveAsAction, SIGNAL(triggered()), this, SLOT(saveAs()));
 
+  // Export package.
+  exportPackageAction = new QAction(tr("Export Package..."), this);
+  exportPackageAction->setToolTip(tr("Bundle the project and all media into a zip archive"));
+  exportPackageAction->setIconVisibleInMenu(false);
+  connect(exportPackageAction, &QAction::triggered, this, &MainWindow::exportPackage);
+
   // Recents file
   for (int i = 0; i < MaxRecentFiles; i++)
   {
@@ -3017,6 +3145,7 @@ void MainWindow::createMenus()
   fileMenu->addAction(openAction);
   fileMenu->addAction(saveAction);
   fileMenu->addAction(saveAsAction);
+  fileMenu->addAction(exportPackageAction);
   fileMenu->addSeparator();
   fileMenu->addAction(importMediaAction);
   fileMenu->addAction(importFolderAction);
