@@ -55,8 +55,7 @@ MapperGLCanvas::MapperGLCanvas(MainWindow* mainWindow,
   setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
   setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
 
-  this->horizontalScrollBar()->setRange(0, 1000);
-  this->verticalScrollBar()->setRange(0, 1000);
+  // Let Qt manage scrollbar ranges from the scene rect and zoom level.
 
   setResizeAnchor(AnchorViewCenter);
   setInteractive(true);
@@ -433,20 +432,12 @@ void MapperGLCanvas::mousePressEvent(QMouseEvent* event)
   _mousePressedPosition = event->pos();
   QPointF pos = mapToScene(event->pos());
 
-  // Drag the scene with middle button.
-  //  if (event->buttons() & Qt::MiddleButton)
-  //  {
-  //    // NOTE: This is a trick code to implement scroll hand drag using the middle button.
-  //    QMouseEvent releaseEvent(QEvent::MouseButtonRelease, event->pos(),
-  //            event->globalPos(), Qt::LeftButton, 0, event->modifiers());
-  //    QGraphicsView::mouseReleaseEvent(&releaseEvent);
-  //    setDragMode(QGraphicsView::ScrollHandDrag);
-
-  //    // We need to pretend it is actually the left button that was pressed!
-  //    QMouseEvent fakeEvent(event->type(), event->pos(), event->globalPos(),
-  //            Qt::LeftButton, event->buttons() | Qt::LeftButton, event->modifiers());
-  //    QGraphicsView::mousePressEvent(&fakeEvent);
-  //  }
+  // Middle-click: start pan — cursor changes to closed hand.
+  if (event->button() == Qt::MiddleButton) {
+    setCursor(Qt::ClosedHandCursor);
+    event->accept();
+    return;
+  }
 
   // Check for shape selection.
   if (event->buttons() & (Qt::LeftButton | Qt::RightButton))
@@ -618,17 +609,9 @@ void MapperGLCanvas::mouseReleaseEvent(QMouseEvent* event)
 {
   Q_UNUSED(event);
 
-  // Wrap-up dragging the scene with middle button.
-  if (event->buttons() & Qt::MiddleButton)
-  {
-    QMouseEvent fakeEvent(
-          event->type(), event->pos(), event->globalPosition().toPoint(),
-          Qt::LeftButton, event->buttons() & ~Qt::LeftButton,
-          event->modifiers());
-    QGraphicsView::mouseReleaseEvent(&fakeEvent);
-    setDragMode(QGraphicsView::NoDrag);
+  // End middle-click pan.
+  if (event->button() == Qt::MiddleButton)
     setCursor(Qt::ArrowCursor);
-  }
   //  // Click on vertex ==> select the vertex.
   //  if ((event->buttons() & Qt::LeftButton) && _mousePressedOnVertex)
   //  {
@@ -740,13 +723,14 @@ void MapperGLCanvas::mouseMoveEvent(QMouseEvent* event)
     undoStack->push(new TranslateShapeCommand(this, TransformShapeCommand::FREE, diff));
   }
 
-  // Window translation action
+  // Pan with middle-click drag (or Shift+left-drag).
+  // Adjust scrollbars directly — view->translate() would shift scene objects.
   else if ((event->buttons() & Qt::MiddleButton) ||
            ((event->modifiers() & Qt::ShiftModifier) && (event->buttons() & Qt::LeftButton)))
   {
-    QPointF diff = event->pos() - lastMousePos;
-    QGraphicsView* view = scene()->views().first();
-    view->translate(diff.x(), diff.y());
+    QPoint delta = event->pos() - lastMousePos;
+    horizontalScrollBar()->setValue(horizontalScrollBar()->value() - delta.x());
+    verticalScrollBar()->setValue(verticalScrollBar()->value() - delta.y());
   }
 
   // Update rubber-band in polygon draw mode.
