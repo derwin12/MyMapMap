@@ -205,6 +205,10 @@ private:
   // Pointer to MainWindow UndoStack
   QUndoStack *undoStack;
 
+  // Last mouse position tracked per-instance for pan delta (not static — avoids
+  // cross-canvas contamination when the user switches between input and output).
+  QPoint _lastMousePos;
+
 signals:
   void shapeChanged(MShape*);
   void imageChanged();

@@ -66,11 +66,6 @@ MapperGLCanvas::MapperGLCanvas(MainWindow* mainWindow,
   //setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
   setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
 
-  // Large initial scene rect so scrollbars always have range for panning and
-  // zoom-to-cursor even when content fits the viewport exactly. The output
-  // canvas overrides this in _applyOutputFit().
-  setSceneRect(-2000, -2000, 8000, 6000);
-
   resetTransform();
   // setAcceptDrops(true);
 
@@ -84,6 +79,12 @@ MapperGLCanvas::MapperGLCanvas(MainWindow* mainWindow,
 
   // TODO: do we need to delete scene (or call new QGraphicsScene(this)?)
   setScene(scene ? scene : new QGraphicsScene);
+
+  // Large scene rect so scrollbars have range at all zoom levels — required for
+  // pan and zoom-to-cursor to work. Must be set AFTER setScene() because Qt
+  // resets any custom scene rect when a new scene is assigned.
+  // The output canvas overrides this in _applyOutputFit().
+  setSceneRect(-2000, -2000, 8000, 6000);
 
   // Black background.
   this->scene()->setBackgroundBrush(Qt::black);
@@ -445,6 +446,7 @@ void MapperGLCanvas::mousePressEvent(QMouseEvent* event)
 
   // Middle-click: start pan — cursor changes to closed hand.
   if (event->button() == Qt::MiddleButton) {
+    _lastMousePos = event->pos(); // seed per-instance position so first delta is correct
     setCursor(Qt::ClosedHandCursor);
     event->accept();
     return;
@@ -671,8 +673,6 @@ void MapperGLCanvas::mouseReleaseEvent(QMouseEvent* event)
 
 void MapperGLCanvas::mouseMoveEvent(QMouseEvent* event)
 {
-  static QPoint lastMousePos;
-
   QPointF scenePos = mapToScene(event->pos());
 
   // Vertex grab.
@@ -722,7 +722,7 @@ void MapperGLCanvas::mouseMoveEvent(QMouseEvent* event)
     {
       if (_shapeFirstGrab)
       {
-        lastMousePos = _mousePressedPosition;
+        _lastMousePos = _mousePressedPosition;
         _shapeFirstGrab = false;
         // Reset the mode after moved shape
         getCurrentShape()->setShapeMode(MShape::DefaultMode);
@@ -730,7 +730,7 @@ void MapperGLCanvas::mouseMoveEvent(QMouseEvent* event)
 
       _shapeMoved = true; // The active vertex is actually moved
     }
-    QPointF diff = scenePos - mapToScene(lastMousePos);
+    QPointF diff = scenePos - mapToScene(_lastMousePos);
     undoStack->push(new TranslateShapeCommand(this, TransformShapeCommand::FREE, diff));
   }
 
@@ -739,7 +739,7 @@ void MapperGLCanvas::mouseMoveEvent(QMouseEvent* event)
   else if ((event->buttons() & Qt::MiddleButton) ||
            ((event->modifiers() & Qt::ShiftModifier) && (event->buttons() & Qt::LeftButton)))
   {
-    QPoint delta = event->pos() - lastMousePos;
+    QPoint delta = event->pos() - _lastMousePos;
     horizontalScrollBar()->setValue(horizontalScrollBar()->value() - delta.x());
     verticalScrollBar()->setValue(verticalScrollBar()->value() - delta.y());
   }
@@ -749,7 +749,7 @@ void MapperGLCanvas::mouseMoveEvent(QMouseEvent* event)
     _mainWindow->polygonCursorMoved(mapToScene(event->pos()));
 
   // Reset last mouse position.
-  lastMousePos = event->pos();
+  _lastMousePos = event->pos();
 }
 
 
@@ -1082,9 +1082,11 @@ void MapperGLCanvas::fitShapeToView()
     return;
   }
   if (getCurrentShape()) {
-    fitInView(this->scene()->itemsBoundingRect(), Qt::KeepAspectRatio);
-    setSceneRect(scene()->itemsBoundingRect());
-    centerOn(this->scene()->itemsBoundingRect().center());
+    QRectF itemsRect = scene()->itemsBoundingRect();
+    fitInView(itemsRect, Qt::KeepAspectRatio);
+    // Do NOT call setSceneRect here — that would collapse the large scene rect
+    // we set in the constructor, removing scrollbar range for pan / zoom-to-cursor.
+    centerOn(itemsRect.center());
     _scalingFactor = transform().m11();
     _shapeIsAdapted = true;
     emit zoomFactorChanged(getZoomFactor());
