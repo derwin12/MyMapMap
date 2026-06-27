@@ -26,6 +26,8 @@
 #include <QGraphicsScene>
 #include <QKeyEvent>
 #include <QPaintEvent>
+#include <QResizeEvent>
+#include <QSize>
 #include <QUndoStack>
 #include <QPixmap>
 
@@ -97,9 +99,12 @@ public:
   bool vertexGrabbed() const { return _vertexGrabbed; }
 
   //qreal getZoomFactor() const { return qBound(qPow(MM::ZOOM_FACTOR, _zoomLevel), MM::ZOOM_MIN, MM::ZOOM_MAX); }
-  qreal getZoomFactor() const { return _shapeIsAdapted
+  qreal getZoomFactor() const {
+    qreal raw = _shapeIsAdapted
         ? _scalingFactor
-        : qBound(MM::ZOOM_MIN, qPow(MM::ZOOM_FACTOR, _zoomLevel), MM::ZOOM_MAX); }
+        : qBound(MM::ZOOM_MIN, qPow(MM::ZOOM_FACTOR, _zoomLevel), MM::ZOOM_MAX);
+    return (_useOutputFit && _fitScaleFactor > 0) ? raw / _fitScaleFactor : raw;
+  }
 
   /// This function needs to be called after a shape inside the canvas has been changed for appropriate signals to be activated.
   void currentShapeWasChanged();
@@ -108,6 +113,7 @@ public:
   void applyZoomToView();
 
 protected:
+  void resizeEvent(QResizeEvent* event) override;
 //  void initializeGL();
 //  void resizeGL(int width, int height);
 //  void paintGL();
@@ -191,8 +197,17 @@ private:
 
   bool _shapeIsAdapted;
 
+  // Output editor: canonical output size + fit-to-output mode.
+  QSize  _outputCanvasSize;
+  qreal  _fitScaleFactor = 1.0;
+  bool   _useOutputFit   = false;
+
   // Pointer to MainWindow UndoStack
   QUndoStack *undoStack;
+
+  // Last mouse position tracked per-instance for pan delta (not static — avoids
+  // cross-canvas contamination when the user switches between input and output).
+  QPoint _lastMousePos;
 
 signals:
   void shapeChanged(MShape*);
@@ -222,9 +237,13 @@ public slots:
   // Set zoom factor with drowmenu data
   void setZoomFromMenu(const QString& text);
 
+  // Set the canonical output size; switches editor into output-fit mode.
+  void setOutputCanvasSize(QSize size);
+
 protected:
   // TODO: Perhaps the sticky-sensitivity should be configurable through GUI
   void _snapVertex(QPointF* p);
+  void _applyOutputFit();
 
 public:
   static const int NO_VERTEX = -1;

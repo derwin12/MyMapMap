@@ -55,8 +55,7 @@ MapperGLCanvas::MapperGLCanvas(MainWindow* mainWindow,
   setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
   setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
 
-  this->horizontalScrollBar()->setRange(0, 1000);
-  this->verticalScrollBar()->setRange(0, 1000);
+  // Let Qt manage scrollbar ranges from the scene rect and zoom level.
 
   setResizeAnchor(AnchorViewCenter);
   setInteractive(true);
@@ -80,6 +79,12 @@ MapperGLCanvas::MapperGLCanvas(MainWindow* mainWindow,
 
   // TODO: do we need to delete scene (or call new QGraphicsScene(this)?)
   setScene(scene ? scene : new QGraphicsScene);
+
+  // Large scene rect so scrollbars have range at all zoom levels — required for
+  // pan and zoom-to-cursor to work. Must be set AFTER setScene() because Qt
+  // resets any custom scene rect when a new scene is assigned.
+  // The output canvas overrides this in _applyOutputFit().
+  setSceneRect(-2000, -2000, 8000, 6000);
 
   // Black background.
   this->scene()->setBackgroundBrush(Qt::black);
@@ -120,14 +125,28 @@ void MapperGLCanvas::setBackgroundPhotoVisible(bool visible)
 void MapperGLCanvas::drawBackground(QPainter* painter, const QRectF& rect)
 {
   QGraphicsView::drawBackground(painter, rect);
-  if (_backgroundPixmap.isNull() || !_backgroundPhotoVisible) return;
-  painter->save();
-  painter->setOpacity(_backgroundOpacity);
-  // Reset to widget coordinates so the photo always fills the full viewport
-  // regardless of zoom level or scroll position.
-  painter->resetTransform();
-  painter->drawPixmap(viewport()->rect(), _backgroundPixmap);
-  painter->restore();
+
+  // Compute canvas-to-viewport mapping before any transform changes
+  // (mapFromScene uses the view transform, not the painter transform).
+  QRectF canvasVP;
+  if (_useOutputFit && _outputCanvasSize.isValid()) {
+    QPointF tl = mapFromScene(QPointF(0, 0));
+    QPointF br = mapFromScene(QPointF(_outputCanvasSize.width(), _outputCanvasSize.height()));
+    canvasVP = QRectF(tl, br).normalized();
+  }
+
+  if (!_backgroundPixmap.isNull() && _backgroundPhotoVisible) {
+    painter->save();
+    painter->setOpacity(_backgroundOpacity);
+    painter->resetTransform();
+    // In output-fit mode, lock the background photo to the canvas bounds so it
+    // doesn't bleed into the black letterbox area outside the projector output.
+    const QRectF targetRect = (_useOutputFit && !canvasVP.isNull())
+                              ? canvasVP
+                              : QRectF(viewport()->rect());
+    painter->drawPixmap(targetRect, _backgroundPixmap, QRectF(_backgroundPixmap.rect()));
+    painter->restore();
+  }
 }
 
 MShape::ptr MapperGLCanvas::getShapeFromMapping(Layer::ptr mapping)
@@ -266,6 +285,19 @@ void MapperGLCanvas::drawForeground(QPainter *painter , const QRectF &rect)
 
     }
   }
+
+  // Output editor: draw an amber dashed border at the canvas boundary so the
+  // user can see exactly where the projector output edge is.
+  if (_useOutputFit && _outputCanvasSize.isValid()) {
+    painter->save();
+    QPen pen(QColor(255, 200, 0, 200));
+    pen.setWidth(0); // cosmetic — always 1 screen pixel regardless of zoom
+    pen.setStyle(Qt::DashLine);
+    painter->setPen(pen);
+    painter->setBrush(Qt::NoBrush);
+    painter->drawRect(QRectF(0, 0, _outputCanvasSize.width(), _outputCanvasSize.height()));
+    painter->restore();
+  }
 }
 
 void MapperGLCanvas::currentShapeWasChanged()
@@ -275,16 +307,61 @@ void MapperGLCanvas::currentShapeWasChanged()
 
 void MapperGLCanvas::applyZoomToView()
 {
-  // Re-bound zoom (for consistency).
   qreal zoomFactor = getZoomFactor();
-  // Resets the view transformation matrix
-  resetTransform();
-  // Scale the current view
-  scale(zoomFactor, zoomFactor);
-  // And update
+  qreal rawScale = (_useOutputFit && _fitScaleFactor > 0)
+                   ? zoomFactor * _fitScaleFactor
+                   : zoomFactor;
+  // Single setTransform() so AnchorUnderMouse fires exactly once and keeps
+  // the scene position under the cursor fixed. The old resetTransform()+scale()
+  // pair fired the anchor twice, causing the view to recenter unexpectedly.
+  QTransform t;
+  t.scale(rawScale, rawScale);
+  // NoAnchor so wheelEvent can manually compensate scrollbars for zoom-to-cursor.
+  setTransformationAnchor(QGraphicsView::NoAnchor);
+  setTransform(t);
+  setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
   update();
-
   emit zoomFactorChanged(zoomFactor);
+}
+
+void MapperGLCanvas::resizeEvent(QResizeEvent* event)
+{
+  QGraphicsView::resizeEvent(event);
+  if (_useOutputFit && _outputCanvasSize.isValid()) {
+    // Save the user's zoom relative to the current fit scale so it survives
+    // the panel resize (fit scale changes with panel size).
+    qreal savedNorm = (_shapeIsAdapted && _fitScaleFactor > 0)
+                      ? _scalingFactor / _fitScaleFactor
+                      : 1.0;
+    _applyOutputFit();
+    if (savedNorm > 1.001) { // user was zoomed in — restore
+      _scalingFactor = _fitScaleFactor * savedNorm;
+      applyZoomToView();
+    }
+  }
+}
+
+void MapperGLCanvas::_applyOutputFit()
+{
+  QRectF outputRect(0, 0, _outputCanvasSize.width(), _outputCanvasSize.height());
+  // Pad the scene rect with generous margins so scrollbars have range even at
+  // 100% (fit) zoom — required for panning and zoom-to-cursor to work.
+  qreal pad = qMax(outputRect.width(), outputRect.height());
+  setSceneRect(outputRect.adjusted(-pad, -pad, pad, pad));
+  fitInView(outputRect, Qt::KeepAspectRatio);
+  _fitScaleFactor = transform().m11();
+  _scalingFactor  = _fitScaleFactor;
+  _shapeIsAdapted = true;
+  emit zoomFactorChanged(1.0); // 100% = fit to output
+}
+
+void MapperGLCanvas::setOutputCanvasSize(QSize size)
+{
+  if (!size.isValid() || size.isEmpty())
+    return;
+  _outputCanvasSize = size;
+  _useOutputFit     = true;
+  _applyOutputFit();
 }
 
 void MapperGLCanvas::dragEnterEvent(QDragEnterEvent *event)
@@ -367,20 +444,13 @@ void MapperGLCanvas::mousePressEvent(QMouseEvent* event)
   _mousePressedPosition = event->pos();
   QPointF pos = mapToScene(event->pos());
 
-  // Drag the scene with middle button.
-  //  if (event->buttons() & Qt::MiddleButton)
-  //  {
-  //    // NOTE: This is a trick code to implement scroll hand drag using the middle button.
-  //    QMouseEvent releaseEvent(QEvent::MouseButtonRelease, event->pos(),
-  //            event->globalPos(), Qt::LeftButton, 0, event->modifiers());
-  //    QGraphicsView::mouseReleaseEvent(&releaseEvent);
-  //    setDragMode(QGraphicsView::ScrollHandDrag);
-
-  //    // We need to pretend it is actually the left button that was pressed!
-  //    QMouseEvent fakeEvent(event->type(), event->pos(), event->globalPos(),
-  //            Qt::LeftButton, event->buttons() | Qt::LeftButton, event->modifiers());
-  //    QGraphicsView::mousePressEvent(&fakeEvent);
-  //  }
+  // Middle-click: start pan — cursor changes to closed hand.
+  if (event->button() == Qt::MiddleButton) {
+    _lastMousePos = event->pos(); // seed per-instance position so first delta is correct
+    setCursor(Qt::ClosedHandCursor);
+    event->accept();
+    return;
+  }
 
   // Check for shape selection.
   if (event->buttons() & (Qt::LeftButton | Qt::RightButton))
@@ -552,17 +622,9 @@ void MapperGLCanvas::mouseReleaseEvent(QMouseEvent* event)
 {
   Q_UNUSED(event);
 
-  // Wrap-up dragging the scene with middle button.
-  if (event->buttons() & Qt::MiddleButton)
-  {
-    QMouseEvent fakeEvent(
-          event->type(), event->pos(), event->globalPosition().toPoint(),
-          Qt::LeftButton, event->buttons() & ~Qt::LeftButton,
-          event->modifiers());
-    QGraphicsView::mouseReleaseEvent(&fakeEvent);
-    setDragMode(QGraphicsView::NoDrag);
+  // End middle-click pan.
+  if (event->button() == Qt::MiddleButton)
     setCursor(Qt::ArrowCursor);
-  }
   //  // Click on vertex ==> select the vertex.
   //  if ((event->buttons() & Qt::LeftButton) && _mousePressedOnVertex)
   //  {
@@ -611,8 +673,6 @@ void MapperGLCanvas::mouseReleaseEvent(QMouseEvent* event)
 
 void MapperGLCanvas::mouseMoveEvent(QMouseEvent* event)
 {
-  static QPoint lastMousePos;
-
   QPointF scenePos = mapToScene(event->pos());
 
   // Vertex grab.
@@ -662,7 +722,7 @@ void MapperGLCanvas::mouseMoveEvent(QMouseEvent* event)
     {
       if (_shapeFirstGrab)
       {
-        lastMousePos = _mousePressedPosition;
+        _lastMousePos = _mousePressedPosition;
         _shapeFirstGrab = false;
         // Reset the mode after moved shape
         getCurrentShape()->setShapeMode(MShape::DefaultMode);
@@ -670,17 +730,18 @@ void MapperGLCanvas::mouseMoveEvent(QMouseEvent* event)
 
       _shapeMoved = true; // The active vertex is actually moved
     }
-    QPointF diff = scenePos - mapToScene(lastMousePos);
+    QPointF diff = scenePos - mapToScene(_lastMousePos);
     undoStack->push(new TranslateShapeCommand(this, TransformShapeCommand::FREE, diff));
   }
 
-  // Window translation action
+  // Pan with middle-click drag (or Shift+left-drag).
+  // Adjust scrollbars directly — view->translate() would shift scene objects.
   else if ((event->buttons() & Qt::MiddleButton) ||
            ((event->modifiers() & Qt::ShiftModifier) && (event->buttons() & Qt::LeftButton)))
   {
-    QPointF diff = event->pos() - lastMousePos;
-    QGraphicsView* view = scene()->views().first();
-    view->translate(diff.x(), diff.y());
+    QPoint delta = event->pos() - _lastMousePos;
+    horizontalScrollBar()->setValue(horizontalScrollBar()->value() - delta.x());
+    verticalScrollBar()->setValue(verticalScrollBar()->value() - delta.y());
   }
 
   // Update rubber-band in polygon draw mode.
@@ -688,7 +749,7 @@ void MapperGLCanvas::mouseMoveEvent(QMouseEvent* event)
     _mainWindow->polygonCursorMoved(mapToScene(event->pos()));
 
   // Reset last mouse position.
-  lastMousePos = event->pos();
+  _lastMousePos = event->pos();
 }
 
 
@@ -909,43 +970,30 @@ void MapperGLCanvas::deselectAll()
 
 void MapperGLCanvas::wheelEvent(QWheelEvent *event)
 {
-  // [-120]-----[-1]|[1]++++++[120]
-  // See: http://doc.qt.io/qt-5/qwheelevent.html#angleDelta
-#if QT_VERSION >= 0x050500
   int deltaLevel = event->angleDelta().y() / 120;
-#else
-  int deltaLevel = event->delta() / 120;
-#endif
-  bool control_is_pressed = event->modifiers().testFlag(Qt::ControlModifier);
-  bool shift_is_pressed = event->modifiers().testFlag(Qt::ShiftModifier);
+  if (deltaLevel == 0) { QGraphicsView::wheelEvent(event); return; }
 
-  if (control_is_pressed) { // control is pressed: zoom
-    // zoom in or out:
-    if (deltaLevel > 0) {
-      // Increase zoom level
-      increaseZoomLevel(deltaLevel);
-    } else {
-      // Decrease zoom level
-      decreaseZoomLevel(-deltaLevel);
-    }
-    // Accept wheel scrolling event.
-    event->accept();
-  } else { // control is not pressed: scroll
-    QScrollBar* scrollbar;
-    if (shift_is_pressed) { // shift is pressed: pans horizontally
-      scrollbar = this->horizontalScrollBar();
-    } else { // shift is not pressed: scrolls vertically
-      scrollbar = this->verticalScrollBar();
-    }
-    // FIXME: scrolling with the mouse doesn't currently work
-    int scroll = scrollbar->value();
-    if (deltaLevel > 0) {
-      scrollbar->setValue(scroll + 50);
-    } else {
-      scrollbar->setValue(scroll - 50);
-    }
-    event->accept();
+  bool ctrl  = event->modifiers().testFlag(Qt::ControlModifier);
+  bool shift = event->modifiers().testFlag(Qt::ShiftModifier);
+
+  if (ctrl) {
+    // Manual zoom-to-cursor: capture the scene point under the cursor, apply
+    // the zoom (which uses NoAnchor), then scroll to put that point back under
+    // the cursor. Works at any zoom level regardless of scrollbar clamping.
+    QPointF cursorScene = mapToScene(event->position().toPoint());
+    if (deltaLevel > 0) increaseZoomLevel(deltaLevel);
+    else                 decreaseZoomLevel(-deltaLevel);
+    QPointF newCursorViewF(mapFromScene(cursorScene));
+    QPointF shift = newCursorViewF - event->position();
+    horizontalScrollBar()->setValue(qRound(horizontalScrollBar()->value() + shift.x()));
+    verticalScrollBar()->setValue(qRound(verticalScrollBar()->value() + shift.y()));
+  } else {
+    // Scroll: wheel-up → negative scrollbar delta (content moves up, natural).
+    // Shift scrolls horizontally.
+    QScrollBar *bar = shift ? horizontalScrollBar() : verticalScrollBar();
+    bar->setValue(bar->value() - deltaLevel * 60);
   }
+  event->accept();
 }
 
 bool MapperGLCanvas::eventFilter(QObject *target, QEvent *event)
@@ -965,67 +1013,82 @@ bool MapperGLCanvas::eventFilter(QObject *target, QEvent *event)
 
 void MapperGLCanvas::increaseZoomLevel(int steps)
 {
-  qreal zoomFactor = qPow(MM::ZOOM_FACTOR, _zoomLevel);
+  if (_useOutputFit) {
+    // Work relative to the fit baseline so 100% = fit, 141% = one step in, etc.
+    if (!_shapeIsAdapted)
+      _scalingFactor = _fitScaleFactor * qPow(MM::ZOOM_FACTOR, _zoomLevel);
+    _shapeIsAdapted = true;
+    qreal normalizedFactor = (_fitScaleFactor > 0) ? _scalingFactor / _fitScaleFactor : _scalingFactor;
+    while (steps > 0 && normalizedFactor < MM::ZOOM_MAX) {
+      _scalingFactor *= MM::ZOOM_FACTOR;
+      normalizedFactor = (_fitScaleFactor > 0) ? _scalingFactor / _fitScaleFactor : _scalingFactor;
+      steps--;
+    }
+    applyZoomToView();
+    return;
+  }
 
+  qreal zoomFactor = qPow(MM::ZOOM_FACTOR, _zoomLevel);
   while (steps > 0 && zoomFactor < MM::ZOOM_MAX) {
     _zoomLevel++;
     zoomFactor = qPow(MM::ZOOM_FACTOR, _zoomLevel);
     steps--;
   }
-  zoomFactor = qMin(zoomFactor, MM::ZOOM_MAX);
-
-  // Reset adaptation
   _shapeIsAdapted = false;
-
-  // Apply to view
   applyZoomToView();
 }
 
 void MapperGLCanvas::decreaseZoomLevel(int steps)
 {
-  qreal zoomFactor = qPow(MM::ZOOM_FACTOR, _zoomLevel);
+  if (_useOutputFit) {
+    if (!_shapeIsAdapted)
+      _scalingFactor = _fitScaleFactor * qPow(MM::ZOOM_FACTOR, _zoomLevel);
+    _shapeIsAdapted = true;
+    qreal normalizedFactor = (_fitScaleFactor > 0) ? _scalingFactor / _fitScaleFactor : _scalingFactor;
+    while (steps > 0 && normalizedFactor > MM::ZOOM_MIN) {
+      _scalingFactor /= MM::ZOOM_FACTOR;
+      normalizedFactor = (_fitScaleFactor > 0) ? _scalingFactor / _fitScaleFactor : _scalingFactor;
+      steps--;
+    }
+    applyZoomToView();
+    return;
+  }
 
+  qreal zoomFactor = qPow(MM::ZOOM_FACTOR, _zoomLevel);
   while (steps > 0 && zoomFactor > MM::ZOOM_MIN) {
     _zoomLevel--;
     zoomFactor = qPow(MM::ZOOM_FACTOR, _zoomLevel);
     steps--;
   }
-  zoomFactor = qMax(zoomFactor, MM::ZOOM_MIN);
-
-  // Reset adaptation
   _shapeIsAdapted = false;
-
-  // Apply to view
   applyZoomToView();
 }
 
 void MapperGLCanvas::resetZoomLevel()
 {
-  // Reset zoom level to zero
+  if (_useOutputFit && _outputCanvasSize.isValid()) {
+    _applyOutputFit(); // 100% = fit full output
+    return;
+  }
   _zoomLevel = 0;
-
-  // Reset adaptation
   _shapeIsAdapted = false;
-
-  // Apply to view
   applyZoomToView();
 }
 
 void MapperGLCanvas::fitShapeToView()
 {
-  if (getCurrentShape()) { // Test if current shape exists
-    // Get first of the list of all the views
-    // Scales the view matrix
-    fitInView(this->scene()->itemsBoundingRect(), Qt::KeepAspectRatio);
-    // Center all shapes
-    setSceneRect(scene()->itemsBoundingRect());
-    centerOn(this->scene()->itemsBoundingRect().center());
-    // Get the horizontal scaling factor
+  if (_useOutputFit && _outputCanvasSize.isValid()) {
+    _applyOutputFit();
+    return;
+  }
+  if (getCurrentShape()) {
+    QRectF itemsRect = scene()->itemsBoundingRect();
+    fitInView(itemsRect, Qt::KeepAspectRatio);
+    // Do NOT call setSceneRect here — that would collapse the large scene rect
+    // we set in the constructor, removing scrollbar range for pan / zoom-to-cursor.
+    centerOn(itemsRect.center());
     _scalingFactor = transform().m11();
-
-    // Adapt shape
     _shapeIsAdapted = true;
-
     emit zoomFactorChanged(getZoomFactor());
   }
 }
@@ -1033,15 +1096,12 @@ void MapperGLCanvas::fitShapeToView()
 
 void MapperGLCanvas::setZoomFromMenu(const QString &text)
 {
-  // Get text choosen by user and convert it to double
-  qreal zoomFactor = text.mid(0, text.length() - 1).toDouble();
-  // Set zoom factor
-  _scalingFactor = zoomFactor / 100;
-
-  // Adapt shape
+  qreal zoomFactor = text.mid(0, text.length() - 1).toDouble() / 100.0;
+  // In output-fit mode, scale relative to the fit baseline so 100% = fit.
+  _scalingFactor  = (_useOutputFit && _fitScaleFactor > 0)
+                    ? zoomFactor * _fitScaleFactor
+                    : zoomFactor;
   _shapeIsAdapted = true;
-
-  // Apply to view
   applyZoomToView();
 }
 

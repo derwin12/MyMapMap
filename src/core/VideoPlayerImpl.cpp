@@ -176,6 +176,11 @@ bool VideoPlayerImpl::seekTo(qint64 positionMs)
   return true;
 }
 
+qint64 VideoPlayerImpl::getPosition() const
+{
+  return _player ? _player->position() : 0;
+}
+
 void VideoPlayerImpl::setRate(double rate)
 {
   _rate = rate;
@@ -195,11 +200,6 @@ void VideoPlayerImpl::setPlayInLoop(bool loop)
   _playInLoop = loop;
   if (_player)
     _player->setLoops(loop ? QMediaPlayer::Infinite : 1);
-}
-
-qint64 VideoPlayerImpl::getPosition() const
-{
-  return _player ? _player->position() : 0;
 }
 
 void VideoPlayerImpl::update()

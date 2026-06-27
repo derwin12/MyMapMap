@@ -57,9 +57,11 @@ public:
 
 signals:
   void framePainted(const QImage& frame);
+  void outputCanvasSizeChanged(QSize size);
 
 protected:
   void paintEvent(QPaintEvent* event) override;
+  void resizeEvent(QResizeEvent* event) override;
 
 private slots:
   void _doGrabFrame();
@@ -80,10 +82,6 @@ private:
   QImage _palTestCard;
   QImage _ntscTestCard;
   bool _windowIsHovered;
-
-protected:
-  // overriden from QGlWidget:
-  virtual void resizeGL(int width, int height);
 
   void wheelEvent(QWheelEvent *event);
   void mouseMoveEvent(QMouseEvent *event);

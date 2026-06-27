@@ -110,6 +110,11 @@ bool PreferenceDialog::loadSettings()
   _stickyVerticesBox->setChecked(settings.value("stickyVertices", MM::STICKY_VERTICES).toBool());
   // Sticky vertices radius
   _stickyRadiusBox->setCurrentText(settings.value("vertexStickRadius", MM::VERTEX_STICK_RADIUS).toString());
+  // Output resolution preference
+  _outputResolutionBox->setCurrentIndex(
+    _outputResolutionBox->findData(settings.value("outputResolution", "1920x1080").toString()));
+  if (_outputResolutionBox->currentIndex() < 0)
+    _outputResolutionBox->setCurrentIndex(0);
   // Show screen resolution on output
   _showResolutionBox->setChecked(settings.value("showResolution", MM::SHOW_OUTPUT_RESOLUTION).toBool());
   // Show control on mouse hover
@@ -136,6 +141,7 @@ bool PreferenceDialog::loadSettings()
   // Video recording
   _videoFormatBox->setCurrentIndex(settings.value("videoFormat", (int)VideoExporter::H264_MP4).toInt());
   _videoQualityBox->setCurrentIndex(settings.value("videoQuality", (int)VideoExporter::HighQuality).toInt());
+  _maxRecordLengthBox->setValue(settings.value("maxRecordLengthSec", 30).toInt());
 
   return true;
 }
@@ -151,6 +157,9 @@ void PreferenceDialog::applySettings()
   settings.setValue("stickyVertices", _stickyVerticesBox->isChecked());
   // Sticky vertices radius
   settings.setValue("vertexStickRadius", _stickyRadiusBox->currentText());
+  // Output resolution preference (apply immediately if no projector is connected)
+  settings.setValue("outputResolution", _outputResolutionBox->currentData().toString());
+  mainWindow->applyOutputResolutionFromPref();
   // Show screen resolution on output
   settings.setValue("showResolution", _showResolutionBox->isChecked());
   // Show control on mouse hover
@@ -182,8 +191,9 @@ void PreferenceDialog::applySettings()
   settings.setValue("playInLoop", _playInLoopBox->isChecked());
 
   // Video recording
-  settings.setValue("videoFormat",  _videoFormatBox->currentIndex());
-  settings.setValue("videoQuality", _videoQualityBox->currentIndex());
+  settings.setValue("videoFormat",        _videoFormatBox->currentIndex());
+  settings.setValue("videoQuality",       _videoQualityBox->currentIndex());
+  settings.setValue("maxRecordLengthSec", _maxRecordLengthBox->value());
 }
 
 void PreferenceDialog::refreshCurrentIP()
@@ -275,6 +285,22 @@ void PreferenceDialog::createOutputPage()
 {
   _outputPage = new QWidget;
 
+  // Output resolution preference (used when no projector is detected)
+  _outputResolutionBox = new QComboBox;
+  _outputResolutionBox->addItem(tr("720p HD (1280×720)"),    QString("1280x720"));
+  _outputResolutionBox->addItem(tr("1080p HD (1920×1080)"), QString("1920x1080"));
+  _outputResolutionBox->addItem(tr("2K (2560×1440)"),        QString("2560x1440"));
+  _outputResolutionBox->addItem(tr("4K (3840×2160)"),        QString("3840x2160"));
+
+  QFormLayout *resolutionForm = new QFormLayout;
+  resolutionForm->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
+  resolutionForm->setSpacing(8);
+  resolutionForm->setContentsMargins(12, 8, 12, 8);
+  resolutionForm->addRow(tr("Output resolution"), _outputResolutionBox);
+
+  QGroupBox *resolutionGroupBox = new QGroupBox(tr("Output Resolution"));
+  resolutionGroupBox->setLayout(resolutionForm);
+
   _showControlOnOverBox = new QCheckBox(tr("Only show output controls on mouse over"));
 
   QVBoxLayout *outputLayout = new QVBoxLayout;
@@ -298,9 +324,17 @@ void PreferenceDialog::createOutputPage()
   _palTestImg = new QLabel;
   _ntscTestImg = new QLabel;
 
-  _classicTestImg->setPixmap(QPixmap(":/classic-test"));
-  _palTestImg->setPixmap(QPixmap(":/pal-test"));
-  _ntscTestImg->setPixmap(QPixmap(":/ntsc-test"));
+  const QSize thumbSize(160, 90);
+  auto thumb = [&](const QString &res) {
+    return QPixmap(res).scaled(thumbSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+  };
+  _classicTestImg->setPixmap(thumb(":/classic-test"));
+  _palTestImg->setPixmap(thumb(":/pal-test"));
+  _ntscTestImg->setPixmap(thumb(":/ntsc-test"));
+  for (QLabel *lbl : {_classicTestImg, _palTestImg, _ntscTestImg}) {
+    lbl->setFixedSize(thumbSize);
+    lbl->setAlignment(Qt::AlignCenter);
+  }
 
   QGridLayout *testLayout = new QGridLayout;
   testLayout->setContentsMargins(0, 0, 0, 0);
@@ -331,17 +365,24 @@ void PreferenceDialog::createOutputPage()
   _videoQualityBox->addItem(tr("High"),      (int)VideoExporter::HighQuality);
   _videoQualityBox->addItem(tr("Very High"), (int)VideoExporter::VeryHighQuality);
 
+  _maxRecordLengthBox = new QSpinBox;
+  _maxRecordLengthBox->setRange(1, 3600);
+  _maxRecordLengthBox->setSuffix(tr(" sec"));
+  _maxRecordLengthBox->setToolTip(tr("Used when all media is set to loop, or when only images are present."));
+
   QFormLayout *recordingForm = new QFormLayout;
   recordingForm->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
   recordingForm->setSpacing(8);
   recordingForm->setContentsMargins(12, 8, 12, 8);
-  recordingForm->addRow(tr("Format / Codec"), _videoFormatBox);
-  recordingForm->addRow(tr("Quality"),        _videoQualityBox);
+  recordingForm->addRow(tr("Format / Codec"),        _videoFormatBox);
+  recordingForm->addRow(tr("Quality"),               _videoQualityBox);
+  recordingForm->addRow(tr("Max default length"),    _maxRecordLengthBox);
 
   QGroupBox *recordingGroupBox = new QGroupBox(tr("Recording"));
   recordingGroupBox->setLayout(recordingForm);
 
   QVBoxLayout *outputPageLayout = new QVBoxLayout;
+  outputPageLayout->addWidget(resolutionGroupBox);
   outputPageLayout->addWidget(outputGroupBox);
   outputPageLayout->addWidget(testCardGroupbox);
   outputPageLayout->addWidget(recordingGroupBox);

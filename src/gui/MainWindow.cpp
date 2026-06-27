@@ -28,6 +28,9 @@
 #include "Commands.h"
 #include "ProjectWriter.h"
 #include "ProjectReader.h"
+#include "ProjectLabels.h"
+#include <private/qzipwriter_p.h>
+#include <QJsonArray>
 #ifdef Q_OS_MAC
 #include "Syphon.h"
 #include "SyphonServerDialog.h"
@@ -240,6 +243,9 @@ MainWindow::MainWindow()
 
   // Start osc.
   startOscReceiver();
+
+  // Start FPP MultiSync follower.
+  startFppSync();
 
 #ifdef HAVE_MCP
   // Start MCP server.
@@ -763,6 +769,125 @@ bool MainWindow::saveAs()
 
   // Save to filename.
   return saveFile(fileName);
+}
+
+void MainWindow::exportPackage()
+{
+  if (curFile.isEmpty()) {
+    QMessageBox::warning(this, tr("Export Package"),
+      tr("Please save the project before exporting."));
+    return;
+  }
+
+  QFileInfo projectInfo(curFile);
+  QDir projectDir = projectInfo.absoluteDir();
+
+  QString defaultZip = projectDir.filePath(projectInfo.completeBaseName() + ".zip");
+  QString zipPath = QFileDialog::getSaveFileName(this,
+    tr("Export Project Package"), defaultZip, tr("Zip Archive (*.zip)"));
+  if (zipPath.isEmpty()) return;
+
+  // Collect media files: absolute path -> flat zip entry name (deduped).
+  QMap<QString, QString> fileMap;
+  QSet<QString> usedNames;
+  bool hasFolderSources = false;
+
+  auto addMedia = [&](const QString &uri) {
+    if (uri.isEmpty()) return;
+    QString abs = QDir::cleanPath(QDir::isAbsolutePath(uri) ? uri : projectDir.filePath(uri));
+    if (!QFile::exists(abs) || fileMap.contains(abs)) return;
+    QString base = QFileInfo(abs).fileName();
+    QString name = base;
+    int n = 1;
+    while (usedNames.contains(name)) {
+      QFileInfo bn(base);
+      name = bn.completeBaseName() + QString("_%1.").arg(n++) + bn.suffix();
+    }
+    usedNames.insert(name);
+    fileMap[abs] = name;
+  };
+
+  for (int i = 0; i < mappingManager->nSources(); i++) {
+    Source::ptr src = mappingManager->getSource(i);
+    switch (src->getSourceType()) {
+    case SourceType::Video:
+      addMedia(static_cast<Video*>(src.get())->getUri());
+      break;
+    case SourceType::Image:
+      addMedia(static_cast<Image*>(src.get())->getUri());
+      break;
+    case SourceType::Folder:
+      hasFolderSources = true;
+      break;
+    default:
+      break;
+    }
+  }
+  addMedia(_backgroundPhotoPath);
+
+  // Read the .mmp and rewrite URIs to their flat zip entry names.
+  QFile mmpFile(curFile);
+  if (!mmpFile.open(QIODevice::ReadOnly)) {
+    QMessageBox::critical(this, tr("Export Package"),
+      tr("Cannot read project file:\n%1").arg(curFile));
+    return;
+  }
+  QJsonDocument doc = QJsonDocument::fromJson(mmpFile.readAll());
+  mmpFile.close();
+
+  QJsonObject root = doc.object();
+
+  auto patchUri = [&](const QString &uri) -> QString {
+    if (uri.isEmpty()) return uri;
+    QString abs = QDir::cleanPath(QDir::isAbsolutePath(uri) ? uri : projectDir.filePath(uri));
+    return fileMap.value(abs, uri);
+  };
+
+  QJsonArray sources = root[ProjectLabels::SOURCES].toArray();
+  for (int i = 0; i < sources.size(); i++) {
+    QJsonObject src = sources[i].toObject();
+    if (src.contains("uri"))
+      src["uri"] = patchUri(src["uri"].toString());
+    sources[i] = src;
+  }
+  root[ProjectLabels::SOURCES] = sources;
+
+  if (root.contains(ProjectLabels::BACKGROUND_PHOTO))
+    root[ProjectLabels::BACKGROUND_PHOTO] = patchUri(root[ProjectLabels::BACKGROUND_PHOTO].toString());
+
+  doc = QJsonDocument(root);
+
+  // Write zip.
+  QZipWriter zip(zipPath);
+  zip.setCompressionPolicy(QZipWriter::AutoCompress);
+  zip.addFile(projectInfo.fileName(), doc.toJson(QJsonDocument::Indented));
+
+  int failed = 0;
+  for (auto it = fileMap.cbegin(); it != fileMap.cend(); ++it) {
+    QFile f(it.key());
+    if (f.open(QIODevice::ReadOnly)) {
+      zip.addFile(it.value(), f.readAll());
+      f.close();
+    } else {
+      ++failed;
+    }
+  }
+  zip.close();
+
+  if (zip.status() != QZipWriter::NoError) {
+    QMessageBox::critical(this, tr("Export Package"),
+      tr("Failed to write package:\n%1").arg(zipPath));
+    return;
+  }
+
+  QString msg = tr("Package exported successfully:\n%1\n\n%2 media file(s) included.")
+    .arg(zipPath).arg(fileMap.size() - failed);
+  if (hasFolderSources)
+    msg += tr("\n\nNote: Folder sources are not bundled — add them manually.");
+  if (failed > 0)
+    msg += tr("\n\nWarning: %1 file(s) could not be read and were skipped.").arg(failed);
+
+  QMessageBox::information(this, tr("Export Package"), msg);
 }
 
 void MainWindow::importMedia()
@@ -2244,6 +2369,18 @@ void MainWindow::createLayout()
   outputWindow = new OutputGLWindow(this, destinationCanvas);
   outputWindow->installEventFilter(destinationCanvas);
 
+  // Keep the output editor's coordinate space locked to the projector screen
+  // (or the user-chosen resolution preference when no projector is detected).
+  {
+    int preferredScreen = outputWindow->getPreferredScreen();
+    const QList<QScreen*> screens = QGuiApplication::screens();
+    QSize outputSize = (preferredScreen < screens.size())
+        ? screens.at(preferredScreen)->geometry().size()
+        : preferredOutputSize();
+    destinationCanvas->setOutputCanvasSize(outputSize);
+  }
+  connect(outputWindow->getCanvas(), &OutputGLCanvas::outputCanvasSizeChanged,
+          destinationCanvas,         &MapperGLCanvas::setOutputCanvasSize);
 
   // Source scene changed -> change destination.
   connect(sourceCanvas->scene(), SIGNAL(changed(const QList<QRectF>&)),
@@ -2362,6 +2499,12 @@ void MainWindow::createActions()
   saveAsAction->setShortcutContext(Qt::ApplicationShortcut);
   addAction(saveAsAction);
   connect(saveAsAction, SIGNAL(triggered()), this, SLOT(saveAs()));
+
+  // Export package.
+  exportPackageAction = new QAction(tr("Export Package..."), this);
+  exportPackageAction->setToolTip(tr("Bundle the project and all media into a zip archive"));
+  exportPackageAction->setIconVisibleInMenu(false);
+  connect(exportPackageAction, &QAction::triggered, this, &MainWindow::exportPackage);
 
   // Recents file
   for (int i = 0; i < MaxRecentFiles; i++)
@@ -3002,6 +3145,7 @@ void MainWindow::createMenus()
   fileMenu->addAction(openAction);
   fileMenu->addAction(saveAction);
   fileMenu->addAction(saveAsAction);
+  fileMenu->addAction(exportPackageAction);
   fileMenu->addSeparator();
   fileMenu->addAction(importMediaAction);
   fileMenu->addAction(importFolderAction);
@@ -3208,6 +3352,9 @@ void MainWindow::createToolBars()
 {
   mainToolBar = addToolBar(tr("&Toolbar"));
   mainToolBar->setMovable(false);
+  mainToolBar->addAction(openAction);
+  mainToolBar->addAction(saveAction);
+  mainToolBar->addSeparator();
   mainToolBar->addAction(importMediaAction);
   mainToolBar->addAction(AddCameraAction);
   mainToolBar->addAction(addColorAction);
@@ -4443,20 +4590,31 @@ void MainWindow::toggleRecording(bool on)
 
     s.setValue("lastRecordingDir", QFileInfo(path).absolutePath());
 
-    // Rewind all video sources, force loop, find longest duration.
+    // Rewind all video sources, force loop during recording.
+    // Only non-looping videos contribute to the auto-stop duration; looping
+    // videos (and image-only projects) fall back to the preference value.
     _recordingTotalMs = 0;
     _savedLoopStates.clear();
     for (int i = 0; i < mappingManager->nSources(); i++) {
       Source::ptr src = mappingManager->getSource(i);
       if (src->getSourceType() == SourceType::Video) {
         Video* vid = static_cast<Video*>(src.get());
-        _savedLoopStates[src->getId()] = vid->getPlayInLoop();
+        bool wasLooping = vid->getPlayInLoop();
+        _savedLoopStates[src->getId()] = wasLooping;
         vid->setPlayInLoop(true);
         vid->rewind();
-        qint64 dur = vid->getDuration();
-        if (dur > _recordingTotalMs)
-          _recordingTotalMs = dur;
+        if (!wasLooping) {
+          qint64 dur = vid->getDuration();
+          if (dur > _recordingTotalMs)
+            _recordingTotalMs = dur;
+        }
       }
+    }
+    // If every source was already looping (or project has no videos), use the
+    // user-configured max default record length.
+    if (_recordingTotalMs == 0) {
+      QSettings recSettings;
+      _recordingTotalMs = recSettings.value("maxRecordLengthSec", 30).toLongLong() * 1000;
     }
 
     // QScreen::grabWindow only captures pixels that are composited to the display.
@@ -5037,6 +5195,80 @@ bool MainWindow::setOscPort(int port)
   return true;
 }
 
+void MainWindow::startFppSync()
+{
+  if (fppSyncListener)
+    return;
+
+  fppSyncListener = new FppMultiSyncListener(FppMultiSyncListener::DEFAULT_PORT, this);
+  connect(fppSyncListener, &FppMultiSyncListener::mediaStart,
+          this, &MainWindow::onFppMediaStart);
+  connect(fppSyncListener, &FppMultiSyncListener::mediaStop,
+          this, &MainWindow::onFppMediaStop);
+  connect(fppSyncListener, &FppMultiSyncListener::mediaSync,
+          this, &MainWindow::onFppMediaSync);
+
+  if (!fppSyncListener->start())
+  {
+    // Bind failed (port busy, no permission): keep the object so we don't
+    // retry on every call; it simply never emits.
+    qWarning() << "FPP MultiSync follower disabled (could not bind UDP port"
+               << fppSyncListener->port() << ")";
+  }
+}
+
+void MainWindow::seekAllVideosToMs(qint64 ms)
+{
+  if (ms < 0)
+    ms = 0;
+  const int n = mappingManager->nSources();
+  for (int i = 0; i < n; ++i)
+  {
+    QSharedPointer<Video> video =
+        qSharedPointerDynamicCast<Video>(mappingManager->getSource(i));
+    if (video)
+      video->seekToMs(ms);
+  }
+}
+
+void MainWindow::onFppMediaStart(const QString& filename, double secondsElapsed)
+{
+  Q_UNUSED(filename);
+  // Start playback and align to the master's reported position.
+  play();
+  seekAllVideosToMs(qint64(secondsElapsed * 1000.0));
+}
+
+void MainWindow::onFppMediaStop(const QString& filename)
+{
+  Q_UNUSED(filename);
+  pause();
+}
+
+void MainWindow::onFppMediaSync(const QString& filename, double secondsElapsed,
+                                quint32 frameNumber)
+{
+  Q_UNUSED(filename);
+  Q_UNUSED(frameNumber);
+
+  // Ensure we're rolling, then drift-correct only when needed so we don't
+  // stutter the players by seeking on every sync packet.
+  if (!isPlaying())
+    play();
+
+  const qint64 targetMs = qint64(secondsElapsed * 1000.0);
+  const int n = mappingManager->nSources();
+  for (int i = 0; i < n; ++i)
+  {
+    QSharedPointer<Video> video =
+        qSharedPointerDynamicCast<Video>(mappingManager->getSource(i));
+    if (!video)
+      continue;
+    if (qAbs(video->getPosition() - targetMs) > FPP_SYNC_THRESHOLD_MS)
+      video->seekToMs(targetMs);
+  }
+}
+
 int MainWindow::getOscPort() const
 {
   return oscListeningPort;
@@ -5116,6 +5348,24 @@ bool MainWindow::setMcpPort(QString portNumber)
   }
 }
 #endif // HAVE_MCP
+
+QSize MainWindow::preferredOutputSize() const
+{
+  QSettings settings;
+  QString res = settings.value("outputResolution", "1920x1080").toString();
+  QStringList parts = res.split('x');
+  if (parts.size() == 2)
+    return QSize(parts[0].toInt(), parts[1].toInt());
+  return QSize(1920, 1080);
+}
+
+void MainWindow::applyOutputResolutionFromPref()
+{
+  int preferredScreen = outputWindow->getPreferredScreen();
+  const QList<QScreen*> screens = QGuiApplication::screens();
+  if (preferredScreen >= screens.size())
+    destinationCanvas->setOutputCanvasSize(preferredOutputSize());
+}
 
 void MainWindow::pollOscInterface()
 {

@@ -91,8 +91,10 @@ private:
   // Recording widgets
   QComboBox *_videoFormatBox;
   QComboBox *_videoQualityBox;
+  QSpinBox  *_maxRecordLengthBox;
 
   // Output widgets
+  QComboBox *_outputResolutionBox;
   QCheckBox *_showResolutionBox;
   QRadioButton *_classicRadio;
   QRadioButton *_palTestRadio;
