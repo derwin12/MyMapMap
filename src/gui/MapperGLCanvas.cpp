@@ -318,8 +318,18 @@ void MapperGLCanvas::applyZoomToView()
 void MapperGLCanvas::resizeEvent(QResizeEvent* event)
 {
   QGraphicsView::resizeEvent(event);
-  if (_useOutputFit && _outputCanvasSize.isValid())
+  if (_useOutputFit && _outputCanvasSize.isValid()) {
+    // Save the user's zoom relative to the current fit scale so it survives
+    // the panel resize (fit scale changes with panel size).
+    qreal savedNorm = (_shapeIsAdapted && _fitScaleFactor > 0)
+                      ? _scalingFactor / _fitScaleFactor
+                      : 1.0;
     _applyOutputFit();
+    if (savedNorm > 1.001) { // user was zoomed in — restore
+      _scalingFactor = _fitScaleFactor * savedNorm;
+      applyZoomToView();
+    }
+  }
 }
 
 void MapperGLCanvas::_applyOutputFit()
