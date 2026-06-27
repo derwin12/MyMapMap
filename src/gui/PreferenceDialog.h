@@ -91,6 +91,7 @@ private:
   // Recording widgets
   QComboBox *_videoFormatBox;
   QComboBox *_videoQualityBox;
+  QSpinBox  *_maxRecordLengthBox;
 
   // Output widgets
   QComboBox *_outputResolutionBox;

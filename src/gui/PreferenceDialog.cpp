@@ -141,6 +141,7 @@ bool PreferenceDialog::loadSettings()
   // Video recording
   _videoFormatBox->setCurrentIndex(settings.value("videoFormat", (int)VideoExporter::H264_MP4).toInt());
   _videoQualityBox->setCurrentIndex(settings.value("videoQuality", (int)VideoExporter::HighQuality).toInt());
+  _maxRecordLengthBox->setValue(settings.value("maxRecordLengthSec", 30).toInt());
 
   return true;
 }
@@ -190,8 +191,9 @@ void PreferenceDialog::applySettings()
   settings.setValue("playInLoop", _playInLoopBox->isChecked());
 
   // Video recording
-  settings.setValue("videoFormat",  _videoFormatBox->currentIndex());
-  settings.setValue("videoQuality", _videoQualityBox->currentIndex());
+  settings.setValue("videoFormat",        _videoFormatBox->currentIndex());
+  settings.setValue("videoQuality",       _videoQualityBox->currentIndex());
+  settings.setValue("maxRecordLengthSec", _maxRecordLengthBox->value());
 }
 
 void PreferenceDialog::refreshCurrentIP()
@@ -355,12 +357,18 @@ void PreferenceDialog::createOutputPage()
   _videoQualityBox->addItem(tr("High"),      (int)VideoExporter::HighQuality);
   _videoQualityBox->addItem(tr("Very High"), (int)VideoExporter::VeryHighQuality);
 
+  _maxRecordLengthBox = new QSpinBox;
+  _maxRecordLengthBox->setRange(1, 3600);
+  _maxRecordLengthBox->setSuffix(tr(" sec"));
+  _maxRecordLengthBox->setToolTip(tr("Used when all media is set to loop, or when only images are present."));
+
   QFormLayout *recordingForm = new QFormLayout;
   recordingForm->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
   recordingForm->setSpacing(8);
   recordingForm->setContentsMargins(12, 8, 12, 8);
-  recordingForm->addRow(tr("Format / Codec"), _videoFormatBox);
-  recordingForm->addRow(tr("Quality"),        _videoQualityBox);
+  recordingForm->addRow(tr("Format / Codec"),        _videoFormatBox);
+  recordingForm->addRow(tr("Quality"),               _videoQualityBox);
+  recordingForm->addRow(tr("Max default length"),    _maxRecordLengthBox);
 
   QGroupBox *recordingGroupBox = new QGroupBox(tr("Recording"));
   recordingGroupBox->setLayout(recordingForm);

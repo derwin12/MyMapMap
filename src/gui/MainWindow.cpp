@@ -4458,20 +4458,31 @@ void MainWindow::toggleRecording(bool on)
 
     s.setValue("lastRecordingDir", QFileInfo(path).absolutePath());
 
-    // Rewind all video sources, force loop, find longest duration.
+    // Rewind all video sources, force loop during recording.
+    // Only non-looping videos contribute to the auto-stop duration; looping
+    // videos (and image-only projects) fall back to the preference value.
     _recordingTotalMs = 0;
     _savedLoopStates.clear();
     for (int i = 0; i < mappingManager->nSources(); i++) {
       Source::ptr src = mappingManager->getSource(i);
       if (src->getSourceType() == SourceType::Video) {
         Video* vid = static_cast<Video*>(src.get());
-        _savedLoopStates[src->getId()] = vid->getPlayInLoop();
+        bool wasLooping = vid->getPlayInLoop();
+        _savedLoopStates[src->getId()] = wasLooping;
         vid->setPlayInLoop(true);
         vid->rewind();
-        qint64 dur = vid->getDuration();
-        if (dur > _recordingTotalMs)
-          _recordingTotalMs = dur;
+        if (!wasLooping) {
+          qint64 dur = vid->getDuration();
+          if (dur > _recordingTotalMs)
+            _recordingTotalMs = dur;
+        }
       }
+    }
+    // If every source was already looping (or project has no videos), use the
+    // user-configured max default record length.
+    if (_recordingTotalMs == 0) {
+      QSettings recSettings;
+      _recordingTotalMs = recSettings.value("maxRecordLengthSec", 30).toLongLong() * 1000;
     }
 
     // QScreen::grabWindow only captures pixels that are composited to the display.
