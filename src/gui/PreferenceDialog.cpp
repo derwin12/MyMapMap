@@ -324,9 +324,17 @@ void PreferenceDialog::createOutputPage()
   _palTestImg = new QLabel;
   _ntscTestImg = new QLabel;
 
-  _classicTestImg->setPixmap(QPixmap(":/classic-test"));
-  _palTestImg->setPixmap(QPixmap(":/pal-test"));
-  _ntscTestImg->setPixmap(QPixmap(":/ntsc-test"));
+  const QSize thumbSize(160, 90);
+  auto thumb = [&](const QString &res) {
+    return QPixmap(res).scaled(thumbSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+  };
+  _classicTestImg->setPixmap(thumb(":/classic-test"));
+  _palTestImg->setPixmap(thumb(":/pal-test"));
+  _ntscTestImg->setPixmap(thumb(":/ntsc-test"));
+  for (QLabel *lbl : {_classicTestImg, _palTestImg, _ntscTestImg}) {
+    lbl->setFixedSize(thumbSize);
+    lbl->setAlignment(Qt::AlignCenter);
+  }
 
   QGridLayout *testLayout = new QGridLayout;
   testLayout->setContentsMargins(0, 0, 0, 0);

@@ -210,7 +210,7 @@ QString VideoExporter::formatLabel(Format f)
   case H264_MP4:  return tr("H.264 (MP4)  — best compatibility");
   case H265_MP4:  return tr("H.265 (MP4)  — smaller files, Windows 10+");
   case MJPEG_AVI: return tr("Motion JPEG (AVI)  — near-lossless");
-  case H264_MOV:  return tr("H.264 (MOV)  — QuickTime compatible");
+  case H264_MOV:  return tr("H.264 (MOV)  — lossless quality");
   }
   return {};
 }
