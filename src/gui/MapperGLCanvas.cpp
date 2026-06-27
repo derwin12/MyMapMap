@@ -120,14 +120,28 @@ void MapperGLCanvas::setBackgroundPhotoVisible(bool visible)
 void MapperGLCanvas::drawBackground(QPainter* painter, const QRectF& rect)
 {
   QGraphicsView::drawBackground(painter, rect);
-  if (_backgroundPixmap.isNull() || !_backgroundPhotoVisible) return;
-  painter->save();
-  painter->setOpacity(_backgroundOpacity);
-  // Reset to widget coordinates so the photo always fills the full viewport
-  // regardless of zoom level or scroll position.
-  painter->resetTransform();
-  painter->drawPixmap(viewport()->rect(), _backgroundPixmap);
-  painter->restore();
+
+  // Compute canvas-to-viewport mapping before any transform changes
+  // (mapFromScene uses the view transform, not the painter transform).
+  QRectF canvasVP;
+  if (_useOutputFit && _outputCanvasSize.isValid()) {
+    QPointF tl = mapFromScene(QPointF(0, 0));
+    QPointF br = mapFromScene(QPointF(_outputCanvasSize.width(), _outputCanvasSize.height()));
+    canvasVP = QRectF(tl, br).normalized();
+  }
+
+  if (!_backgroundPixmap.isNull() && _backgroundPhotoVisible) {
+    painter->save();
+    painter->setOpacity(_backgroundOpacity);
+    painter->resetTransform();
+    // In output-fit mode, lock the background photo to the canvas bounds so it
+    // doesn't bleed into the black letterbox area outside the projector output.
+    const QRectF targetRect = (_useOutputFit && !canvasVP.isNull())
+                              ? canvasVP
+                              : QRectF(viewport()->rect());
+    painter->drawPixmap(targetRect, _backgroundPixmap, QRectF(_backgroundPixmap.rect()));
+    painter->restore();
+  }
 }
 
 MShape::ptr MapperGLCanvas::getShapeFromMapping(Layer::ptr mapping)
@@ -266,6 +280,19 @@ void MapperGLCanvas::drawForeground(QPainter *painter , const QRectF &rect)
 
     }
   }
+
+  // Output editor: draw an amber dashed border at the canvas boundary so the
+  // user can see exactly where the projector output edge is.
+  if (_useOutputFit && _outputCanvasSize.isValid()) {
+    painter->save();
+    QPen pen(QColor(255, 200, 0, 200));
+    pen.setWidth(0); // cosmetic — always 1 screen pixel regardless of zoom
+    pen.setStyle(Qt::DashLine);
+    painter->setPen(pen);
+    painter->setBrush(Qt::NoBrush);
+    painter->drawRect(QRectF(0, 0, _outputCanvasSize.width(), _outputCanvasSize.height()));
+    painter->restore();
+  }
 }
 
 void MapperGLCanvas::currentShapeWasChanged()
@@ -275,16 +302,44 @@ void MapperGLCanvas::currentShapeWasChanged()
 
 void MapperGLCanvas::applyZoomToView()
 {
-  // Re-bound zoom (for consistency).
   qreal zoomFactor = getZoomFactor();
-  // Resets the view transformation matrix
   resetTransform();
-  // Scale the current view
-  scale(zoomFactor, zoomFactor);
-  // And update
+  // For the output editor the stored _scalingFactor already encodes
+  // fit-scale * user-zoom, so apply it directly; otherwise getZoomFactor()
+  // is the raw scale.
+  qreal rawScale = (_useOutputFit && _fitScaleFactor > 0)
+                   ? zoomFactor * _fitScaleFactor
+                   : zoomFactor;
+  scale(rawScale, rawScale);
   update();
-
   emit zoomFactorChanged(zoomFactor);
+}
+
+void MapperGLCanvas::resizeEvent(QResizeEvent* event)
+{
+  QGraphicsView::resizeEvent(event);
+  if (_useOutputFit && _outputCanvasSize.isValid())
+    _applyOutputFit();
+}
+
+void MapperGLCanvas::_applyOutputFit()
+{
+  QRectF outputRect(0, 0, _outputCanvasSize.width(), _outputCanvasSize.height());
+  setSceneRect(outputRect);
+  fitInView(outputRect, Qt::KeepAspectRatio);
+  _fitScaleFactor = transform().m11();
+  _scalingFactor  = _fitScaleFactor;
+  _shapeIsAdapted = true;
+  emit zoomFactorChanged(1.0); // 100% = fit to output
+}
+
+void MapperGLCanvas::setOutputCanvasSize(QSize size)
+{
+  if (!size.isValid() || size.isEmpty())
+    return;
+  _outputCanvasSize = size;
+  _useOutputFit     = true;
+  _applyOutputFit();
 }
 
 void MapperGLCanvas::dragEnterEvent(QDragEnterEvent *event)
@@ -965,67 +1020,80 @@ bool MapperGLCanvas::eventFilter(QObject *target, QEvent *event)
 
 void MapperGLCanvas::increaseZoomLevel(int steps)
 {
-  qreal zoomFactor = qPow(MM::ZOOM_FACTOR, _zoomLevel);
+  if (_useOutputFit) {
+    // Work relative to the fit baseline so 100% = fit, 141% = one step in, etc.
+    if (!_shapeIsAdapted)
+      _scalingFactor = _fitScaleFactor * qPow(MM::ZOOM_FACTOR, _zoomLevel);
+    _shapeIsAdapted = true;
+    qreal normalizedFactor = (_fitScaleFactor > 0) ? _scalingFactor / _fitScaleFactor : _scalingFactor;
+    while (steps > 0 && normalizedFactor < MM::ZOOM_MAX) {
+      _scalingFactor *= MM::ZOOM_FACTOR;
+      normalizedFactor = (_fitScaleFactor > 0) ? _scalingFactor / _fitScaleFactor : _scalingFactor;
+      steps--;
+    }
+    applyZoomToView();
+    return;
+  }
 
+  qreal zoomFactor = qPow(MM::ZOOM_FACTOR, _zoomLevel);
   while (steps > 0 && zoomFactor < MM::ZOOM_MAX) {
     _zoomLevel++;
     zoomFactor = qPow(MM::ZOOM_FACTOR, _zoomLevel);
     steps--;
   }
-  zoomFactor = qMin(zoomFactor, MM::ZOOM_MAX);
-
-  // Reset adaptation
   _shapeIsAdapted = false;
-
-  // Apply to view
   applyZoomToView();
 }
 
 void MapperGLCanvas::decreaseZoomLevel(int steps)
 {
-  qreal zoomFactor = qPow(MM::ZOOM_FACTOR, _zoomLevel);
+  if (_useOutputFit) {
+    if (!_shapeIsAdapted)
+      _scalingFactor = _fitScaleFactor * qPow(MM::ZOOM_FACTOR, _zoomLevel);
+    _shapeIsAdapted = true;
+    qreal normalizedFactor = (_fitScaleFactor > 0) ? _scalingFactor / _fitScaleFactor : _scalingFactor;
+    while (steps > 0 && normalizedFactor > MM::ZOOM_MIN) {
+      _scalingFactor /= MM::ZOOM_FACTOR;
+      normalizedFactor = (_fitScaleFactor > 0) ? _scalingFactor / _fitScaleFactor : _scalingFactor;
+      steps--;
+    }
+    applyZoomToView();
+    return;
+  }
 
+  qreal zoomFactor = qPow(MM::ZOOM_FACTOR, _zoomLevel);
   while (steps > 0 && zoomFactor > MM::ZOOM_MIN) {
     _zoomLevel--;
     zoomFactor = qPow(MM::ZOOM_FACTOR, _zoomLevel);
     steps--;
   }
-  zoomFactor = qMax(zoomFactor, MM::ZOOM_MIN);
-
-  // Reset adaptation
   _shapeIsAdapted = false;
-
-  // Apply to view
   applyZoomToView();
 }
 
 void MapperGLCanvas::resetZoomLevel()
 {
-  // Reset zoom level to zero
+  if (_useOutputFit && _outputCanvasSize.isValid()) {
+    _applyOutputFit(); // 100% = fit full output
+    return;
+  }
   _zoomLevel = 0;
-
-  // Reset adaptation
   _shapeIsAdapted = false;
-
-  // Apply to view
   applyZoomToView();
 }
 
 void MapperGLCanvas::fitShapeToView()
 {
-  if (getCurrentShape()) { // Test if current shape exists
-    // Get first of the list of all the views
-    // Scales the view matrix
+  if (_useOutputFit && _outputCanvasSize.isValid()) {
+    _applyOutputFit();
+    return;
+  }
+  if (getCurrentShape()) {
     fitInView(this->scene()->itemsBoundingRect(), Qt::KeepAspectRatio);
-    // Center all shapes
     setSceneRect(scene()->itemsBoundingRect());
     centerOn(this->scene()->itemsBoundingRect().center());
-    // Get the horizontal scaling factor
     _scalingFactor = transform().m11();
-
-    // Adapt shape
     _shapeIsAdapted = true;
-
     emit zoomFactorChanged(getZoomFactor());
   }
 }
@@ -1033,15 +1101,12 @@ void MapperGLCanvas::fitShapeToView()
 
 void MapperGLCanvas::setZoomFromMenu(const QString &text)
 {
-  // Get text choosen by user and convert it to double
-  qreal zoomFactor = text.mid(0, text.length() - 1).toDouble();
-  // Set zoom factor
-  _scalingFactor = zoomFactor / 100;
-
-  // Adapt shape
+  qreal zoomFactor = text.mid(0, text.length() - 1).toDouble() / 100.0;
+  // In output-fit mode, scale relative to the fit baseline so 100% = fit.
+  _scalingFactor  = (_useOutputFit && _fitScaleFactor > 0)
+                    ? zoomFactor * _fitScaleFactor
+                    : zoomFactor;
   _shapeIsAdapted = true;
-
-  // Apply to view
   applyZoomToView();
 }
 

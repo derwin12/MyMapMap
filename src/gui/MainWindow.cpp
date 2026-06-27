@@ -2247,6 +2247,18 @@ void MainWindow::createLayout()
   outputWindow = new OutputGLWindow(this, destinationCanvas);
   outputWindow->installEventFilter(destinationCanvas);
 
+  // Keep the output editor's coordinate space locked to the projector screen
+  // so 100% zoom always shows the full output and shape positions match 1:1.
+  {
+    int preferredScreen = outputWindow->getPreferredScreen();
+    const QList<QScreen*> screens = QGuiApplication::screens();
+    QSize outputSize(1920, 1080);
+    if (preferredScreen < screens.size())
+      outputSize = screens.at(preferredScreen)->geometry().size();
+    destinationCanvas->setOutputCanvasSize(outputSize);
+  }
+  connect(outputWindow->getCanvas(), &OutputGLCanvas::outputCanvasSizeChanged,
+          destinationCanvas,         &MapperGLCanvas::setOutputCanvasSize);
 
   // Source scene changed -> change destination.
   connect(sourceCanvas->scene(), SIGNAL(changed(const QList<QRectF>&)),
