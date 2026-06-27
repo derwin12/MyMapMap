@@ -66,6 +66,11 @@ MapperGLCanvas::MapperGLCanvas(MainWindow* mainWindow,
   //setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
   setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
 
+  // Large initial scene rect so scrollbars always have range for panning and
+  // zoom-to-cursor even when content fits the viewport exactly. The output
+  // canvas overrides this in _applyOutputFit().
+  setSceneRect(-2000, -2000, 8000, 6000);
+
   resetTransform();
   // setAcceptDrops(true);
 
@@ -310,7 +315,10 @@ void MapperGLCanvas::applyZoomToView()
   // pair fired the anchor twice, causing the view to recenter unexpectedly.
   QTransform t;
   t.scale(rawScale, rawScale);
+  // NoAnchor so wheelEvent can manually compensate scrollbars for zoom-to-cursor.
+  setTransformationAnchor(QGraphicsView::NoAnchor);
   setTransform(t);
+  setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
   update();
   emit zoomFactorChanged(zoomFactor);
 }
@@ -335,7 +343,10 @@ void MapperGLCanvas::resizeEvent(QResizeEvent* event)
 void MapperGLCanvas::_applyOutputFit()
 {
   QRectF outputRect(0, 0, _outputCanvasSize.width(), _outputCanvasSize.height());
-  setSceneRect(outputRect);
+  // Pad the scene rect with generous margins so scrollbars have range even at
+  // 100% (fit) zoom — required for panning and zoom-to-cursor to work.
+  qreal pad = qMax(outputRect.width(), outputRect.height());
+  setSceneRect(outputRect.adjusted(-pad, -pad, pad, pad));
   fitInView(outputRect, Qt::KeepAspectRatio);
   _fitScaleFactor = transform().m11();
   _scalingFactor  = _fitScaleFactor;
@@ -966,10 +977,16 @@ void MapperGLCanvas::wheelEvent(QWheelEvent *event)
   bool shift = event->modifiers().testFlag(Qt::ShiftModifier);
 
   if (ctrl) {
-    // Zoom anchored to cursor (AnchorUnderMouse + single setTransform in
-    // applyZoomToView keeps the scene point under the cursor fixed).
+    // Manual zoom-to-cursor: capture the scene point under the cursor, apply
+    // the zoom (which uses NoAnchor), then scroll to put that point back under
+    // the cursor. Works at any zoom level regardless of scrollbar clamping.
+    QPointF cursorScene = mapToScene(event->position().toPoint());
     if (deltaLevel > 0) increaseZoomLevel(deltaLevel);
     else                 decreaseZoomLevel(-deltaLevel);
+    QPointF newCursorViewF(mapFromScene(cursorScene));
+    QPointF shift = newCursorViewF - event->position();
+    horizontalScrollBar()->setValue(qRound(horizontalScrollBar()->value() + shift.x()));
+    verticalScrollBar()->setValue(qRound(verticalScrollBar()->value() + shift.y()));
   } else {
     // Scroll: wheel-up → negative scrollbar delta (content moves up, natural).
     // Shift scrolls horizontally.
