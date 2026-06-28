@@ -1,5 +1,5 @@
 #define MyAppName      "MyMapMap"
-#define MyAppVersion   "1.0.1"
+#define MyAppVersion   "1.0.4"
 #define MyAppPublisher "Kulp Lights"
 #define MyAppURL       "https://github.com/derwin12/MyMapMap"
 #define MyAppExeName   "mymapmap.exe"
