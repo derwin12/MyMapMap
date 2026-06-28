@@ -131,10 +131,7 @@ void Image::build()
   _images.clear();
   for (int i = 0; i < reader.imageCount(); i++) {
     QImage raw = reader.read().convertToFormat(QImage::Format_RGBA8888);
-    QT_WARNING_PUSH
-    QT_WARNING_DISABLE_DEPRECATED
-    _images.push_back(raw.mirrored(true, false).transformed(QTransform().rotate(180)));
-    QT_WARNING_POP
+    _images.push_back(raw);
   }
 
   rewind();
@@ -190,9 +187,10 @@ QIcon Image::getIcon() const
 {
   static QFileIconProvider provider;
 
-  if (!_images.isEmpty())
+  if (!_images.isEmpty()) {
     return QIcon(QPixmap::fromImage(_images[0]).scaled(MM::SOURCE_THUMBNAIL_SIZE, MM::SOURCE_THUMBNAIL_SIZE,
                                     Qt::KeepAspectRatio, Qt::SmoothTransformation));
+  }
   else
     return provider.icon(QFileInfo(_uri));
 }
@@ -239,12 +237,8 @@ void FolderSource::build()
     QImageReader reader(dir.absoluteFilePath(file));
     if (reader.canRead()) {
       QImage raw = reader.read().convertToFormat(QImage::Format_RGBA8888);
-      if (!raw.isNull()) {
-        QT_WARNING_PUSH
-        QT_WARNING_DISABLE_DEPRECATED
-        _images.push_back(raw.mirrored(true, false).transformed(QTransform().rotate(180)));
-        QT_WARNING_POP
-      }
+      if (!raw.isNull())
+        _images.push_back(raw);
     }
   }
 
