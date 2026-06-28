@@ -20,6 +20,7 @@
 #include "AboutDialog.h"
 
 #include <QtWidgets>
+#include <QPainter>
 
 namespace mmp {
 
@@ -41,8 +42,12 @@ AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent)
   iconLabel->setContentsMargins(0, 20, 0, 20);
   mainLayout->addWidget(iconLabel, 0, 0, 1, 1, Qt::AlignRight);
   // Set title label
-  QLabel *textLabel = new QLabel;
-  textLabel->setPixmap(QPixmap(":/mapmap-title-light").scaled(200, 40, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+  QLabel *textLabel = new QLabel(MM::APPLICATION_NAME);
+  QFont titleFont = textLabel->font();
+  titleFont.setPointSize(20);
+  titleFont.setBold(true);
+  textLabel->setFont(titleFont);
+  textLabel->setContentsMargins(4, 20, 0, 0);
   mainLayout->addWidget(textLabel, 0, 2);
   // Set version label
   QLabel *versionLabel = new QLabel;
@@ -78,11 +83,21 @@ void AboutDialog::createAboutTab()
   QWidget *aboutWidget = new QWidget;
   QVBoxLayout *aboutLayout = new QVBoxLayout(aboutWidget);
 
-  // Add splash image at the top.
+  // Splash banner drawn programmatically with the application name.
+  QPixmap splashPixmap(ABOUT_WINDOW_WIDTH - 40, 90);
+  splashPixmap.fill(QColor(35, 35, 45));
+  {
+    QPainter painter(&splashPixmap);
+    QFont splashFont;
+    splashFont.setPointSize(30);
+    splashFont.setBold(true);
+    splashFont.setLetterSpacing(QFont::AbsoluteSpacing, 2);
+    painter.setFont(splashFont);
+    painter.setPen(Qt::white);
+    painter.drawText(splashPixmap.rect(), Qt::AlignCenter, MM::APPLICATION_NAME);
+  }
   QLabel *splashLabel = new QLabel;
-  QPixmap splashPixmap(":/mapmap-splash");
-  int targetWidth = qMin(splashPixmap.width(), ABOUT_WINDOW_WIDTH - 40);
-  splashLabel->setPixmap(splashPixmap.scaledToWidth(targetWidth, Qt::SmoothTransformation));
+  splashLabel->setPixmap(splashPixmap);
   splashLabel->setAlignment(Qt::AlignCenter);
   aboutLayout->addWidget(splashLabel);
 
