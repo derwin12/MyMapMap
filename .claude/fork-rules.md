@@ -35,13 +35,13 @@ picked `upstream` by mistake) — always pass `--repo derwin12/MyMapMap` explici
 
 ## Release process
 
-1. Bump version in `mymapmap.pro`, `src/core/MM.cpp`, and `resources/windows_resource.rc`
+1. Bump version in `mymapmap.pro`, `src/core/MM.cpp`, `resources/windows_resource.rc`, and `installer/mymapmap.iss`
 2. Commit any outstanding changes on `dev` (skip untracked files that don't belong: screenshots, `.claude/settings.local.json`, video demos, thumbnail caches)
 3. Push `dev`, merge to `main` with `--no-ff`, tag `vX.Y.Z` with an annotated message summarising the release
 4. Push `main` and the tag; create a GitHub release with `gh release create`
 5. **Immediately after tagging**, bump `dev` to the next patch version (X.Y.Z+1) in all three files and commit — `dev` must never sit at a released version number
 
-Version files to keep in sync: `mymapmap.pro` (`VERSION =`), `src/core/MM.cpp` (`MM::VERSION`), `resources/windows_resource.rc` (both `FILEVERSION`/`PRODUCTVERSION` comma form and `FileVersion`/`ProductVersion` string form).
+Version files to keep in sync: `mymapmap.pro` (`VERSION =`), `src/core/MM.cpp` (`MM::VERSION`), `resources/windows_resource.rc` (both `FILEVERSION`/`PRODUCTVERSION` comma form and `FileVersion`/`ProductVersion` string form), `installer/mymapmap.iss` (`MyAppVersion`).
 
 ## Keep the wiki up to date
 
