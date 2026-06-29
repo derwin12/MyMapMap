@@ -61,8 +61,14 @@ tests/target_wrapper.sh
 
 # Shadow build directory
 build/
+build-linux/
+build-appimage/
 bin/
 release/
+
+# Linux AppImage packaging output
+.appimage-tools/
+*.AppImage
 
 # Folders not to be included
 html/

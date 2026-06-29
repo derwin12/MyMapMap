@@ -2,10 +2,12 @@ include(../src.pri)
 
 HEADERS += $$PWD/ConcurrentQueue.h \
     $$PWD/OscInterface.h \
-    $$PWD/FppMultiSyncListener.h
+    $$PWD/FppMultiSyncListener.h \
+    $$PWD/FppClient.h
 
 SOURCES += $$PWD/OscInterface.cpp \
-    $$PWD/FppMultiSyncListener.cpp
+    $$PWD/FppMultiSyncListener.cpp \
+    $$PWD/FppClient.cpp
 
 contains(DEFINES, HAVE_MCP) {
   HEADERS += $$PWD/McpServer.h

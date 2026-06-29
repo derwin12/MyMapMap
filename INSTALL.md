@@ -42,6 +42,41 @@ sudo apt-get install -y \
       markdown
 ```
 
+#### One-shot build script
+
+`build_ubuntu.sh` is the Linux counterpart of `build_msvc2022.bat`: it installs
+the dependencies above (via `sudo apt-get`) and then configures and builds with
+CMake + Ninja. The binary is written to `bin/mymapmap`.
+
+```
+./build_ubuntu.sh            # install deps, then build
+./build_ubuntu.sh --no-deps  # skip apt, just configure + build
+```
+
+To build manually with CMake instead:
+
+```
+cmake -B build-linux -G Ninja -DCMAKE_BUILD_TYPE=Release
+cmake --build build-linux
+```
+
+> The `qt6-base-private-dev` package is required — MyMapMap uses Qt private
+> headers (`<private/qzipwriter_p.h>`) for project package export.
+
+#### Packaging an AppImage
+
+To produce a self-contained, distributable `MyMapMap-<version>-x86_64.AppImage`
+(bundles the Qt runtime, including the Multimedia ffmpeg plugin used by video
+playback, video export and FPP Connect):
+
+```
+./build_ubuntu.sh
+./scripts/sh_make_appimage.sh
+```
+
+The script downloads `linuxdeploy` and its Qt plugin on first run. CI builds the
+same AppImage on every push — see `.github/workflows/ubuntu-build.yml`.
+
 ### Arch Linux
 
 Install basic development tools for Qt 6 projects:

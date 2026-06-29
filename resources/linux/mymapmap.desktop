@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Name=MyMapMap
+GenericName=Video Mapping editor
+GenericName[fr]=Éditeur pour le video mapping
+Comment=MyMapMap is a free/libre video projection mapping editor (a fork of MapMap)
+TryExec=mymapmap
+Exec=mymapmap %f
+Terminal=false
+StartupNotify=true
+Type=Application
+Categories=Qt;AudioVideo;Video;
+Icon=mymapmap

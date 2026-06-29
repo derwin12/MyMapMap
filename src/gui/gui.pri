@@ -20,7 +20,8 @@ HEADERS += $$PWD/AboutDialog.h \
     $$PWD/ShapeControlPainter.h \
     $$PWD/ShapeGraphicsItem.h \
     $$PWD/ShortcutWindow.h \
-    $$PWD/VideoExporter.h
+    $$PWD/VideoExporter.h \
+    $$PWD/FppConnectDialog.h
 
 SOURCES += $$PWD/AboutDialog.cpp \
     $$PWD/ConsoleWindow.cpp \
@@ -37,7 +38,8 @@ SOURCES += $$PWD/AboutDialog.cpp \
     $$PWD/ShapeControlPainter.cpp \
     $$PWD/ShapeGraphicsItem.cpp \
     $$PWD/ShortcutWindow.cpp \
-    $$PWD/VideoExporter.cpp
+    $$PWD/VideoExporter.cpp \
+    $$PWD/FppConnectDialog.cpp
 
 # Syphon source picker (macOS-only).
 macx {

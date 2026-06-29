@@ -1,13 +1,12 @@
-# Build MapMap on Ubuntu with all dependencies
+# Build MyMapMap on Ubuntu and package a self-contained AppImage.
 name: Build on Ubuntu
 
 on:
   workflow_dispatch:
-  # Disabled automatic push/PR triggers while this fork focuses on Windows.
-  # push:
-  #   branches: [ dev, master ]
-  # pull_request:
-  #   branches: [ dev, master ]
+  push:
+    branches: [ dev, main, master ]
+  pull_request:
+    branches: [ dev, main, master ]
 
 jobs:
   build:
@@ -22,19 +21,37 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y \
           build-essential \
+          cmake \
+          ninja-build \
+          pkg-config \
+          qt6-base-dev \
+          qt6-base-private-dev \
+          qt6-multimedia-dev \
+          qt6-tools-dev \
           libqt6opengl6-dev \
           libqt6openglwidgets6 \
-          pkg-config \
-          qmake6 \
-          qt6-base-dev \
-          qt6-multimedia-dev \
-          qt6-tools-dev
+          libgl1-mesa-dev \
+          libfuse2 \
+          wget \
+          file
+        # Optional MCP server module — ignore if the package is unavailable.
+        sudo apt-get install -y libqt6httpserver6-dev || true
 
-    - name: Configure with qmake
-      run: qmake6 mymapmap.pro
+    - name: Configure (CMake + Ninja)
+      run: cmake -B build-linux -G Ninja -DCMAKE_BUILD_TYPE=Release
 
     - name: Build
-      run: make -j$(nproc)
+      run: cmake --build build-linux
+
+    - name: Package AppImage
+      run: bash ./scripts/sh_make_appimage.sh
+
+    - name: Upload AppImage artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: MyMapMap-AppImage
+        path: MyMapMap-*-x86_64.AppImage
+        if-no-files-found: error
 
     - name: Build and run tests
       run: |

@@ -27,6 +27,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 find_package(Qt6 REQUIRED COMPONENTS
     Core Gui Widgets OpenGL OpenGLWidgets
     Network Multimedia MultimediaWidgets
+    CorePrivate GuiPrivate
     LinguistTools
 )
 # Optional: enables the MCP server when the HttpServer module is installed.
@@ -93,6 +94,7 @@ set(SOURCES
     ${GUI_DIR}/ShapeGraphicsItem.cpp
     ${GUI_DIR}/ShortcutWindow.cpp
     ${GUI_DIR}/VideoExporter.cpp
+    ${GUI_DIR}/FppConnectDialog.cpp
 
     # gui/contrib qtpropertybrowser
     ${QPB_DIR}/qtpropertybrowser.cpp
@@ -114,6 +116,7 @@ set(SOURCES
     # control
     ${CONTROL_DIR}/OscInterface.cpp
     ${CONTROL_DIR}/FppMultiSyncListener.cpp
+    ${CONTROL_DIR}/FppClient.cpp
 
     # control/qosc (OSC support)
     ${QOSC_DIR}/contrib/oscpack/OscOutboundPacketStream.cpp
@@ -148,6 +151,7 @@ set(HEADERS
     ${GUI_DIR}/OutputGLCanvas.h ${GUI_DIR}/OutputGLWindow.h ${GUI_DIR}/SourceGui.h
     ${GUI_DIR}/PreferenceDialog.h ${GUI_DIR}/ShapeControlPainter.h
     ${GUI_DIR}/ShapeGraphicsItem.h ${GUI_DIR}/ShortcutWindow.h ${GUI_DIR}/VideoExporter.h
+    ${GUI_DIR}/FppConnectDialog.h
 
     ${QPB_DIR}/qtpropertybrowser.h ${QPB_DIR}/qtpropertymanager.h
     ${QPB_DIR}/qteditorfactory.h ${QPB_DIR}/qtvariantproperty.h
@@ -158,7 +162,7 @@ set(HEADERS
     ${QPBE_DIR}/variantmanager.h ${QPBE_DIR}/variantfactory.h
 
     ${CONTROL_DIR}/ConcurrentQueue.h ${CONTROL_DIR}/OscInterface.h
-    ${CONTROL_DIR}/FppMultiSyncListener.h
+    ${CONTROL_DIR}/FppMultiSyncListener.h ${CONTROL_DIR}/FppClient.h
     ${QOSC_DIR}/oscreceiver.h ${QOSC_DIR}/oscsender.h
 
     ${APP_DIR}/MainApplication.h
@@ -243,6 +247,9 @@ target_compile_definitions(mymapmap PRIVATE
 target_link_libraries(mymapmap PRIVATE
     Qt6::Core Qt6::Gui Qt6::Widgets Qt6::OpenGL Qt6::OpenGLWidgets
     Qt6::Network Qt6::Multimedia Qt6::MultimediaWidgets
+    # Private modules: MainWindow uses <private/qzipwriter_p.h> for project
+    # package export (mirrors "QT += core-private" / gui-private in the .pro).
+    Qt6::CorePrivate Qt6::GuiPrivate
 )
 
 if(Qt6HttpServer_FOUND)

@@ -24,6 +24,7 @@
 #include "Maths.h"
 #include "PreferenceDialog.h"
 #include "AboutDialog.h"
+#include "FppConnectDialog.h"
 #include "ShortcutWindow.h"
 #include "Commands.h"
 #include "ProjectWriter.h"
@@ -2900,6 +2901,13 @@ void MainWindow::createActions()
   addAction(recordAction);
   connect(recordAction, &QAction::toggled, this, &MainWindow::toggleRecording);
 
+  // FPP Connect: export the project to a video and upload it to a Falcon Player.
+  fppConnectAction = new QAction(tr("FPP Connect..."), this);
+  fppConnectAction->setToolTip(tr("Export and upload a video to a Falcon Player (FPP) device"));
+  fppConnectAction->setShortcutContext(Qt::ApplicationShortcut);
+  addAction(fppConnectAction);
+  connect(fppConnectAction, &QAction::triggered, this, &MainWindow::showFppConnectDialog);
+
   // Mute all source audio.
   muteAllAction = new QAction(tr("&Mute All Audio"), this);
   muteAllAction->setShortcut(Qt::CTRL | Qt::Key_M);
@@ -3146,6 +3154,7 @@ void MainWindow::createMenus()
   fileMenu->addAction(saveAction);
   fileMenu->addAction(saveAsAction);
   fileMenu->addAction(exportPackageAction);
+  fileMenu->addAction(fppConnectAction);
   fileMenu->addSeparator();
   fileMenu->addAction(importMediaAction);
   fileMenu->addAction(importFolderAction);
@@ -3384,6 +3393,7 @@ void MainWindow::createToolBars()
   mainToolBar->addAction(muteAllAction);
   mainToolBar->addSeparator();
   mainToolBar->addAction(recordAction);
+  mainToolBar->addAction(fppConnectAction);
 
   // Disable toolbar context menu
   mainToolBar->setContextMenuPolicy(Qt::PreventContextMenu);
@@ -4560,7 +4570,6 @@ void MainWindow::toggleRecording(bool on)
   if (on) {
     QSettings s;
     auto format  = (VideoExporter::Format)  s.value("videoFormat",  (int)VideoExporter::H264_MP4).toInt();
-    auto quality = (VideoExporter::Quality) s.value("videoQuality", (int)VideoExporter::HighQuality).toInt();
 
     QString filter = VideoExporter::formatFilter(format);
     QString ext    = VideoExporter::formatExtension(format);
@@ -4590,84 +4599,122 @@ void MainWindow::toggleRecording(bool on)
 
     s.setValue("lastRecordingDir", QFileInfo(path).absolutePath());
 
-    // Rewind all video sources, force loop during recording.
-    // Only non-looping videos contribute to the auto-stop duration; looping
-    // videos (and image-only projects) fall back to the preference value.
-    _recordingTotalMs = 0;
-    _savedLoopStates.clear();
-    for (int i = 0; i < mappingManager->nSources(); i++) {
-      Source::ptr src = mappingManager->getSource(i);
-      if (src->getSourceType() == SourceType::Video) {
-        Video* vid = static_cast<Video*>(src.get());
-        bool wasLooping = vid->getPlayInLoop();
-        _savedLoopStates[src->getId()] = wasLooping;
-        vid->setPlayInLoop(true);
-        vid->rewind();
-        if (!wasLooping) {
-          qint64 dur = vid->getDuration();
-          if (dur > _recordingTotalMs)
-            _recordingTotalMs = dur;
-        }
-      }
-    }
-    // If every source was already looping (or project has no videos), use the
-    // user-configured max default record length.
-    if (_recordingTotalMs == 0) {
-      QSettings recSettings;
-      _recordingTotalMs = recSettings.value("maxRecordLengthSec", 30).toLongLong() * 1000;
-    }
-
-    // QScreen::grabWindow only captures pixels that are composited to the display.
-    // A windowed output that is hidden or occluded returns black frames. Go fullscreen
-    // when recording starts so the compositor always has real content to grab.
-    _recordingOpenedOutputWindow = !outputFullScreenAction->isChecked();
-    if (_recordingOpenedOutputWindow) {
-      _recordingHadControls = displayControlsAction->isChecked();
-      startFullScreen();
-      // Allow the GL context and compositor to settle before the first frame grab.
-      QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
-    }
-
-    QSize size = outputWindow->getCanvas()->viewport()->size();
-    if (!_videoExporter->start(path, format, quality, size, framesPerSecond())) {
-      recordAction->setChecked(false);
-      statusBar()->showMessage(tr("Failed to start recording."), 4000);
-      // Restore loop states since recording failed to start.
-      for (int i = 0; i < mappingManager->nSources(); i++) {
-        Source::ptr src = mappingManager->getSource(i);
-        if (src->getSourceType() == SourceType::Video) {
-          Video* vid = static_cast<Video*>(src.get());
-          if (_savedLoopStates.contains(src->getId()))
-            vid->setPlayInLoop(_savedLoopStates.value(src->getId()));
-        }
-      }
-      _savedLoopStates.clear();
-      _recordingTotalMs = 0;
-      if (_recordingOpenedOutputWindow) {
-        exitFullScreen();
-        _recordingOpenedOutputWindow = false;
-      }
-    } else {
-      // Enable frame grab: main update loop drives canvas->update() each tick,
-      // paintEvent captures the frame and emits framePainted → sendFrame.
-      OutputGLCanvas* canvas = outputWindow->getCanvas();
-      canvas->setFrameGrabEnabled(true);
-      connect(canvas, &OutputGLCanvas::framePainted,
-              _videoExporter, &VideoExporter::sendFrame);
-
-      recordingTimerLabel->setText("● REC  00:00 / --:--");
-      recordingTimerLabel->show();
-
-      QString audioMsg = _videoExporter->audioDeviceName().isEmpty()
-          ? tr("No loopback audio device — recording video only. "
-               "Enable Stereo Mix in Windows Sound settings to capture audio.")
-          : tr("Recording audio from: %1").arg(_videoExporter->audioDeviceName());
-      statusBar()->showMessage(audioMsg, 8000);
-    }
+    startRecordingToFile(path);
   } else {
     if (_videoExporter)
       _videoExporter->stop();
   }
+}
+
+bool MainWindow::isRecording() const
+{
+  return _videoExporter && _videoExporter->isRecording();
+}
+
+bool MainWindow::startRecordingToFile(const QString& path)
+{
+  if (!_videoExporter || _videoExporter->isRecording())
+    return false;
+
+  QSettings s;
+  auto format  = (VideoExporter::Format)  s.value("videoFormat",  (int)VideoExporter::H264_MP4).toInt();
+  auto quality = (VideoExporter::Quality) s.value("videoQuality", (int)VideoExporter::HighQuality).toInt();
+
+  // Reflect recording state in the toolbar action without re-entering
+  // toggleRecording (callers other than the Record action use this directly).
+  if (!recordAction->isChecked()) {
+    QSignalBlocker blocker(recordAction);
+    recordAction->setChecked(true);
+  }
+
+  // Rewind all video sources, force loop during recording.
+  // Only non-looping videos contribute to the auto-stop duration; looping
+  // videos (and image-only projects) fall back to the preference value.
+  _recordingTotalMs = 0;
+  _savedLoopStates.clear();
+  for (int i = 0; i < mappingManager->nSources(); i++) {
+    Source::ptr src = mappingManager->getSource(i);
+    if (src->getSourceType() == SourceType::Video) {
+      Video* vid = static_cast<Video*>(src.get());
+      bool wasLooping = vid->getPlayInLoop();
+      _savedLoopStates[src->getId()] = wasLooping;
+      vid->setPlayInLoop(true);
+      vid->rewind();
+      if (!wasLooping) {
+        qint64 dur = vid->getDuration();
+        if (dur > _recordingTotalMs)
+          _recordingTotalMs = dur;
+      }
+    }
+  }
+  // If every source was already looping (or project has no videos), use the
+  // user-configured max default record length.
+  if (_recordingTotalMs == 0) {
+    QSettings recSettings;
+    _recordingTotalMs = recSettings.value("maxRecordLengthSec", 30).toLongLong() * 1000;
+  }
+
+  // QScreen::grabWindow only captures pixels that are composited to the display.
+  // A windowed output that is hidden or occluded returns black frames. Go fullscreen
+  // when recording starts so the compositor always has real content to grab.
+  _recordingOpenedOutputWindow = !outputFullScreenAction->isChecked();
+  if (_recordingOpenedOutputWindow) {
+    _recordingHadControls = displayControlsAction->isChecked();
+    startFullScreen();
+    // Allow the GL context and compositor to settle before the first frame grab.
+    QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+  }
+
+  QSize size = outputWindow->getCanvas()->viewport()->size();
+  if (!_videoExporter->start(path, format, quality, size, framesPerSecond())) {
+    {
+      QSignalBlocker blocker(recordAction);
+      recordAction->setChecked(false);
+    }
+    statusBar()->showMessage(tr("Failed to start recording."), 4000);
+    // Restore loop states since recording failed to start.
+    for (int i = 0; i < mappingManager->nSources(); i++) {
+      Source::ptr src = mappingManager->getSource(i);
+      if (src->getSourceType() == SourceType::Video) {
+        Video* vid = static_cast<Video*>(src.get());
+        if (_savedLoopStates.contains(src->getId()))
+          vid->setPlayInLoop(_savedLoopStates.value(src->getId()));
+      }
+    }
+    _savedLoopStates.clear();
+    _recordingTotalMs = 0;
+    if (_recordingOpenedOutputWindow) {
+      exitFullScreen();
+      _recordingOpenedOutputWindow = false;
+    }
+    return false;
+  }
+
+  // Enable frame grab: main update loop drives canvas->update() each tick,
+  // paintEvent captures the frame and emits framePainted → sendFrame.
+  OutputGLCanvas* canvas = outputWindow->getCanvas();
+  canvas->setFrameGrabEnabled(true);
+  connect(canvas, &OutputGLCanvas::framePainted,
+          _videoExporter, &VideoExporter::sendFrame);
+
+  recordingTimerLabel->setText("● REC  00:00 / --:--");
+  recordingTimerLabel->show();
+
+  QString audioMsg = _videoExporter->audioDeviceName().isEmpty()
+      ? tr("No loopback audio device — recording video only. "
+           "Enable Stereo Mix in Windows Sound settings to capture audio.")
+      : tr("Recording audio from: %1").arg(_videoExporter->audioDeviceName());
+  statusBar()->showMessage(audioMsg, 8000);
+  return true;
+}
+
+void MainWindow::showFppConnectDialog()
+{
+  if (!_fppConnectDialog)
+    _fppConnectDialog = new FppConnectDialog(this, this);
+  _fppConnectDialog->show();
+  _fppConnectDialog->raise();
+  _fppConnectDialog->activateWindow();
 }
 
 void MainWindow::onRecordingStopped(const QString& filePath)

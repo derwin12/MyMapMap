@@ -65,6 +65,7 @@ namespace mmp {
 class PreferenceDialog;
 class AboutDialog;
 class ShortcutWindow;
+class FppConnectDialog;
 
 /**
  * This is the main window of MapMap. It acts as both a view and a controller interface.
@@ -101,6 +102,9 @@ private slots:
   // Recording.
   void toggleRecording(bool on);
   void onRecordingStopped(const QString& filePath);
+
+  // FPP Connect: export the project and upload it to a Falcon Player device.
+  void showFppConnectDialog();
 
   // Source preview.
   void updateSourcePreview(uid sourceId);
@@ -356,6 +360,15 @@ public:
   void setCurrentFile(const QString &fileName);
   void setCurrentVideo(const QString &filename);
   bool importMediaFile(const QString &fileName, bool isImage = false, bool isCamera = false);
+
+  // Record the output canvas to `path` (no save dialog). Shared by the Record
+  // action and the FPP Connect export flow. Returns true if recording started.
+  bool startRecordingToFile(const QString &path);
+  // True while a recording/export is in progress.
+  bool isRecording() const;
+  // The video recorder, for callers that need its completion signals (may be
+  // null very early in startup).
+  VideoExporter* videoExporter() const { return _videoExporter; }
   bool addColorSource(const QColor& color);
   bool addTextSource(const QString& text);
   void addLayerItem(uid mappingId);
@@ -504,6 +517,7 @@ private:
   QAction *rewindAction;
   QAction *muteAllAction;
   QAction *recordAction;
+  QAction *fppConnectAction;
 
   QAction *outputFullScreenAction;
   QAction *displayControlsAction;
@@ -668,6 +682,9 @@ private:
   QMap<uid, bool> _savedLoopStates;
   bool _recordingOpenedOutputWindow = false;
   bool _recordingHadControls        = false; // controls state before auto-fullscreen
+
+  // FPP Connect dialog (lazily created)
+  FppConnectDialog* _fppConnectDialog = nullptr;
 
   // Preference dialog
   PreferenceDialog* _preferenceDialog;
