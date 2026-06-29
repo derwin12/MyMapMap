@@ -27,11 +27,14 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 find_package(Qt6 REQUIRED COMPONENTS
     Core Gui Widgets OpenGL OpenGLWidgets
     Network Multimedia MultimediaWidgets
-    CorePrivate GuiPrivate
     LinguistTools
 )
 # Optional: enables the MCP server when the HttpServer module is installed.
 find_package(Qt6 QUIET COMPONENTS HttpServer)
+# Optional: the Qt private modules. Upstream Qt (and Qt 6.10+) ship the
+# Qt6::CorePrivate CMake config; Debian/Ubuntu distro Qt (e.g. 6.4) ships the
+# private *headers* without it, so this is best-effort and handled below.
+find_package(Qt6 QUIET COMPONENTS CorePrivate GuiPrivate)
 
 qt_standard_project_setup()
 set(CMAKE_AUTOMOC ON)
@@ -247,10 +250,32 @@ target_compile_definitions(mymapmap PRIVATE
 target_link_libraries(mymapmap PRIVATE
     Qt6::Core Qt6::Gui Qt6::Widgets Qt6::OpenGL Qt6::OpenGLWidgets
     Qt6::Network Qt6::Multimedia Qt6::MultimediaWidgets
-    # Private modules: MainWindow uses <private/qzipwriter_p.h> for project
-    # package export (mirrors "QT += core-private" / gui-private in the .pro).
-    Qt6::CorePrivate Qt6::GuiPrivate
 )
+
+# MainWindow uses <private/qzipwriter_p.h> (a QtCore private header) for project
+# package export. Prefer the Qt6::CorePrivate target where it exists; on distro
+# Qt that ships the headers without the *Private CMake config, locate the
+# private include directory directly (mirrors "QT += core-private" in the .pro).
+if(TARGET Qt6::CorePrivate)
+    target_link_libraries(mymapmap PRIVATE Qt6::CorePrivate)
+    if(TARGET Qt6::GuiPrivate)
+        target_link_libraries(mymapmap PRIVATE Qt6::GuiPrivate)
+    endif()
+else()
+    find_path(MYMAPMAP_QT_CORE_PRIVATE_DIR
+        NAMES private/qzipwriter_p.h
+        PATHS ${Qt6Core_INCLUDE_DIRS}
+        PATH_SUFFIXES ${Qt6_VERSION}/QtCore)
+    if(NOT MYMAPMAP_QT_CORE_PRIVATE_DIR)
+        message(FATAL_ERROR
+            "Qt private headers (qzipwriter_p.h) not found. "
+            "Install the Qt private development package (e.g. qt6-base-private-dev).")
+    endif()
+    message(STATUS "Using Qt private headers from ${MYMAPMAP_QT_CORE_PRIVATE_DIR}")
+    target_include_directories(mymapmap PRIVATE
+        ${MYMAPMAP_QT_CORE_PRIVATE_DIR}
+        ${MYMAPMAP_QT_CORE_PRIVATE_DIR}/..)
+endif()
 
 if(Qt6HttpServer_FOUND)
     target_compile_definitions(mymapmap PRIVATE HAVE_MCP)
