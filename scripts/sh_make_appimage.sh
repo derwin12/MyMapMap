@@ -43,7 +43,7 @@ fetch "https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/co
 export APPIMAGE_EXTRACT_AND_RUN=1
 
 # Icon: linuxdeploy expects the icon's basename to match the .desktop Icon= key.
-ICON_SRC="resources/app_icons/mapmap.png"
+ICON_SRC="resources/app_icons/mymapmap.png"
 ICON="$TOOLDIR/mymapmap.png"
 cp "$ICON_SRC" "$ICON"
 
