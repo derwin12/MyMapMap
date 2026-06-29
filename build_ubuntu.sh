@@ -6,6 +6,12 @@
 # dependencies (unless --no-deps is given), then configures and builds with
 # CMake + Ninja. The resulting binary is bin/mymapmap.
 #
+# NOTE: MyMapMap requires Qt 6.8 or newer (the video exporter uses
+# QVideoFrameInput / QAudioBufferInput). Ubuntu 24.10+ / 25.04+ / 26.04 ship a
+# new-enough Qt. On Ubuntu 24.04 LTS (Qt 6.4) the distro packages are too old —
+# install Qt 6.8+ from the Qt online installer or aqtinstall and build with
+#   cmake -B build-linux -G Ninja -DCMAKE_PREFIX_PATH=/path/to/Qt/6.8.x/gcc_64
+#
 # Usage:
 #   ./build_ubuntu.sh            # install deps (sudo), then build
 #   ./build_ubuntu.sh --no-deps  # skip apt, just configure + build

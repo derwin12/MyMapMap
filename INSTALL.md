@@ -21,6 +21,13 @@ Alternatively:
 
 ### Ubuntu
 
+> **Qt 6.8+ required.** MyMapMap's video exporter uses `QVideoFrameInput` /
+> `QAudioBufferInput`, added in Qt 6.8. Ubuntu 24.10 and newer ship a
+> sufficient Qt. On Ubuntu 24.04 LTS (Qt 6.4) the distro packages are too old —
+> install Qt 6.8+ from the [Qt online installer](https://www.qt.io/download-qt-installer)
+> or [`aqtinstall`](https://github.com/miurahr/aqtinstall) and pass
+> `-DCMAKE_PREFIX_PATH=/path/to/Qt/6.8.x/gcc_64` to CMake.
+
 Install basic development tools for Qt 6 projects:
 
 ```
