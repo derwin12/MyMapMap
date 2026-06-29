@@ -2,6 +2,15 @@
 
 &nbsp;
 
+## 2026-06-29 - MyMapMap 1.0.4
+
+- Feat: FPP Connect — export the project to a video and upload it to a Falcon Player (FPP) device, mirroring xLights' FPP Connect (verify device, upload an existing file or export-then-upload, with progress)
+- Feat: Linux build via CMake + Ninja (`build_ubuntu.sh`) and a self-contained AppImage (`scripts/sh_make_appimage.sh`) that bundles the Qt Multimedia ffmpeg backend
+- CI: GitHub Actions builds and publishes the Linux AppImage as an artifact
+- Build: CMake links the Qt private modules used by project package export, with a fallback for distro Qt that ships the headers without the CMake config
+
+&nbsp;
+
 ## 2026-06-28 - MyMapMap 1.0.3
 
 - Fix: pan and zoom-to-cursor work correctly at all zoom levels
